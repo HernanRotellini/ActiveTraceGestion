@@ -67,7 +67,9 @@ def create_app() -> FastAPI:
     )
 
     # Registrar routers
+    from app.api.v1.routers.auth import router as auth_router  # noqa: PLC0415
     from app.api.v1.routers.health import router as health_router  # noqa: PLC0415
+    app.include_router(auth_router)
     app.include_router(health_router)
 
     return app
