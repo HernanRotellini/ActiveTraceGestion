@@ -2,6 +2,12 @@
 
 import asyncio
 import os
+import sys
+
+# Windows: SelectorEventLoop en lugar de ProactorEventLoop para compatibilidad
+# con asyncpg (SSL handshake falla con ProactorEventLoop).
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 from collections.abc import AsyncGenerator, Generator
 from typing import Any
 
@@ -60,7 +66,7 @@ async def db_engine(test_settings: Settings) -> AsyncGenerator[None, None]:
     Función-scoped para evitar problemas de event loop en Windows
     con asyncpg. Cada test crea su propio pool de conexiones.
     """
-    create_engine_from_url(test_settings.DATABASE_URL)
+    create_engine_from_url(test_settings.DATABASE_URL, connect_args={"ssl": False})
     try:
         yield
     finally:

@@ -19,7 +19,7 @@ class Base(DeclarativeBase):
     """Base declarativa para todos los modelos ORM del proyecto."""
 
 
-def create_engine_from_url(database_url: str) -> None:
+def create_engine_from_url(database_url: str, connect_args: dict[str, object] | None = None) -> None:
     """Crea el engine async y la sessionmaker a partir de una URL de conexión.
 
     Debe llamarse en el arranque (lifespan) antes de cualquier operación.
@@ -27,9 +27,11 @@ def create_engine_from_url(database_url: str) -> None:
     Args:
         database_url: URL de PostgreSQL con driver asyncpg,
                       ej: "postgresql+asyncpg://user:pass@host:port/db"
+        connect_args: Argumentos adicionales para asyncpg.connect(),
+                      ej: {"ssl": False} en Windows para evitar SSL handshake.
     """
     global _engine, _sessionmaker  # noqa: PLW0603
-    _engine = create_async_engine(database_url, echo=False, pool_size=5, max_overflow=10)
+    _engine = create_async_engine(database_url, echo=False, pool_size=5, max_overflow=10, connect_args=connect_args or {})
     _sessionmaker = async_sessionmaker(
         _engine,
         class_=AsyncSession,

@@ -8,6 +8,7 @@ Bootstrap:
 """
 
 import logging
+import sys
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -40,7 +41,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Iniciando activia-trace...")
 
     from app.core.database import create_engine_from_url, dispose_engine  # noqa: PLC0415
-    create_engine_from_url(settings.DATABASE_URL)
+    connect_args: dict[str, object] = {}
+    if sys.platform == "win32":
+        connect_args["ssl"] = False
+    create_engine_from_url(settings.DATABASE_URL, connect_args=connect_args)
     logger.info("Engine de base de datos inicializado")
 
     from app.core.observability import setup_observability  # noqa: PLC0415
@@ -69,8 +73,10 @@ def create_app() -> FastAPI:
     # Registrar routers
     from app.api.v1.routers.auth import router as auth_router  # noqa: PLC0415
     from app.api.v1.routers.health import router as health_router  # noqa: PLC0415
+    from app.api.v1.routers.rbac import router as rbac_router  # noqa: PLC0415
     app.include_router(auth_router)
     app.include_router(health_router)
+    app.include_router(rbac_router)
 
     return app
 
