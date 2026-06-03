@@ -32,6 +32,13 @@ COPY --from=builder /install /usr/local
 COPY app/ app/
 COPY alembic.ini .
 COPY alembic/ alembic/
+COPY tests/ tests/
+COPY pyproject.toml .
+
+ARG INSTALL_TEST_DEPS=false
+RUN if [ "$INSTALL_TEST_DEPS" = "true" ]; then \
+        pip install --no-cache-dir "pytest>=8.3.0" "pytest-asyncio>=0.24.0" "httpx>=0.28.0" "coverage>=7.6.0"; \
+    fi
 
 # Pydantic v2: desactivar Rust para reducir tamaño (opcional)
 ENV PYTHONDONTWRITEBYTECODE=1 \
