@@ -1,5 +1,6 @@
 """Repository tenant-scoped para Asignacion."""
 
+from datetime import date as date_type
 from uuid import UUID
 
 from sqlalchemy import select
@@ -41,6 +42,42 @@ class AsignacionRepository(TenantScopedRepository[Asignacion]):
                 Asignacion.rol == rol,
             )
         )
+        return list(result.scalars().all())
+
+    async def list_by_filters(
+        self,
+        usuario_id: UUID | None = None,
+        materia_id: UUID | None = None,
+        carrera_id: UUID | None = None,
+        cohorte_id: UUID | None = None,
+        rol: str | None = None,
+        estado: str | None = None,
+    ) -> list[Asignacion]:
+        query = select(Asignacion).where(
+            Asignacion.tenant_id == self.tenant_id,
+            Asignacion.deleted_at.is_(None),
+        )
+        if usuario_id is not None:
+            query = query.where(Asignacion.usuario_id == usuario_id)
+        if materia_id is not None:
+            query = query.where(Asignacion.materia_id == materia_id)
+        if carrera_id is not None:
+            query = query.where(Asignacion.carrera_id == carrera_id)
+        if cohorte_id is not None:
+            query = query.where(Asignacion.cohorte_id == cohorte_id)
+        if rol is not None:
+            query = query.where(Asignacion.rol == rol)
+        if estado == "vigente":
+            today = date_type.today()
+            query = query.where(
+                (Asignacion.hasta.is_(None)) | (Asignacion.hasta >= today)
+            )
+        elif estado == "vencida":
+            today = date_type.today()
+            query = query.where(
+                (Asignacion.hasta.isnot(None)) & (Asignacion.hasta < today)
+            )
+        result = await self.session.execute(query)
         return list(result.scalars().all())
 
     async def create(self, **kwargs) -> Asignacion:
