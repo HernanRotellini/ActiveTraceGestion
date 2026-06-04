@@ -306,7 +306,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/08_arquitectura_propuesta.md` §5.1 (Moodle WS, fallback manual)
 
 ### [C-10] `calificaciones-y-umbral`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - Modelos `Calificacion` (numérica/textual, `aprobado` derivado, origen Importado/Manual) y `UmbralMateria` (umbral_pct por asignación, valores aprobatorios).
   - Importar calificaciones desde archivo del LMS (F1.1): detecta columnas de actividades numéricas (RN-01) y textuales (RN-02), vista previa, selección de actividades.
@@ -322,7 +322,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/07_flujos_principales.md` FL-02 (pasos 3–5)
 
 ### [C-11] `analisis-atrasados-reportes`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - Cómputo de **alumnos atrasados** (actividades faltantes o nota < umbral, RN-06) (F2.2).
   - Ranking de actividades aprobadas (F2.3, RN-09); reportes rápidos por materia (F2.4); notas finales agrupadas (F2.5).
@@ -337,7 +337,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/04_modelo_de_datos.md` §E7, §E8
 
 ### [C-12] `comunicaciones-cola-worker`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - Modelo `Comunicacion` (destinatario `[cifrado]`, lote_id, estado: Pendiente → Enviando → Enviado/Error/Cancelado, RN-15).
   - **Worker asíncrono** de despacho (`workers/`): consume cola, transiciona estados. Plantillas con variables de sustitución.
@@ -354,7 +354,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/08_arquitectura_propuesta.md` §5.2 (worker de cola)
 
 ### [C-13] `encuentros-y-guardias`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - Modelos `SlotEncuentro`, `InstanciaEncuentro`, `Guardia`.
   - Crear encuentro recurrente (F6.1, RN-13): genera todas las instancias del slot. Encuentro único (F6.2). Editar instancia (F6.3: estado, meet_url, video_url, comentario).
@@ -371,7 +371,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/07_flujos_principales.md` FL-06 (encuentros recurrentes)
 
 ### [C-14] `evaluaciones-y-coloquios`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - Modelos `Evaluacion`, `ReservaEvaluacion`, `ResultadoEvaluacion`.
   - Crear convocatoria de coloquio (F7.3): materia, instancia, días y cupos. Importar alumnos a convocatoria (F7.2). Listado de convocatorias (F7.4). Panel de métricas (F7.1). Admin global (F7.5).

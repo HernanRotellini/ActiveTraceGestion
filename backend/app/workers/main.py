@@ -1,29 +1,23 @@
 """Entrypoint del worker de background.
 
-C-01: placeholder no-op. La tecnología real de la cola se define en ADR-003
-(comunicaciones-cola-worker, C-12). Este archivo existe para que el servicio
-`worker` en docker-compose tenga un entrypoint que correr.
-
-COMPORTAMIENTO ACTUAL: log infinito cada 60 segundos. Reemplazar cuando se
-implemente el sistema de colas real.
+Arranca el ComunicacionWorker (C-12) que despacha comunicaciones Pendiente
+mediante polling a la base de datos.
 """
 
 import asyncio
 import logging
 
+from app.workers.comunicaciones_worker import ComunicacionWorker
+
 logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    """Loop principal del worker.
-
-    Placeholder: log de heartbeat y sleep. No procesa nada todavía.
-    """
-    logger.info("Worker iniciado (placeholder — sin lógica de cola todavía)")
+    """Loop principal del worker — delega al ComunicacionWorker."""
+    logger.info("Worker iniciado — arrancando ComunicacionWorker")
+    worker = ComunicacionWorker()
     try:
-        while True:
-            logger.debug("Worker heartbeat — sin tareas pendientes")
-            await asyncio.sleep(60)
+        await worker.start()
     except asyncio.CancelledError:
         logger.info("Worker detenido")
 
