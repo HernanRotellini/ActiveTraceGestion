@@ -131,6 +131,8 @@ def upgrade() -> None:
         ("facturas:gestionar", "Gestionar facturas", "facturas", "gestionar"),
         ("tenant:configurar", "Configurar tenant", "tenant", "configurar"),
         ("impersonacion:usar", "Usar impersonación", "impersonacion", "usar"),
+        ("coloquios:gestionar", "Gestionar coloquios", "coloquios", "gestionar"),
+        ("coloquios:reservar", "Reservar coloquio", "coloquios", "reservar"),
     ]
     permisos_table = sa.table(
         "permisos",
@@ -163,8 +165,9 @@ def upgrade() -> None:
     matrix = [
         ("ALUMNO", "academico:ver_estado_propio", "global"),
         ("ALUMNO", "evaluaciones:reservar", "global"),
+        ("ALUMNO", "coloquios:reservar", "global"),
         ("TUTOR", "avisos:confirmar", "global"),
-        ("TUTOR", "atrasados:ver", "global"),
+        ("TUTOR", "atrasados:ver", "propio"),
         ("TUTOR", "entregas:detectar_sin_corregir", "global"),
         ("TUTOR", "encuentros:gestionar", "global"),
         ("TUTOR", "guardias:registrar", "propio"),
@@ -188,6 +191,7 @@ def upgrade() -> None:
         ("COORDINADOR", "avisos:publicar", "global"),
         ("COORDINADOR", "equipos:asignar", "global"),
         ("COORDINADOR", "auditoria:ver", "propio"),
+        ("COORDINADOR", "coloquios:gestionar", "global"),
         ("NEXO", "avisos:confirmar", "global"),
         ("ADMIN", "avisos:confirmar", "global"),
         ("ADMIN", "calificaciones:importar", "global"),
@@ -205,6 +209,8 @@ def upgrade() -> None:
         ("ADMIN", "auditoria:ver", "global"),
         ("ADMIN", "tenant:configurar", "global"),
         ("ADMIN", "impersonacion:usar", "global"),
+        ("ADMIN", "coloquios:gestionar", "global"),
+        ("ADMIN", "coloquios:reservar", "global"),
         ("FINANZAS", "avisos:confirmar", "global"),
         ("FINANZAS", "auditoria:ver", "global"),
         ("FINANZAS", "liquidaciones:operar_grilla", "global"),
