@@ -73,6 +73,7 @@ def create_app() -> FastAPI:
     # Registrar routers
     from app.api.v1.routers.analisis import router as analisis_router  # noqa: PLC0415
     from app.api.v1.routers.asignaciones import router as asignaciones_router  # noqa: PLC0415
+    from app.api.v1.routers.avisos import router as avisos_router  # noqa: PLC0415
     from app.api.v1.routers.auth import router as auth_router  # noqa: PLC0415
     from app.api.v1.routers.calificaciones import router as calificaciones_router  # noqa: PLC0415
     from app.api.v1.routers.coloquios import router as coloquios_router  # noqa: PLC0415
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
     from app.api.v1.routers.usuarios import router as usuarios_router  # noqa: PLC0415
     app.include_router(analisis_router)
     app.include_router(asignaciones_router)
+    app.include_router(avisos_router)
     app.include_router(auth_router)
     app.include_router(calificaciones_router)
     app.include_router(coloquios_router)

@@ -1,5 +1,6 @@
 """Modelos ORM del backend."""
 
+from app.models.aviso import AcknowledgmentAviso, AlcanceAviso, Aviso, SeveridadAviso
 from app.models.base import BaseModelMixin, SoftDeleteMixin, TenantScopedMixin
 from app.models.auth import AuthUser, PasswordRecoveryToken, RefreshSession, TotpFactor, TwoFactorChallenge
 from app.models.calificaciones import Calificacion, OrigenCalificacion, UmbralMateria
@@ -21,7 +22,10 @@ from app.models.padron import EntradaPadron, VersionPadron
 from app.models.tenant import Tenant
 
 __all__ = [
+    "AcknowledgmentAviso",
+    "AlcanceAviso",
     "Asignacion",
+    "Aviso",
     "AuthUser",
     "BaseModelMixin",
     "Calificacion",
@@ -42,6 +46,7 @@ __all__ = [
     "ResultadoEvaluacion",
     "ReservaEvaluacion",
     "Rol",
+    "SeveridadAviso",
     "RolPermiso",
     "SoftDeleteMixin",
     "Tenant",

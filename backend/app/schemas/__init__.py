@@ -1,5 +1,14 @@
 """Schemas Pydantic del backend."""
 
+from app.schemas.aviso import (
+    AckCreate,
+    AckResponse,
+    AvisoCreate,
+    AvisoListResponse,
+    AvisoResponse,
+    AvisoStatsResponse,
+    AvisoUpdate,
+)
 from app.schemas.asignaciones import AsignacionCreate, AsignacionResponse, AsignacionUpdate
 from app.schemas.equipos import (
     AsignacionMasivaRequest,
@@ -24,7 +33,14 @@ from app.schemas.padron import (
 from app.schemas.usuarios import UsuarioCreate, UsuarioResponse, UsuarioUpdate
 
 __all__ = [
+    "AckCreate",
+    "AckResponse",
     "AsignacionCreate",
+    "AvisoCreate",
+    "AvisoListResponse",
+    "AvisoResponse",
+    "AvisoStatsResponse",
+    "AvisoUpdate",
     "AsignacionMasivaRequest",
     "AsignacionResponse",
     "AsignacionUpdate",
