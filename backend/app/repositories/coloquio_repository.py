@@ -1,6 +1,6 @@
 """Repositorio tenant-scoped para evaluaciones y coloquios."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select, text, update

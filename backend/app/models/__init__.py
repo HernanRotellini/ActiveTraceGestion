@@ -16,6 +16,8 @@ from app.models.coloquio import (
 )
 from app.models.comunicacion import Comunicacion, EstadoComunicacion
 from app.models.estructura_academica import Carrera, Cohorte, Materia
+from app.models.programas import FechaAcademica, ProgramaMateria, TipoFechaAcademica
+from app.models.tarea import ComentarioTarea, EstadoTarea, Tarea
 from app.models.usuarios_asignaciones import Asignacion, Usuario
 from app.models.rbac import Permiso, Rol, RolPermiso
 from app.models.padron import EntradaPadron, VersionPadron
@@ -32,16 +34,20 @@ __all__ = [
     "Carrera",
     "Cohorte",
     "Comunicacion",
+    "ComentarioTarea",
     "ConvocatoriaAlumno",
     "EntradaPadron",
     "EstadoComunicacion",
     "EstadoEvaluacion",
     "EstadoReserva",
+    "EstadoTarea",
     "Evaluacion",
+    "FechaAcademica",
     "Materia",
     "OrigenCalificacion",
     "PasswordRecoveryToken",
     "Permiso",
+    "ProgramaMateria",
     "RefreshSession",
     "ResultadoEvaluacion",
     "ReservaEvaluacion",
@@ -50,6 +56,8 @@ __all__ = [
     "RolPermiso",
     "SoftDeleteMixin",
     "Tenant",
+    "Tarea",
+    "TipoFechaAcademica",
     "TipoEvaluacion",
     "TurnoEvaluacion",
     "TenantScopedMixin",

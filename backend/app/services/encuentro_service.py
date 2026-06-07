@@ -1,7 +1,7 @@
 """Servicio de encuentros sincrónicos: slots recurrentes, instancias, HTML block."""
 
 import io
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
