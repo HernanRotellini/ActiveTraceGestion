@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Admin can manage usuarios
-The system SHALL provide CRUD operations for Usuario entities scoped to the authenticated user's tenant, with automatic AES-256 encryption of PII fields at rest.
+The system SHALL provide CRUD operations for Usuario entities scoped to the authenticated user's tenant, with automatic AES-256 encryption of PII fields at rest. The Usuario model SHALL include profile fields: regional, modalidad_cobro, genero, condicion_impositiva, matricula_profesional.
 
 #### Scenario: Create a new usuario
 - **WHEN** an ADMIN sends a POST to `/api/admin/usuarios` with `{ "nombre": "Juan", "apellidos": "Perez", "email": "juan@example.com", "dni": "12345678", "cuil": "20-12345678-9", "cbu": "00000031000000000001", "alias_cbu": "JUAN.PEREZ.ALIAS" }`

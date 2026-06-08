@@ -74,7 +74,7 @@ The system SHALL distinguish impersonated sessions from normal sessions and reco
 - **AND** impersonado_id records who was being impersonated
 
 ### Requirement: Audit log query
-The system SHALL allow authorized users (with `auditoria:ver` permission) to query the audit log filtered by tenant, date range, actor, action code, and materia.
+The system SHALL allow authorized users (with `auditoria:ver` permission) to query the audit log filtered by tenant, date range, actor, action code, and materia. Users with COORDINADOR role SHALL only see entries for their own assigned materias (scope `(propio)`).
 
 #### Scenario: Query filtered by date range
 - **WHEN** a user with `auditoria:ver` queries entries between two dates
@@ -87,3 +87,11 @@ The system SHALL allow authorized users (with `auditoria:ver` permission) to que
 #### Scenario: Tenant isolation in query
 - **WHEN** a user queries the audit log
 - **THEN** only entries from their own tenant are returned
+
+#### Scenario: COORDINADOR sees only own materias
+- **WHEN** a user with COORDINADOR role queries the audit log
+- **THEN** only entries for materias where the user has asignaciones with COORDINADOR role are returned
+
+#### Scenario: ADMIN sees all entries
+- **WHEN** a user with ADMIN role queries the audit log
+- **THEN** all entries within the tenant are returned without materia scope restriction

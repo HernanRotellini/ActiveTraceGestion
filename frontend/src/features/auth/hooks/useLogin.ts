@@ -1,0 +1,47 @@
+import { useMutation } from '@tanstack/react-query'
+import { login as loginApi } from '@/features/auth/services/auth'
+import { getMe } from '@/features/auth/services/auth'
+import { useSession } from '@/shared/hooks/useSession'
+import { useNavigate } from 'react-router-dom'
+import { ApiError } from '@/shared/types/api'
+import { useCallback } from 'react'
+
+export function useLogin() {
+  const { login: setSession } = useSession()
+  const navigate = useNavigate()
+
+  const mutation = useMutation({
+    mutationFn: loginApi,
+    onSuccess: async (data) => {
+      if (data.requires_2fa && data.challenge_id) {
+        sessionStorage.setItem('challenge_id', data.challenge_id)
+        navigate('/auth/2fa', { replace: true })
+        return
+      }
+
+      const me = await getMe()
+      setSession(data.access_token, data.refresh_token, {
+        user_id: me.user_id,
+        tenant_id: me.tenant_id,
+        roles: me.roles,
+      })
+
+      const redirectTo = sessionStorage.getItem('redirectTo') ?? '/'
+      sessionStorage.removeItem('redirectTo')
+      navigate(redirectTo, { replace: true })
+    },
+  })
+
+  const handleLogin = useCallback(
+    (data: { tenant_code: string; email: string; password: string }) => {
+      mutation.mutate(data)
+    },
+    [mutation],
+  )
+
+  return {
+    login: handleLogin,
+    isLoading: mutation.isPending,
+    error: mutation.error instanceof ApiError ? mutation.error : null,
+  }
+}

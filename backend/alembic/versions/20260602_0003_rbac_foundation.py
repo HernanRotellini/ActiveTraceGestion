@@ -235,7 +235,7 @@ def upgrade() -> None:
                 ["id", "tenant_id", "rol_id", "permiso_id", "habilitado", "alcance", "created_at", "updated_at"],
                 sa.select(
                     sa.func.gen_random_uuid(),
-                    sa.literal(SEED_TENANT_ID),
+                    sa.cast(sa.literal(SEED_TENANT_ID), postgresql.UUID),
                     roles_table.c.id,
                     permisos_table.c.id,
                     sa.true(),
