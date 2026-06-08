@@ -424,14 +424,14 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - Grilla salarial ABM (F10.4, RN-31/32/33). Facturas de docentes que facturan (F10.5, RN-35): excluidos de liquidación general. Separación contable factura vs no-factura + KPIs (F10.6, RN-36/37/38).
   - `/api/liquidaciones/*`, `/api/facturas/*` con guards `liquidaciones:*` (FINANZAS). Audit `LIQUIDACION_CERRAR`.
   - `Migración 0NN: salario_base, salario_plus, liquidacion, factura`.
-  - Tests: selección de base vigente por período, suma de plus, total, cierre inmutable, exclusión por factura, segmentación NEXO/factura/general.
-- **Dependencias**: `C-07`
+  - Tests: selección de base vigente por período, mapeo Materia→clave Plus, acumulación `N × Plus(clave, rol)` por comisión activa, total, cierre inmutable, exclusión por factura, segmentación NEXO/factura/general.
+- **Dependencias**: `C-07`, `resolver-preguntas-liquidaciones` archivado
 - **Governance**: CRITICO
 - **Leer antes**:
   - `knowledge-base/04_modelo_de_datos.md` §E17–E20 (Salario, Liquidación, Factura)
   - `knowledge-base/06_funcionalidades.md` Épica 10 (F10.1–F10.6)
   - `knowledge-base/07_flujos_principales.md` FL-08 (liquidación)
-  - `knowledge-base/10_preguntas_abiertas.md` PA-22, PA-23 (mapeo y acumulación de Plus — confirmar antes)
+  - `openspec/specs/liquidaciones-reglas-salariales/spec.md` (mapeo y acumulación de Plus — creada al archivar `resolver-preguntas-liquidaciones`)
 
 ### [C-19] `panel-auditoria-metricas`
 - **Estado**: `[ ]` pendiente

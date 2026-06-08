@@ -119,7 +119,11 @@ Las tablas de Base y Plus tienen fecha de inicio (`desde`) y fecha de fin (`hast
 Existe una **base salarial fija por rol** independiente de la materia dictada. Los roles del dominio con base definida son: COORDINADOR, NEXO, PROFESOR, TUTOR. Los valores concretos son configuración de la grilla salarial, no constantes del sistema.
 
 ### RN-33 — Plus salarial por (categoría de materia × rol)
-Los plus son adicionales identificados por una **clave de categoría** (por ejemplo: una categoría que agrupa materias de programación) cruzada con el rol del docente. El valor del plus es configurable en la grilla. Si un docente tiene asignaciones en N comisiones de la misma categoría, acumula N veces el plus correspondiente.
+Los plus son adicionales identificados por una **clave de categoría** (por ejemplo: una categoría que agrupa materias de programación) cruzada con el rol del docente. Las claves de Plus son **configurables por tenant**: el sistema no define un catálogo global hardcodeado. Cada tenant define sus claves (`PROG`, `BD`, `MAT`, etc.), su descripción, sus valores por rol y su vigencia.
+
+El mapeo entre materia y clave de Plus es explícito dentro del tenant: cada `Materia` puede tener cero o una clave vigente para el período liquidado. Las materias sin clave asignada no generan Plus, aunque sí pueden participar en la liquidación base si corresponde al rol.
+
+Si un docente tiene asignaciones en N comisiones activas de materias que caen bajo la misma clave, acumula N veces el plus correspondiente. No existe tope de acumulación por defecto; cualquier tope debe definirse mediante un change futuro explícito.
 
 ### RN-34 — Cálculo de liquidación mensual
 La liquidación mensual de un docente se calcula como:
@@ -128,8 +132,12 @@ Total = Base(rol vigente al mes) + Σ(Plus(categoría_materia, rol) × N_comisio
 ```
 donde N_comisiones es la cantidad de comisiones activas de esa categoría en el período.
 
+Para seleccionar la clave aplicable se usa el mapeo `Materia → clave Plus` vigente para el período liquidado. Si una materia no tiene clave vigente, aporta `0` al componente Plus.
+
 ### RN-35 — Docentes que facturan se liquidan por flujo separado
 Los docentes configurados como "facturantes" (modalidad de pago contra factura) **no se incluyen en la liquidación general Base+Plus**. Su pago se gestiona mediante el módulo de facturas: el docente presenta la factura con el importe y el equipo de finanzas la aprueba y marca como abonada.
+
+La exclusión aplica al total pagable de la liquidación general. El sistema puede mostrarlos en un segmento informativo y en KPIs separados, pero su cobro operativo se resuelve exclusivamente en el flujo de facturas.
 
 ### RN-36 — El rol NEXO se visibiliza por separado pero suma al total
 En los reportes de liquidación, los importes correspondientes al rol NEXO se presentan en una sección diferenciada para mayor visibilidad contable, pero **se incluyen en el total general** y en el resumen consolidado por docente.

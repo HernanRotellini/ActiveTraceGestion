@@ -17,6 +17,16 @@ from app.models.coloquio import (
 )
 from app.models.comunicacion import Comunicacion, EstadoComunicacion
 from app.models.estructura_academica import Carrera, Cohorte, Materia
+from app.models.liquidaciones import (
+    EstadoFactura,
+    EstadoLiquidacion,
+    Factura,
+    Liquidacion,
+    MateriaPlus,
+    RolLiquidacion,
+    SalarioBase,
+    SalarioPlus,
+)
 from app.models.programas import FechaAcademica, ProgramaMateria, TipoFechaAcademica
 from app.models.tarea import ComentarioTarea, EstadoTarea, Tarea
 from app.models.usuarios_asignaciones import Asignacion, Usuario
@@ -41,11 +51,16 @@ __all__ = [
     "EntradaPadron",
     "EstadoComunicacion",
     "EstadoEvaluacion",
+    "EstadoFactura",
+    "EstadoLiquidacion",
     "EstadoReserva",
     "EstadoTarea",
     "Evaluacion",
+    "Factura",
     "FechaAcademica",
+    "Liquidacion",
     "Materia",
+    "MateriaPlus",
     "OrigenCalificacion",
     "PasswordRecoveryToken",
     "Permiso",
@@ -54,8 +69,11 @@ __all__ = [
     "ResultadoEvaluacion",
     "ReservaEvaluacion",
     "Rol",
+    "RolLiquidacion",
     "SeveridadAviso",
     "RolPermiso",
+    "SalarioBase",
+    "SalarioPlus",
     "SoftDeleteMixin",
     "Tenant",
     "Tarea",
