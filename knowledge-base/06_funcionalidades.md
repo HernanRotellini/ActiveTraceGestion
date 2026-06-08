@@ -355,7 +355,9 @@
 - **Quién**: FINANZAS (con permiso `liquidaciones:configurar-salarios`)
 - **Descripción**: gestiona dos tablas con vigencia temporal:
   - **Salario base**: importe por rol (PROFESOR / TUTOR / NEXO / COORDINADOR) con fechas de vigencia desde / hasta.
-  - **Plus**: incrementos adicionales identificados por clave, rol y descripción, también con vigencia.
+  - **Plus**: incrementos adicionales identificados por clave configurable por tenant, rol y descripción, también con vigencia.
+- **Mapeo de Plus**: FINANZAS configura qué materia pertenece a qué clave de Plus en cada período. Una materia puede no tener clave asignada; en ese caso no genera Plus.
+- **Acumulación**: si un docente tiene N comisiones activas de materias asociadas a la misma clave, el Plus se acumula N veces. No hay tope por defecto.
 - **Reglas aplicadas**: [RN-31](05_reglas_de_negocio.md#rn-31), [RN-32](05_reglas_de_negocio.md#rn-32), [RN-33](05_reglas_de_negocio.md#rn-33)
 
 ### F10.5 — Gestión de facturas de docentes que facturan
@@ -365,7 +367,8 @@
 - **Datos del comprobante**: fecha de carga, docente, período facturado, detalle, archivo adjunto, tamaño del archivo, estado, datos de pago.
 - **Filtros**: docente, estado (pendiente / abonada), rango de fechas, búsqueda libre.
 - **Acción principal**: cambiar el estado del comprobante entre pendiente y abonado.
-- **Regla clave**: los docentes que facturan **no se incluyen** en la liquidación general — su pago se gestiona exclusivamente por este flujo.
+- **Regla clave**: los docentes que facturan **no se incluyen** en el total pagable de la liquidación general — su pago se gestiona exclusivamente por este flujo.
+- **Asociación**: la factura se registra por docente y período, con detalle libre; no requiere asociación obligatoria a una comisión específica.
 - **Reglas aplicadas**: [RN-35](05_reglas_de_negocio.md#rn-35)
 
 ### F10.6 — Separación contable en la liquidación (factura vs. no-factura)
@@ -376,6 +379,7 @@
   2. **NEXO**: calculado por separado pero sumado al total general.
   3. **Docentes que facturan**: visualizados informativamente pero excluidos del total de liquidación; su pago se gestiona por [F10.5](#f105--gestión-de-facturas-de-docentes-que-facturan).
 - **KPIs de cabecera**: "Total sin factura" y "Total con factura" para facilitar la toma de decisiones contables.
+- **Criterios de validación**: antes de cerrar, la vista debe permitir detectar materias sin clave de Plus vigente y docentes no facturantes sin datos bancarios obligatorios.
 - **Filtros**: cohorte, mes, y opcionalmente un docente específico.
 - **Reglas aplicadas**: [RN-35](05_reglas_de_negocio.md#rn-35), [RN-36](05_reglas_de_negocio.md#rn-36), [RN-37](05_reglas_de_negocio.md#rn-37), [RN-38](05_reglas_de_negocio.md#rn-38)
 

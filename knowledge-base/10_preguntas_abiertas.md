@@ -38,33 +38,6 @@ Las cohortes (ej.: "MAR-2026") pueden pertenecer a una carrera específica o ser
 
 ---
 
-### PA-22 — ¿Cuántas claves de Plus existen y cómo se mapean a materias?
-
-El modelo de liquidación define un **Plus** por combinación `(clave, rol)`, donde la clave agrupa familias de materias (ej.: `PROG` para materias de Programación). Ver [RN-31](05_reglas_de_negocio.md#rn-31) a [RN-38](05_reglas_de_negocio.md#rn-38).
-
-**Preguntas abiertas**:
-
-- ¿Cuáles son todas las claves de Plus que existen en el dominio (ej.: `PROG`, `BD`, `ING`, `MAT`, etc.)?
-- ¿Qué materia cae en qué clave? ¿Hay materias sin clave asignada?
-- ¿Ese mapeo es configurable por tenant o está fijo para toda la plataforma?
-- ¿Lo define el ADMIN del tenant o viene preconfigurado desde la institución?
-
----
-
-### PA-23 — ¿Cómo se calcula el Plus cuando un docente tiene N comisiones de la misma clave?
-
-Si un PROFESOR tiene tres comisiones de materias que caen bajo la clave `PROG`:
-
-**Preguntas abiertas**:
-
-- ¿Se acumula `3 × Plus(PROG, PROFESOR)` o se aplica una sola vez sin importar la cantidad de comisiones?
-- ¿Existe un tope de acumulación?
-- ¿La lógica cambia según el rol (TUTOR vs. PROFESOR vs. COORDINADOR)?
-
-**Impacto**: es la regla de negocio central del módulo de liquidaciones. Sin ella no se puede implementar el cálculo.
-
----
-
 ### PA-25 — ¿Cuál es la semántica precisa del rol NEXO?
 
 El rol NEXO existe en el dominio, tiene tratamiento contable propio y aparece en el catálogo de roles, pero su función operativa no está completamente especificada.
@@ -242,6 +215,10 @@ Las siguientes preguntas que existían en versiones anteriores de este documento
 | PA-02 | El rol TUTOR existe formalmente en el catálogo; ver descripción de capacidades | [03_actores_y_roles.md](03_actores_y_roles.md) |
 | PA-04 | Login por email + contraseña; 2FA opcional (TOTP); recuperación por token de un solo uso; alta solo administrativa en MVP | [07_flujos_principales.md](07_flujos_principales.md), [`docs/ARQUITECTURA.md` §5.1](../docs/ARQUITECTURA.md) |
 | PA-06 | Fórmula de liquidación: Base (por rol) + Plus (por clave × rol); ver RN-31 a RN-38 | [05_reglas_de_negocio.md](05_reglas_de_negocio.md) |
+| PA-17 | La modalidad de pago define el flujo contable: docentes facturantes se excluyen del total pagable Base+Plus y se gestionan por facturas | [05_reglas_de_negocio.md](05_reglas_de_negocio.md), [06_funcionalidades.md](06_funcionalidades.md) |
+| PA-22 | Las claves de Plus y el mapeo Materia→clave son configurables por tenant, con vigencia temporal; materias sin clave no generan Plus | [05_reglas_de_negocio.md](05_reglas_de_negocio.md), [04_modelo_de_datos.md](04_modelo_de_datos.md) |
+| PA-23 | El Plus se acumula por comisión activa: `N × Plus(clave, rol)`; no hay tope por defecto | [05_reglas_de_negocio.md](05_reglas_de_negocio.md), [06_funcionalidades.md](06_funcionalidades.md) |
+| PA-24 | Para C-18, la factura se asocia a docente + período con detalle libre; no requiere comisión específica ni validación automática contra Base+Plus | [04_modelo_de_datos.md](04_modelo_de_datos.md), [06_funcionalidades.md](06_funcionalidades.md) |
 | PA-21 | Impersonación via parámetro de petición: eliminada. La impersonación legítima requiere permiso explícito, sesión diferenciada y auditoría completa | [03_actores_y_roles.md §4](03_actores_y_roles.md), [`docs/ARQUITECTURA.md`](../docs/ARQUITECTURA.md) |
 
 ---
@@ -250,7 +227,7 @@ Las siguientes preguntas que existían en versiones anteriores de este documento
 
 Para resolver las preguntas pendientes se recomienda:
 
-1. **Una sesión de trabajo con el responsable de producto** — cubre las preguntas de dominio (PA-01, PA-22, PA-23, PA-25 son prioritarias).
+1. **Una sesión de trabajo con el responsable de producto** — cubre las preguntas de dominio (PA-01 y PA-25 son prioritarias).
 2. **Revisión del modelo de datos con el equipo técnico** — para validar las entidades y relaciones de [04_modelo_de_datos.md](04_modelo_de_datos.md).
-3. **Sesión de refinamiento con FINANZAS** — para cerrar PA-17, PA-18, PA-24 que afectan el módulo de liquidaciones.
+3. **Sesión de refinamiento con FINANZAS** — para cerrar PA-18 y cualquier refinamiento futuro que afecte el módulo de liquidaciones.
 4. **Cuando se cierre una pregunta**: documentar la resolución en el archivo temático correspondiente y moverla a la tabla de "Decisiones ya cerradas" de este archivo.

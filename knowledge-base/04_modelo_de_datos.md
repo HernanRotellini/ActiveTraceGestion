@@ -452,7 +452,7 @@ Complemento adicional al salario base, por grupo de materias y rol.
 SalarioPlus {
   id          : UUID       — clave interna
   tenant_id   : UUID       — FK → Tenant
-  grupo       : texto      — clave del grupo de materias (ej: "PROG", "BD")
+  grupo       : texto      — clave configurable por tenant del grupo de materias (ej: "PROG", "BD")
   rol         : enum       — PROFESOR | TUTOR | NEXO | COORDINADOR
   descripcion : texto      — descripción legible del plus
   monto       : decimal
@@ -463,7 +463,29 @@ SalarioPlus {
 
 **Reglas**:
 - Un docente puede acumular plus de distintos grupos si dicta materias de varios de ellos.
-- La clave `grupo` mapea a un conjunto de materias (definido en configuración del tenant).
+- La clave `grupo` pertenece al catálogo configurable del tenant; no existe un catálogo global hardcodeado.
+- La clave `grupo` mapea a un conjunto de materias mediante configuración explícita del tenant y con vigencia temporal.
+- Si un docente tiene N comisiones activas de materias mapeadas al mismo grupo durante el período, acumula N veces el plus de ese grupo para su rol.
+
+#### E18b — Mapeo Materia → Plus
+
+Define qué clave de Plus aplica a una materia en un período determinado.
+
+```
+MateriaPlus {
+  id          : UUID       — clave interna
+  tenant_id   : UUID       — FK → Tenant
+  materia_id  : UUID       — FK → Materia
+  grupo       : texto      — clave de SalarioPlus dentro del tenant
+  desde       : fecha      — inicio de vigencia
+  hasta       : fecha      — fin de vigencia (nulo = vigente sin límite)
+}
+```
+
+**Reglas**:
+- Una materia puede tener cero o una clave de Plus vigente para un período determinado.
+- Una materia sin clave vigente no genera Plus.
+- El mapeo es tenant-scoped y no puede referenciar materias ni claves de otro tenant.
 
 ---
 
@@ -513,6 +535,11 @@ Factura {
   abonada_at      : fecha-hora — nullable hasta que se abone
 }
 ```
+
+**Reglas**:
+- La factura se asocia a un docente y período; no requiere asociación obligatoria a una comisión específica.
+- El detalle del servicio facturado es texto libre y la referencia al archivo es opaca.
+- El sistema no valida automáticamente el monto contra una liquidación Base+Plus equivalente, porque el docente facturante no integra el total pagable de liquidación general.
 
 ---
 
