@@ -1,5 +1,6 @@
 """Modelos ORM del backend."""
 
+from app.models.audit_log import AuditLog
 from app.models.aviso import AcknowledgmentAviso, AlcanceAviso, Aviso, SeveridadAviso
 from app.models.base import BaseModelMixin, SoftDeleteMixin, TenantScopedMixin
 from app.models.auth import AuthUser, PasswordRecoveryToken, RefreshSession, TotpFactor, TwoFactorChallenge
@@ -27,6 +28,7 @@ __all__ = [
     "AcknowledgmentAviso",
     "AlcanceAviso",
     "Asignacion",
+    "AuditLog",
     "Aviso",
     "AuthUser",
     "BaseModelMixin",

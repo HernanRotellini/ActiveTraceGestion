@@ -8,7 +8,7 @@ Implementadas en C-01:
 from collections.abc import AsyncGenerator
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -84,5 +84,15 @@ def require_permission(permission: str) -> RequirePermission:
     return RequirePermission(permission)
 
 
+async def get_audit_service(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Dependency que construye AuditService con IP/user-agent del request."""
+    from app.services.audit import AuditService  # noqa: PLC0415
 
+    ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "")
+    return AuditService(db=db, current_user=current_user, ip=ip, user_agent=user_agent)
 

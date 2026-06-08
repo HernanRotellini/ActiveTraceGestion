@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     OTEL_SERVICE_NAME: str = Field(default="activia-trace")
     OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(default=None)
 
+    # ── Test database (opcional, usada por conftest) ───────────
+    DATABASE_URL_TEST: str | None = Field(default=None)
+
     # ── Moodle Web Services (opcional por tenant) ──────────────
     MOODLE_BASE_URL: str | None = Field(default=None)
     MOODLE_TOKEN: str | None = Field(default=None)
