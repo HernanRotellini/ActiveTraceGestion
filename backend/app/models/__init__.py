@@ -30,6 +30,8 @@ from app.models.liquidaciones import (
 from app.models.programas import FechaAcademica, ProgramaMateria, TipoFechaAcademica
 from app.models.tarea import ComentarioTarea, EstadoTarea, Tarea
 from app.models.usuarios_asignaciones import Asignacion, Usuario
+from app.models.hilo_mensaje import HiloMensaje
+from app.models.mensaje_interno import MensajeInterno
 from app.models.rbac import Permiso, Rol, RolPermiso
 from app.models.padron import EntradaPadron, VersionPadron
 from app.models.tenant import Tenant
@@ -58,9 +60,11 @@ __all__ = [
     "Evaluacion",
     "Factura",
     "FechaAcademica",
+    "HiloMensaje",
     "Liquidacion",
     "Materia",
     "MateriaPlus",
+    "MensajeInterno",
     "OrigenCalificacion",
     "PasswordRecoveryToken",
     "Permiso",

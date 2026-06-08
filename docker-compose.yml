@@ -21,6 +21,7 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-activia-trace}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - PYTHONPATH=/app
     depends_on:
       postgres:
         condition: service_healthy

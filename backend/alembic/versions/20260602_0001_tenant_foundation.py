@@ -32,6 +32,28 @@ def upgrade() -> None:
     )
     op.create_index("ix_tenants_code", "tenants", ["code"], unique=True)
 
+    # ── Seed: default global tenant ─────────────────────────────
+    # Required by 0003_rbac_foundation which references this tenant_id as FK
+    tenants_table = sa.table(
+        "tenants",
+        sa.column("id", postgresql.UUID),
+        sa.column("name", sa.String),
+        sa.column("code", sa.String),
+        sa.column("is_active", sa.Boolean),
+        sa.column("created_at", sa.DateTime),
+        sa.column("updated_at", sa.DateTime),
+    )
+    op.execute(
+        tenants_table.insert().values(
+            id="00000000-0000-0000-0000-000000000001",
+            name="Tenant Global Universitario",
+            code="UTN_MENDOZA_GLOBAL",
+            is_active=True,
+            created_at=sa.func.now(),
+            updated_at=sa.func.now(),
+        )
+    )
+
 
 def downgrade() -> None:
     op.drop_index("ix_tenants_code", table_name="tenants")

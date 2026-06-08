@@ -28,6 +28,11 @@ class Usuario(TenantScopedMixin, Base):
     legajo: Mapped[str | None] = mapped_column(String(50), nullable=True)
     banco: Mapped[str | None] = mapped_column(String(100), nullable=True)
     facturador: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    regional: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    modalidad_cobro: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    genero: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    condicion_impositiva: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    matricula_profesional: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
 
 class Asignacion(TenantScopedMixin, Base):

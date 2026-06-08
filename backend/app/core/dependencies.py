@@ -84,6 +84,14 @@ def require_permission(permission: str) -> RequirePermission:
     return RequirePermission(permission)
 
 
+async def get_panel_auditoria_service(
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+) -> "PanelAuditoriaService":
+    from app.services.panel_auditoria import PanelAuditoriaService  # noqa: PLC0415
+    return PanelAuditoriaService(db=db, current_user=current_user)
+
+
 async def get_audit_service(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -95,4 +103,14 @@ async def get_audit_service(
     ip = request.client.host if request.client else "unknown"
     user_agent = request.headers.get("user-agent", "")
     return AuditService(db=db, current_user=current_user, ip=ip, user_agent=user_agent)
+
+
+async def get_inbox_service(
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+) -> "InboxService":
+    from app.services.inbox_service import InboxService  # noqa: PLC0415
+    from app.core.config import Settings  # noqa: PLC0415
+    settings = Settings()  # type: ignore[call-arg]
+    return InboxService(db=db, tenant_id=current_user.tenant_id, encryption_key=settings.ENCRYPTION_KEY)
 

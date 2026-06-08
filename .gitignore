@@ -13,6 +13,16 @@ __pycache__/
 .env
 !.env.example
 
+# Node
+node_modules/
+
+# Python virtual environments
+.venv/
+.venv_wsl/
+
+# Engram persistent memory
+.engram/
+
 # OS / IDE
 Thumbs.db
 .DS_Store

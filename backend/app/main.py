@@ -92,10 +92,14 @@ def create_app() -> FastAPI:
     from app.api.v1.routers.padron import router as padron_router  # noqa: PLC0415
     from app.api.v1.routers.tareas import router as tareas_router  # noqa: PLC0415
     from app.api.v1.routers.audit import router as audit_router  # noqa: PLC0415
+    from app.api.v1.routers.auditoria import router as auditoria_router  # noqa: PLC0415
     from app.api.v1.routers.usuarios import router as usuarios_router  # noqa: PLC0415
+    from app.api.v1.routers.perfil import router as perfil_router  # noqa: PLC0415
+    from app.api.v1.routers.inbox import router as inbox_router  # noqa: PLC0415
     app.include_router(analisis_router)
     app.include_router(asignaciones_router)
     app.include_router(audit_router)
+    app.include_router(auditoria_router)
     app.include_router(avisos_router)
     app.include_router(auth_router)
     app.include_router(calificaciones_router)
@@ -111,6 +115,8 @@ def create_app() -> FastAPI:
     app.include_router(moodle_router)
     app.include_router(programas_router)
     app.include_router(padron_router)
+    app.include_router(perfil_router)
+    app.include_router(inbox_router)
     app.include_router(health_router)
     app.include_router(rbac_router)
     app.include_router(tareas_router)

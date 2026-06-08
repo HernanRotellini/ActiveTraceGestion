@@ -11,6 +11,8 @@ app/api/v1/__init__.py
 app/api/v1/routers/__init__.py
 app/api/v1/routers/analisis.py
 app/api/v1/routers/asignaciones.py
+app/api/v1/routers/audit.py
+app/api/v1/routers/auditoria.py
 app/api/v1/routers/auth.py
 app/api/v1/routers/avisos.py
 app/api/v1/routers/calificaciones.py
@@ -19,9 +21,11 @@ app/api/v1/routers/comunicaciones.py
 app/api/v1/routers/encuentros.py
 app/api/v1/routers/equipos.py
 app/api/v1/routers/estructura_academica.py
+app/api/v1/routers/facturas.py
 app/api/v1/routers/fechas_academicas.py
 app/api/v1/routers/guardias.py
 app/api/v1/routers/health.py
+app/api/v1/routers/liquidaciones.py
 app/api/v1/routers/moodle.py
 app/api/v1/routers/padron.py
 app/api/v1/routers/programas.py
@@ -42,6 +46,7 @@ app/core/tenancy.py
 app/integrations/__init__.py
 app/integrations/moodle_ws.py
 app/models/__init__.py
+app/models/audit_log.py
 app/models/auth.py
 app/models/aviso.py
 app/models/base.py
@@ -51,6 +56,7 @@ app/models/comunicacion.py
 app/models/encuentro.py
 app/models/estructura_academica.py
 app/models/guardia.py
+app/models/liquidaciones.py
 app/models/padron.py
 app/models/permisos.py
 app/models/programas.py
@@ -62,6 +68,7 @@ app/repositories/__init__.py
 app/repositories/acknowledgment_repository.py
 app/repositories/analisis.py
 app/repositories/asignaciones.py
+app/repositories/audit_log.py
 app/repositories/auth.py
 app/repositories/aviso_repository.py
 app/repositories/base.py
@@ -72,7 +79,9 @@ app/repositories/encuentro_repository.py
 app/repositories/estructura_academica.py
 app/repositories/fecha_academica_repository.py
 app/repositories/guardia_repository.py
+app/repositories/liquidacion_repository.py
 app/repositories/padron.py
+app/repositories/panel_auditoria.py
 app/repositories/programa_repository.py
 app/repositories/rbac.py
 app/repositories/tarea_repository.py
@@ -81,6 +90,7 @@ app/repositories/usuarios.py
 app/schemas/__init__.py
 app/schemas/analisis.py
 app/schemas/asignaciones.py
+app/schemas/audit.py
 app/schemas/auth.py
 app/schemas/aviso.py
 app/schemas/calificaciones.py
@@ -90,7 +100,9 @@ app/schemas/encuentro.py
 app/schemas/equipos.py
 app/schemas/estructura_academica.py
 app/schemas/guardia.py
+app/schemas/liquidaciones.py
 app/schemas/padron.py
+app/schemas/panel_auditoria.py
 app/schemas/programas.py
 app/schemas/rbac.py
 app/schemas/tarea.py
@@ -98,6 +110,7 @@ app/schemas/usuarios.py
 app/services/__init__.py
 app/services/analisis.py
 app/services/asignaciones.py
+app/services/audit.py
 app/services/auth.py
 app/services/authorization.py
 app/services/aviso_service.py
@@ -107,11 +120,15 @@ app/services/comunicacion_service.py
 app/services/encuentro_service.py
 app/services/equipos.py
 app/services/estructura_academica.py
+app/services/factura_service.py
 app/services/fecha_academica_service.py
 app/services/file_parser.py
+app/services/grilla_salarial_service.py
 app/services/guardia_service.py
+app/services/liquidacion_service.py
 app/services/lms_parser.py
 app/services/padron.py
+app/services/panel_auditoria.py
 app/services/preview_cache.py
 app/services/programa_service.py
 app/services/tarea_service.py
@@ -122,6 +139,7 @@ app/workers/main.py
 app/workers/stubs.py
 tests/test_analisis.py
 tests/test_app_startup.py
+tests/test_audit.py
 tests/test_auth_flow.py
 tests/test_auth_models.py
 tests/test_avisos.py
@@ -129,6 +147,11 @@ tests/test_c17_api.py
 tests/test_c17_models.py
 tests/test_c17_repositories.py
 tests/test_c17_services.py
+tests/test_c18_api.py
+tests/test_c18_models.py
+tests/test_c18_repositories.py
+tests/test_c18_services.py
+tests/test_c19_panel_auditoria.py
 tests/test_calificaciones.py
 tests/test_coloquios.py
 tests/test_comunicaciones.py
