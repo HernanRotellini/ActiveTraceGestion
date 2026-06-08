@@ -49,6 +49,7 @@ class CurrentUser:
     user_id: UUID
     tenant_id: UUID
     roles: list[str]
+    impersonator_id: UUID | None = None
 
 
 @dataclass(frozen=True)

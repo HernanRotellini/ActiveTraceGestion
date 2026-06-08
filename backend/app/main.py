@@ -89,9 +89,11 @@ def create_app() -> FastAPI:
     from app.api.v1.routers.moodle import router as moodle_router  # noqa: PLC0415
     from app.api.v1.routers.padron import router as padron_router  # noqa: PLC0415
     from app.api.v1.routers.tareas import router as tareas_router  # noqa: PLC0415
+    from app.api.v1.routers.audit import router as audit_router  # noqa: PLC0415
     from app.api.v1.routers.usuarios import router as usuarios_router  # noqa: PLC0415
     app.include_router(analisis_router)
     app.include_router(asignaciones_router)
+    app.include_router(audit_router)
     app.include_router(avisos_router)
     app.include_router(auth_router)
     app.include_router(calificaciones_router)
