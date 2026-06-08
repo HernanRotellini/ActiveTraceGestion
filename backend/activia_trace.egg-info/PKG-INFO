@@ -11,11 +11,15 @@ Requires-Dist: asyncpg>=0.30.0
 Requires-Dist: pydantic>=2.10.0
 Requires-Dist: pydantic-settings>=2.6.0
 Requires-Dist: argon2-cffi>=23.1.0
+Requires-Dist: python-multipart>=0.0.12
 Requires-Dist: python-jose[cryptography]>=3.3.0
 Requires-Dist: opentelemetry-api>=1.28.0
 Requires-Dist: opentelemetry-sdk>=1.28.0
 Requires-Dist: opentelemetry-instrumentation-fastapi>=0.49b0
 Requires-Dist: cryptography>=44.0.0
+Requires-Dist: httpx>=0.28.0
+Requires-Dist: openpyxl>=3.1.0
+Requires-Dist: python-multipart>=0.0.9
 Provides-Extra: test
 Requires-Dist: pytest>=8.3.0; extra == "test"
 Requires-Dist: pytest-asyncio>=0.24.0; extra == "test"
