@@ -536,7 +536,7 @@ class AnalisisRepository:
                 "atrasado": sd["pendientes"] > 0,
             })
 
-        return {"data": data, "total": len(data)}
+        return {"data": data, "total": total}
 
     # ── 2.7 — monitor_por_asignaciones ──────────────────────────
 
@@ -661,7 +661,7 @@ class AnalisisRepository:
                 "atrasado": sd["pendientes"] > 0,
             })
 
-        return {"data": data, "total": len(data)}
+        return {"data": data, "total": total}
 
     # ── 2.8 — monitor_con_fechas ────────────────────────────────
 
@@ -770,4 +770,4 @@ class AnalisisRepository:
                 "atrasado": sd["pendientes"] > 0,
             })
 
-        return {"data": data, "total": len(data)}
+        return {"data": data, "total": total_estudiantes}

@@ -15,7 +15,7 @@ The system SHALL provide a catalog of roles administrable per tenant. Each role 
 - **THEN** it belongs to exactly one tenant and cannot be accessed by other tenants
 
 ### Requirement: Permission catalog
-The system SHALL provide a catalog of atomic permissions with format `modulo:accion`. Each permission has a unique code and description.
+The system SHALL provide a catalog of atomic permissions with format `modulo:accion`. Each permission has a unique code and description. The `impersonacion:usar` permission controls access to impersonation features.
 
 #### Scenario: Permissions are defined as modulo:accion
 - **WHEN** a permission is created
@@ -24,6 +24,10 @@ The system SHALL provide a catalog of atomic permissions with format `modulo:acc
 #### Scenario: Default permissions exist after migration
 - **WHEN** the 003 migration runs
 - **THEN** all permissions from the 03_actores_y_roles.md §3.3 matrix are loaded
+
+#### Scenario: Impersonation permission is required
+- **WHEN** a user without `impersonacion:usar` attempts to impersonate another user
+- **THEN** the request is denied with status 403
 
 ### Requirement: Role-permission matrix
 The system SHALL support assigning permissions to roles via a many-to-many matrix with enable/disable flag and scope (global vs propio).

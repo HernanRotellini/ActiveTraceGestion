@@ -50,7 +50,7 @@ async def tenant_id(db_session: AsyncSession, aviso_schema: None) -> UUID:
     """Crea un tenant de prueba y retorna su id."""
     from app.models.tenant import Tenant
 
-    tenant = Tenant(id=uuid4(), name="Test Tenant")
+    tenant = Tenant(id=uuid4(), name="Test Tenant", code="TEST")
     db_session.add(tenant)
     await db_session.flush()
     return tenant.id
@@ -61,7 +61,7 @@ async def otro_tenant_id(db_session: AsyncSession, aviso_schema: None) -> UUID:
     """Crea otro tenant para tests de aislamiento."""
     from app.models.tenant import Tenant
 
-    tenant = Tenant(id=uuid4(), name="Other Tenant")
+    tenant = Tenant(id=uuid4(), name="Other Tenant", code="OTHER")
     db_session.add(tenant)
     await db_session.flush()
     return tenant.id
@@ -88,7 +88,8 @@ async def cohorte_id(db_session: AsyncSession, tenant_id: UUID) -> UUID:
     await db_session.flush()
 
     cohorte = Cohorte(
-        tenant_id=tenant_id, carrera_id=carrera.id, nombre="2026-1", anio=2026,
+        tenant_id=tenant_id, carrera_id=carrera.id, nombre="2026-1",
+        anio=2026, vig_desde=datetime.now(UTC).date(),
     )
     db_session.add(cohorte)
     await db_session.flush()
