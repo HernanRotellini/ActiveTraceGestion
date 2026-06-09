@@ -58,7 +58,12 @@ class Comunicacion(TenantScopedMixin, Base):
     asunto: Mapped[str] = mapped_column(String(255), nullable=False)
     cuerpo: Mapped[str] = mapped_column(Text, nullable=False)
     estado: Mapped[EstadoComunicacion] = mapped_column(
-        Enum(EstadoComunicacion, name="estado_comunicacion", create_constraint=True),
+        Enum(
+            EstadoComunicacion,
+            name="estado_comunicacion",
+            create_constraint=True,
+            values_callable=lambda enum_cls: [estado.value for estado in enum_cls],
+        ),
         nullable=False,
         default=EstadoComunicacion.PENDIENTE,
     )

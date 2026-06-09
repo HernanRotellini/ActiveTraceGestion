@@ -42,6 +42,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const hasPermission = useCallback(
     (permission: string): boolean => {
+      if (session?.user?.roles?.includes('ADMIN')) return true
       if (!session?.user?.permissions) return false
       return session.user.permissions.includes(permission)
     },

@@ -18,7 +18,10 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    sa.Enum("Pendiente", "En progreso", "Resuelta", "Cancelada", name="estado_tarea").create(op.get_bind())
+    estado_tarea = postgresql.ENUM(
+        "Pendiente", "En progreso", "Resuelta", "Cancelada", name="estado_tarea", create_type=False
+    )
+    estado_tarea.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         "tarea",
@@ -26,7 +29,7 @@ def upgrade() -> None:
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("titulo", sa.String(length=200), nullable=False),
         sa.Column("descripcion", sa.Text(), nullable=False),
-        sa.Column("estado", sa.Enum("Pendiente", "En progreso", "Resuelta", "Cancelada", name="estado_tarea"), server_default="Pendiente", nullable=False),
+        sa.Column("estado", estado_tarea, server_default="Pendiente", nullable=False),
         sa.Column("asignado_a", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("asignado_por", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("materia_id", postgresql.UUID(as_uuid=True), nullable=True),

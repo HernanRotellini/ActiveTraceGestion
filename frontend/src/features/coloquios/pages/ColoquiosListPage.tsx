@@ -8,6 +8,8 @@ import type { ColoquiosFilters } from '@/features/coloquios/types'
 export default function ColoquiosListPage() {
   const [filters, setFilters] = useState<ColoquiosFilters>({ page: 1, limit: 20 })
   const { data, isLoading } = useColoquiosList(filters)
+  const items = data?.items ?? []
+  const total = data?.total ?? items.length
 
   return (
     <div className="space-y-6">
@@ -67,7 +69,7 @@ export default function ColoquiosListPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {data?.items.map((col) => (
+                {items.map((col) => (
                   <tr key={col.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{col.materia_nombre}</td>
                     <td className="px-4 py-3 text-gray-600">{col.comision_nombre}</td>
@@ -85,20 +87,20 @@ export default function ColoquiosListPage() {
                     </td>
                   </tr>
                 ))}
-                {(!data?.items || data.items.length === 0) && (
+                {items.length === 0 && (
                   <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No hay coloquios registrados.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
-          {data && data.total > (filters.limit ?? 20) && (
+          {total > (filters.limit ?? 20) && (
             <div className="flex items-center justify-between border-t px-4 py-3">
               <span className="text-sm text-gray-600">
-                {((filters.page ?? 1) - 1) * (filters.limit ?? 20) + 1}-{Math.min((filters.page ?? 1) * (filters.limit ?? 20), data.total)} de {data.total}
+                 {((filters.page ?? 1) - 1) * (filters.limit ?? 20) + 1}-{Math.min((filters.page ?? 1) * (filters.limit ?? 20), total)} de {total}
               </span>
               <div className="flex gap-2">
                 <button onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })} disabled={(filters.page ?? 1) <= 1} className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50">Anterior</button>
-                <button onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })} disabled={(filters.page ?? 1) * (filters.limit ?? 20) >= data.total} className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50">Siguiente</button>
+                <button onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })} disabled={(filters.page ?? 1) * (filters.limit ?? 20) >= total} className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50">Siguiente</button>
               </div>
             </div>
           )}

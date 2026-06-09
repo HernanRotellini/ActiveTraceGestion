@@ -18,7 +18,10 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    sa.Enum("Parcial", "TP", "Coloquio", "Recuperatorio", name="tipo_fecha_academica").create(op.get_bind())
+    tipo_fecha_academica = postgresql.ENUM(
+        "Parcial", "TP", "Coloquio", "Recuperatorio", name="tipo_fecha_academica", create_type=False
+    )
+    tipo_fecha_academica.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         "programa_materia",
@@ -60,7 +63,7 @@ def upgrade() -> None:
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("materia_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("cohorte_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("tipo", sa.Enum("Parcial", "TP", "Coloquio", "Recuperatorio", name="tipo_fecha_academica"), nullable=False),
+        sa.Column("tipo", tipo_fecha_academica, nullable=False),
         sa.Column("numero", sa.Integer(), nullable=False),
         sa.Column("periodo", sa.String(length=50), nullable=False),
         sa.Column("fecha", sa.Date(), nullable=False),
