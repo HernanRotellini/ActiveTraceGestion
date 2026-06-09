@@ -18,15 +18,21 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    sa.Enum("PROFESOR", "TUTOR", "NEXO", "COORDINADOR", name="rol_liquidacion").create(op.get_bind())
-    sa.Enum("Abierta", "Cerrada", name="estado_liquidacion").create(op.get_bind())
-    sa.Enum("Pendiente", "Abonada", name="estado_factura").create(op.get_bind())
+    rol_liquidacion = postgresql.ENUM(
+        "PROFESOR", "TUTOR", "NEXO", "COORDINADOR", name="rol_liquidacion", create_type=False
+    )
+    estado_liquidacion = postgresql.ENUM("Abierta", "Cerrada", name="estado_liquidacion", create_type=False)
+    estado_factura = postgresql.ENUM("Pendiente", "Abonada", name="estado_factura", create_type=False)
+
+    rol_liquidacion.create(op.get_bind(), checkfirst=True)
+    estado_liquidacion.create(op.get_bind(), checkfirst=True)
+    estado_factura.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         "salario_base",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("rol", sa.Enum("PROFESOR", "TUTOR", "NEXO", "COORDINADOR", name="rol_liquidacion"), nullable=False),
+        sa.Column("rol", rol_liquidacion, nullable=False),
         sa.Column("monto", sa.Numeric(12, 2), nullable=False),
         sa.Column("desde", sa.Date(), nullable=False),
         sa.Column("hasta", sa.Date(), nullable=True),
@@ -51,7 +57,7 @@ def upgrade() -> None:
         "salario_plus",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("rol", sa.Enum("PROFESOR", "TUTOR", "NEXO", "COORDINADOR", name="rol_liquidacion"), nullable=False),
+        sa.Column("rol", rol_liquidacion, nullable=False),
         sa.Column("grupo", sa.String(length=50), nullable=False),
         sa.Column("descripcion", sa.String(length=255), nullable=False),
         sa.Column("monto", sa.Numeric(12, 2), nullable=False),
@@ -109,8 +115,8 @@ def upgrade() -> None:
         sa.Column("cohorte_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("usuario_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("periodo", sa.String(length=7), nullable=False),
-        sa.Column("rol", sa.Enum("PROFESOR", "TUTOR", "NEXO", "COORDINADOR", name="rol_liquidacion"), nullable=False),
-        sa.Column("estado", sa.Enum("Abierta", "Cerrada", name="estado_liquidacion"), server_default="Abierta", nullable=False),
+        sa.Column("rol", rol_liquidacion, nullable=False),
+        sa.Column("estado", estado_liquidacion, server_default="Abierta", nullable=False),
         sa.Column("monto_base", sa.Numeric(12, 2), nullable=False),
         sa.Column("monto_plus", sa.Numeric(12, 2), nullable=False),
         sa.Column("monto_total", sa.Numeric(12, 2), nullable=False),
@@ -149,7 +155,7 @@ def upgrade() -> None:
         sa.Column("detalle", sa.Text(), nullable=False),
         sa.Column("referencia_archivo", sa.String(length=500), nullable=False),
         sa.Column("archivo_size_bytes", sa.Integer(), nullable=False),
-        sa.Column("estado", sa.Enum("Pendiente", "Abonada", name="estado_factura"), server_default="Pendiente", nullable=False),
+        sa.Column("estado", estado_factura, server_default="Pendiente", nullable=False),
         sa.Column("abonada_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),

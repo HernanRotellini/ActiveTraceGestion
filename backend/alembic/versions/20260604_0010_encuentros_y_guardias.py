@@ -19,10 +19,28 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # ── Enum types ──────────────────────────────────────────────
-    sa.Enum("Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", name="dia_semana").create(op.get_bind())
-    sa.Enum("Programado", "Realizado", "Cancelado", name="estado_instancia").create(op.get_bind())
-    sa.Enum("Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", name="dia_semana_guardia").create(op.get_bind())
-    sa.Enum("Pendiente", "Realizada", "Cancelada", name="estado_guardia").create(op.get_bind())
+    dia_semana = postgresql.ENUM(
+        "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", name="dia_semana", create_type=False
+    )
+    estado_instancia = postgresql.ENUM(
+        "Programado", "Realizado", "Cancelado", name="estado_instancia", create_type=False
+    )
+    dia_semana_guardia = postgresql.ENUM(
+        "Lunes",
+        "Martes",
+        "Miercoles",
+        "Jueves",
+        "Viernes",
+        "Sabado",
+        name="dia_semana_guardia",
+        create_type=False,
+    )
+    estado_guardia = postgresql.ENUM("Pendiente", "Realizada", "Cancelada", name="estado_guardia", create_type=False)
+
+    dia_semana.create(op.get_bind(), checkfirst=True)
+    estado_instancia.create(op.get_bind(), checkfirst=True)
+    dia_semana_guardia.create(op.get_bind(), checkfirst=True)
+    estado_guardia.create(op.get_bind(), checkfirst=True)
 
     # ── SlotEncuentro ───────────────────────────────────────────
     op.create_table(
@@ -32,7 +50,7 @@ def upgrade() -> None:
         sa.Column("asignacion_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("materia_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("titulo", sa.String(length=255), nullable=False),
-        sa.Column("dia_semana", sa.Enum("Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", name="dia_semana"), nullable=False),
+        sa.Column("dia_semana", dia_semana, nullable=False),
         sa.Column("hora", sa.Time(), nullable=False),
         sa.Column("fecha_inicio", sa.Date(), nullable=False),
         sa.Column("cant_semanas", sa.Integer(), nullable=False, server_default="0"),
@@ -62,7 +80,7 @@ def upgrade() -> None:
         sa.Column("fecha", sa.Date(), nullable=False),
         sa.Column("hora", sa.Time(), nullable=False),
         sa.Column("titulo", sa.String(length=255), nullable=False),
-        sa.Column("estado", sa.Enum("Programado", "Realizado", "Cancelado", name="estado_instancia"), nullable=False, server_default="Programado"),
+        sa.Column("estado", estado_instancia, nullable=False, server_default="Programado"),
         sa.Column("meet_url", sa.Text(), nullable=True),
         sa.Column("video_url", sa.Text(), nullable=True),
         sa.Column("comentario", sa.Text(), nullable=True),
@@ -88,9 +106,9 @@ def upgrade() -> None:
         sa.Column("materia_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("carrera_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("cohorte_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("dia", sa.Enum("Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", name="dia_semana_guardia"), nullable=False),
+        sa.Column("dia", dia_semana_guardia, nullable=False),
         sa.Column("horario", sa.String(length=50), nullable=False),
-        sa.Column("estado", sa.Enum("Pendiente", "Realizada", "Cancelada", name="estado_guardia"), nullable=False, server_default="Pendiente"),
+        sa.Column("estado", estado_guardia, nullable=False, server_default="Pendiente"),
         sa.Column("comentarios", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),

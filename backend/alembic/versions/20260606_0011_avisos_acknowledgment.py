@@ -19,19 +19,24 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # ── Enum types ──────────────────────────────────────────────
-    sa.Enum("Global", "PorMateria", "PorCohorte", "PorRol", name="alcance_aviso").create(op.get_bind())
-    sa.Enum("Info", "Advertencia", "Critico", name="severidad_aviso").create(op.get_bind())
+    alcance_aviso = postgresql.ENUM(
+        "Global", "PorMateria", "PorCohorte", "PorRol", name="alcance_aviso", create_type=False
+    )
+    severidad_aviso = postgresql.ENUM("Info", "Advertencia", "Critico", name="severidad_aviso", create_type=False)
+
+    alcance_aviso.create(op.get_bind(), checkfirst=True)
+    severidad_aviso.create(op.get_bind(), checkfirst=True)
 
     # ── Aviso ────────────────────────────────────────────────────
     op.create_table(
         "avisos",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("alcance", sa.Enum("Global", "PorMateria", "PorCohorte", "PorRol", name="alcance_aviso"), nullable=False),
+        sa.Column("alcance", alcance_aviso, nullable=False),
         sa.Column("materia_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("cohorte_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("rol_destino", sa.String(length=50), nullable=True),
-        sa.Column("severidad", sa.Enum("Info", "Advertencia", "Critico", name="severidad_aviso"), nullable=False, server_default="Info"),
+        sa.Column("severidad", severidad_aviso, nullable=False, server_default="Info"),
         sa.Column("titulo", sa.String(length=200), nullable=False),
         sa.Column("cuerpo", sa.Text(), nullable=False),
         sa.Column("inicio_en", sa.DateTime(timezone=True), nullable=False),

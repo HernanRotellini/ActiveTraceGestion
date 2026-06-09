@@ -12,11 +12,10 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { label: 'Inicio', route: '/' },
-  { label: 'Alumnos', route: '/alumnos', requiredPermission: 'alumnos:ver' },
-  { label: 'Materias', route: '/materias', requiredPermission: 'materias:ver' },
-  { label: 'Comisiones', route: '/comisiones', requiredPermission: 'comisiones:ver' },
-  { label: 'Calificaciones', route: '/calificaciones', requiredPermission: 'calificaciones:ver' },
-  { label: 'Comunicaciones', route: '/comunicaciones', requiredPermission: 'comunicaciones:ver' },
+  { label: 'Mis Comisiones', route: '/docente/comisiones', requiredPermission: 'calificaciones:ver' },
+  { label: 'Entregas sin corregir', route: '/docente/entregas', requiredPermission: 'atrasados:ver' },
+  { label: 'Comunicaciones', route: '/docente/comunicaciones', requiredPermission: 'comunicacion:enviar' },
+  { label: 'Monitor', route: '/docente/monitor', requiredPermission: 'atrasados:ver' },
   { label: 'Equipos docentes', route: '/coordinacion/equipos-docentes', requiredPermission: 'equipos:ver' },
   { label: 'Avisos', route: '/coordinacion/avisos', requiredPermission: 'avisos:ver' },
   { label: 'Tareas internas', route: '/coordinacion/tareas', requiredPermission: 'tareas:ver' },
@@ -33,10 +32,6 @@ const menuItems: MenuItem[] = [
   { label: 'Usuarios', route: '/admin/usuarios', requiredPermission: 'usuarios:gestionar' },
   { label: 'Auditoría', route: '/admin/auditoria', requiredPermission: 'auditoria:ver' },
   { label: 'Log auditoría', route: '/admin/auditoria/log', requiredPermission: 'auditoria:ver' },
-  { label: 'Mis Comisiones', route: '/docente/comisiones', requiredPermission: 'calificaciones:ver' },
-  { label: 'Entregas sin corregir', route: '/docente/entregas', requiredPermission: 'atrasados:ver' },
-  { label: 'Comunicaciones', route: '/docente/comunicaciones', requiredPermission: 'comunicacion:enviar' },
-  { label: 'Monitor', route: '/docente/monitor', requiredPermission: 'atrasados:ver' },
 ]
 
 export default function MainLayout() {

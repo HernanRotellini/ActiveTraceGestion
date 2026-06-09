@@ -40,7 +40,7 @@ services:
       POSTGRES_PASSWORD: trace
       POSTGRES_DB: trace
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - trace_pgdata:/var/lib/postgresql/data
     healthcheck:

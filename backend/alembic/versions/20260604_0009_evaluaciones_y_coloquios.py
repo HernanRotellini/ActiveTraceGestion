@@ -19,9 +19,20 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # ── Enum types ──────────────────────────────────────────────
-    sa.Enum("Parcial", "TP", "Coloquio", "Recuperatorio", name="tipo_evaluacion").create(op.get_bind())
-    sa.Enum("Activa", "Cerrada", name="estado_evaluacion").create(op.get_bind())
-    sa.Enum("Activa", "Cancelada", name="estado_reserva").create(op.get_bind())
+    tipo_evaluacion = postgresql.ENUM(
+        "Parcial",
+        "TP",
+        "Coloquio",
+        "Recuperatorio",
+        name="tipo_evaluacion",
+        create_type=False,
+    )
+    estado_evaluacion = postgresql.ENUM("Activa", "Cerrada", name="estado_evaluacion", create_type=False)
+    estado_reserva = postgresql.ENUM("Activa", "Cancelada", name="estado_reserva", create_type=False)
+
+    tipo_evaluacion.create(op.get_bind(), checkfirst=True)
+    estado_evaluacion.create(op.get_bind(), checkfirst=True)
+    estado_reserva.create(op.get_bind(), checkfirst=True)
 
     # ── Evaluacion ──────────────────────────────────────────────
     op.create_table(
@@ -30,9 +41,9 @@ def upgrade() -> None:
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("materia_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("cohorte_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("tipo", sa.Enum("Parcial", "TP", "Coloquio", "Recuperatorio", name="tipo_evaluacion"), nullable=False),
+        sa.Column("tipo", tipo_evaluacion, nullable=False),
         sa.Column("instancia", sa.String(length=255), nullable=False),
-        sa.Column("estado", sa.Enum("Activa", "Cerrada", name="estado_evaluacion"), nullable=False, server_default="Activa"),
+        sa.Column("estado", estado_evaluacion, nullable=False, server_default="Activa"),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
@@ -74,7 +85,7 @@ def upgrade() -> None:
         sa.Column("evaluacion_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("turno_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("alumno_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("estado", sa.Enum("Activa", "Cancelada", name="estado_reserva"), nullable=False, server_default="Activa"),
+        sa.Column("estado", estado_reserva, nullable=False, server_default="Activa"),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),

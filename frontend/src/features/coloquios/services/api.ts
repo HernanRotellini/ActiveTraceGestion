@@ -2,8 +2,19 @@ import api from '@/shared/services/api'
 import type { EvaluacionColoquio, ColoquioPayload, ColoquiosFilters, ResultadoColoquio } from '@/features/coloquios/types'
 
 export async function listarColoquios(filters?: ColoquiosFilters) {
-  const { data } = await api.get<{ items: EvaluacionColoquio[]; total: number }>('/coloquios', { params: filters })
-  return data
+  const { data } = await api.get<EvaluacionColoquio[] | { items?: EvaluacionColoquio[]; total?: number }>(
+    '/coloquios',
+    { params: filters },
+  )
+
+  if (Array.isArray(data)) {
+    return { items: data, total: data.length }
+  }
+
+  return {
+    items: data.items ?? [],
+    total: data.total ?? data.items?.length ?? 0,
+  }
 }
 
 export async function obtenerColoquio(id: string) {

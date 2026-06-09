@@ -6,6 +6,23 @@ import { useNavigate } from 'react-router-dom'
 import { ApiError } from '@/shared/types/api'
 import { useCallback } from 'react'
 
+interface AccessTokenClaims {
+  user_id: string
+  tenant_id: string
+  roles: string[]
+}
+
+function decodeAccessTokenClaims(accessToken: string): AccessTokenClaims {
+  const [, payload] = accessToken.split('.')
+  if (!payload) {
+    throw new ApiError('Token de acceso inválido', 401, 'invalid_token')
+  }
+
+  const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/')
+  const claims = JSON.parse(atob(normalizedPayload)) as AccessTokenClaims
+  return claims
+}
+
 export function useLogin() {
   const { login: setSession } = useSession()
   const navigate = useNavigate()
@@ -18,6 +35,13 @@ export function useLogin() {
         navigate('/auth/2fa', { replace: true })
         return
       }
+
+      const claims = decodeAccessTokenClaims(data.access_token)
+      setSession(data.access_token, data.refresh_token, {
+        user_id: claims.user_id,
+        tenant_id: claims.tenant_id,
+        roles: claims.roles,
+      })
 
       const me = await getMe()
       setSession(data.access_token, data.refresh_token, {
