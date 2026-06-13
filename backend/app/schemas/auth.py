@@ -38,6 +38,7 @@ class CurrentUserResponse(BaseModel):
     user_id: str
     tenant_id: str
     roles: list[str]
+    email: str | None = None
 
 
 class TotpEnrollmentResponse(BaseModel):

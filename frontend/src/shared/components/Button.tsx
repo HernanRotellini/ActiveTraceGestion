@@ -3,8 +3,11 @@ import { Spinner } from './Spinner'
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost'
 
+type Size = 'sm' | 'md'
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
+  size?: Size
   loading?: boolean
   children: ReactNode
 }
@@ -20,8 +23,14 @@ const variantStyles: Record<Variant, string> = {
     'bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-500',
 }
 
+const sizeStyles: Record<Size, string> = {
+  sm: 'px-3 py-1.5 text-xs',
+  md: 'px-4 py-2.5 text-sm',
+}
+
 export function Button({
   variant = 'primary',
+  size = 'md',
   loading = false,
   disabled,
   children,
@@ -30,7 +39,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

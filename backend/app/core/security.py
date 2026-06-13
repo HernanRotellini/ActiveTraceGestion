@@ -45,15 +45,16 @@ def hash_token(token: str) -> str:
 
 
 def create_access_token(
-    *, user_id: UUID, tenant_id: UUID, roles: list[str], settings: Settings, expires_delta: timedelta | None = None
+    *, user_id: UUID, tenant_id: UUID, roles: list[str], email: str, settings: Settings, expires_delta: timedelta | None = None
 ) -> str:
-    """Crea JWT de acceso con claims mínimos y sin permisos."""
+    """Crea JWT de acceso con claims mínimos."""
     expires_at = datetime.now(UTC) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
     claims = {
         "sub": str(user_id),
         "user_id": str(user_id),
         "tenant_id": str(tenant_id),
         "roles": roles,
+        "email": email,
         "exp": expires_at,
     }
     return jwt.encode(claims, settings.SECRET_KEY, algorithm="HS256")

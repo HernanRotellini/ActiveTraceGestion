@@ -1,11 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
+import type { AckStatus } from '@/features/avisos/types'
 import { render } from '@/test/test-utils'
 import AvisosListPage from '@/features/avisos/pages/AvisosListPage'
 import AvisoFormPage from '@/features/avisos/pages/AvisoFormPage'
 import { AckProgressBar } from '@/features/avisos/components/AckProgressBar'
-import type { AckStatus } from '@/features/avisos/types'
-
 const mockAcks: AckStatus[] = [
   { usuario_id: '1', usuario_nombre: 'Juan', leido: true, leido_en: '2026-01-15T10:00:00Z' },
   { usuario_id: '2', usuario_nombre: 'María', leido: false },

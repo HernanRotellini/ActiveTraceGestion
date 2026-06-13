@@ -10,7 +10,7 @@ interface ImportPreviewProps {
 
 export function ImportPreview({ comisionId }: ImportPreviewProps) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const { upload, confirm, isLoading } = useImportar(comisionId)
+  const { upload, confirm } = useImportar(comisionId)
   const [actividades, setActividades] = useState<ActividadDetectada[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)

@@ -4,7 +4,7 @@ import type { AvisoPayload, AvisosFilters } from '@/features/avisos/types'
 
 export function useAvisosList(filters?: AvisosFilters) {
   return useQuery({
-    queryKey: ['avisos', filters],
+    queryKey: ['avisos-admin', filters],
     queryFn: () => api.listarAvisos(filters),
     staleTime: 30_000,
   })

@@ -1,3 +1,5 @@
+import { Combobox } from '@/shared/components/Combobox'
+import { useMaterias } from '@/features/admin/hooks/useAdmin'
 import type { MonitorFilters as MonitorFiltersType } from '@/features/monitores/types/monitores'
 
 interface MonitorFiltersProps {
@@ -6,6 +8,12 @@ interface MonitorFiltersProps {
 }
 
 export function MonitorFilters({ filters, onChange }: MonitorFiltersProps) {
+  const { data: materiasResp, isLoading: loadingMaterias } = useMaterias()
+  const materiaItems = (materiasResp?.items ?? []).map((m) => ({
+    value: m.id,
+    label: `${m.nombre} (${m.codigo})${m.carrera_nombre ? ` - ${m.carrera_nombre}` : ''}`,
+  }))
+
   return (
     <div className="flex flex-wrap gap-4">
       <div className="space-y-1">
@@ -19,14 +27,14 @@ export function MonitorFilters({ filters, onChange }: MonitorFiltersProps) {
         />
       </div>
 
-      <div className="space-y-1">
-        <label className="block text-xs font-medium text-gray-600">Materia</label>
-        <input
-          type="text"
+      <div className="w-48">
+        <Combobox
+          label="Materia"
+          items={materiaItems}
           value={filters.materia_id ?? ''}
-          onChange={(e) => onChange({ ...filters, materia_id: e.target.value || undefined })}
-          placeholder="ID de materia"
-          className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          onChange={(val) => onChange({ ...filters, materia_id: val || undefined })}
+          placeholder="Buscar materia..."
+          isLoading={loadingMaterias}
         />
       </div>
 

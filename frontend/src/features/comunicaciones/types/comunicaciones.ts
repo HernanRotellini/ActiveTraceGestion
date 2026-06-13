@@ -13,8 +13,14 @@ export interface PreviewResponse {
   destinatarios_count: number
 }
 
+export interface MateriaOption {
+  id: string
+  nombre: string
+  codigo?: string
+}
+
 export interface EnvioRequest {
-  comision_id: string
+  materia_id: string
   tipo: string
   asunto: string
   cuerpo: string

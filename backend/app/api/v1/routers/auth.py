@@ -48,7 +48,8 @@ async def login(payload: LoginRequest, request: Request, db: AsyncSession = Depe
 @router.get("/me", response_model=CurrentUserResponse)
 async def me(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUserResponse:
     return CurrentUserResponse(
-        user_id=str(current_user.user_id), tenant_id=str(current_user.tenant_id), roles=current_user.roles
+        user_id=str(current_user.user_id), tenant_id=str(current_user.tenant_id), roles=current_user.roles,
+        email=current_user.email,
     )
 
 

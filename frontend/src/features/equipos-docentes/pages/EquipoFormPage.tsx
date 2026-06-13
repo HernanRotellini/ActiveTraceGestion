@@ -5,6 +5,8 @@ import { Button } from '@/shared/components/Button'
 import { Alert } from '@/shared/components/Alert'
 import { useEquipo, useCrearEquipo, useActualizarEquipo } from '@/features/equipos-docentes/hooks/useEquipos'
 import { Spinner } from '@/shared/components/Spinner'
+import { Combobox } from '@/shared/components/Combobox'
+import { useMaterias } from '@/features/admin/hooks/useAdmin'
 
 export default function EquipoFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -18,6 +20,12 @@ export default function EquipoFormPage() {
   const [materiaId, setMateriaId] = useState('')
   const [carrera, setCarrera] = useState('')
   const [error, setError] = useState('')
+
+  const { data: materiasResp, isLoading: loadingMaterias } = useMaterias()
+  const materiaItems = (materiasResp?.items ?? []).map((m) => ({
+    value: m.id,
+    label: `${m.nombre} (${m.codigo})${m.carrera_nombre ? ` - ${m.carrera_nombre}` : ''}`,
+  }))
 
   useState(() => {
     if (equipo) {
@@ -59,17 +67,14 @@ export default function EquipoFormPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <Alert variant="error">{error}</Alert>}
 
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Materia *</label>
-            <input
-              type="text"
-              value={materiaId}
-              onChange={(e) => setMateriaId(e.target.value)}
-              placeholder="ID de materia"
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-            />
-          </div>
+          <Combobox
+            label="Materia *"
+            items={materiaItems}
+            value={materiaId}
+            onChange={setMateriaId}
+            placeholder="Buscar materia..."
+            isLoading={loadingMaterias}
+          />
 
           <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">Carrera *</label>

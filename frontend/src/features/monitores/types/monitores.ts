@@ -4,6 +4,7 @@ export interface MonitorFilters {
   estado?: string
   fecha_desde?: string
   fecha_hasta?: string
+  periodo?: string
 }
 
 export interface MonitorAlumno {

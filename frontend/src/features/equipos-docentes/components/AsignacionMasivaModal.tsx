@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/Button'
 import { Card } from '@/shared/components/Card'
+import { Combobox } from '@/shared/components/Combobox'
 import { useAsignacionMasiva } from '@/features/equipos-docentes/hooks/useEquipos'
+import { useUsuarios } from '@/features/admin/hooks/useAdmin'
 import type { Asignacion, AsignacionMasivaPayload } from '@/features/equipos-docentes/types'
 
 interface AsignacionMasivaModalProps {
@@ -14,6 +16,12 @@ const ROLES: Asignacion['rol'][] = ['titular', 'adjunto', 'auxiliar', 'jefe_tp']
 export function AsignacionMasivaModal({ equipoId, onClose }: AsignacionMasivaModalProps) {
   const [usuarios, setUsuarios] = useState<AsignacionMasivaPayload['usuarios']>([{ usuario_id: '', rol: 'auxiliar' }])
   const mutation = useAsignacionMasiva()
+
+  const { data: usuariosResp, isLoading: loadingUsuarios } = useUsuarios()
+  const usuarioItems = (usuariosResp?.items ?? []).map((u) => ({
+    value: u.id,
+    label: `${u.nombre} (${u.email})`,
+  }))
 
   const handleSubmit = async () => {
     const validos = usuarios.filter((u) => u.usuario_id.trim())
@@ -46,13 +54,16 @@ export function AsignacionMasivaModal({ equipoId, onClose }: AsignacionMasivaMod
         <div className="space-y-3">
           {usuarios.map((u, i) => (
             <div key={i} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={u.usuario_id}
-                onChange={(e) => actualizar(i, 'usuario_id', e.target.value)}
-                placeholder="ID de usuario"
-                className="block flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
+              <div className="flex-1">
+                <Combobox
+                  label=""
+                  items={usuarioItems}
+                  value={u.usuario_id}
+                  onChange={(val) => actualizar(i, 'usuario_id', val)}
+                  placeholder="Buscar usuario..."
+                  isLoading={loadingUsuarios}
+                />
+              </div>
               <select
                 value={u.rol}
                 onChange={(e) => actualizar(i, 'rol', e.target.value)}

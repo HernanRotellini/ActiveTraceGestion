@@ -95,18 +95,11 @@ export default function MainLayout() {
         {session?.user && (
           <div className="border-t p-4">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {session.user.user_id}
+              {session.user.email ?? session.user.user_id}
             </p>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {session.user.roles?.map((role) => (
-                <span
-                  key={role}
-                  className="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700"
-                >
-                  {role}
-                </span>
-              ))}
-            </div>
+            <p className="text-xs text-gray-500 truncate">
+              {session.user.roles?.join(', ')}
+            </p>
           </div>
         )}
       </aside>

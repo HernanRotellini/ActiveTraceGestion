@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Spinner } from '@/shared/components/Spinner'
+import { Combobox } from '@/shared/components/Combobox'
 import { useTareasList } from '@/features/tareas-internas/hooks/useTareas'
+import { useUsuarios } from '@/features/admin/hooks/useAdmin'
 import type { TareasFilters, Prioridad } from '@/features/tareas-internas/types'
 
 const PRIORIDAD_CLASSES: Record<Prioridad, string> = {
@@ -22,6 +24,12 @@ const ESTADO_CLASSES: Record<string, string> = {
 export default function TareasListPage() {
   const [filters, setFilters] = useState<TareasFilters>({ page: 1, limit: 20 })
   const { data, isLoading } = useTareasList(filters)
+
+  const { data: usuariosResp, isLoading: loadingUsuarios } = useUsuarios()
+  const usuarioItems = (usuariosResp?.items ?? []).map((u) => ({
+    value: u.id,
+    label: `${u.nombre} (${u.email})`,
+  }))
 
   return (
     <div className="space-y-6">
@@ -65,14 +73,14 @@ export default function TareasListPage() {
               <option value="critica">Crítica</option>
             </select>
           </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Asignado</label>
-            <input
-              type="text"
+          <div className="w-48">
+            <Combobox
+              label="Asignado"
+              items={usuarioItems}
               value={filters.asignado_id ?? ''}
-              onChange={(e) => setFilters({ ...filters, asignado_id: e.target.value || undefined, page: 1 })}
-              placeholder="ID de usuario"
-              className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              onChange={(val) => setFilters({ ...filters, asignado_id: val || undefined, page: 1 })}
+              placeholder="Buscar usuario..."
+              isLoading={loadingUsuarios}
             />
           </div>
           <div className="space-y-1">

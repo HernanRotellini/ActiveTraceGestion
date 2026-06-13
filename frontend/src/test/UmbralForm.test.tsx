@@ -14,7 +14,7 @@ describe('UmbralForm', () => {
       umbral_atraso: 5,
       umbral_promocion: 7,
     })
-    const { container } = render(
+    render(
       <QueryClientProvider client={queryClient}>
         <UmbralForm comisionId="COM-001" />
       </QueryClientProvider>,

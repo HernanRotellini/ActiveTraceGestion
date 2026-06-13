@@ -70,7 +70,7 @@ export default function AvisoDetailPage() {
         <>
           <h2 className="text-lg font-semibold text-gray-900">Seguimiento de lectura</h2>
           <Card className="p-4">
-            <AckProgressBar acks={aviso.acks} />
+            <AckProgressBar acks={aviso.acks ?? []} />
 
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -82,7 +82,7 @@ export default function AvisoDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {aviso.acks.map((ack) => (
+                  {(aviso.acks ?? []).map((ack) => (
                     <tr key={ack.usuario_id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-900">{ack.usuario_nombre}</td>
                       <td className="px-4 py-3">

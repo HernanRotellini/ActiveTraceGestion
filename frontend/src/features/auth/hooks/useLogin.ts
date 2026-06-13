@@ -10,6 +10,7 @@ interface AccessTokenClaims {
   user_id: string
   tenant_id: string
   roles: string[]
+  email?: string
 }
 
 function decodeAccessTokenClaims(accessToken: string): AccessTokenClaims {
@@ -37,10 +38,12 @@ export function useLogin() {
       }
 
       const claims = decodeAccessTokenClaims(data.access_token)
+      const initialEmail = claims.email ?? null
       setSession(data.access_token, data.refresh_token, {
         user_id: claims.user_id,
         tenant_id: claims.tenant_id,
         roles: claims.roles,
+        email: initialEmail,
       })
 
       const me = await getMe()
@@ -48,6 +51,7 @@ export function useLogin() {
         user_id: me.user_id,
         tenant_id: me.tenant_id,
         roles: me.roles,
+        email: me.email ?? initialEmail,
       })
 
       const redirectTo = sessionStorage.getItem('redirectTo') ?? '/'
