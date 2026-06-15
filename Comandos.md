@@ -48,9 +48,19 @@ docker exec active-trace-api-1 alembic downgrade -1
 
 ## 🌱 Seeds — Orden correcto
 
-Los seeds deben ejecutarse EN ESTE ORDEN después de un reset completo:
+Los seeds deben ejecutarse EN ESTE ORDEN después de un reset completo.
+Siempre rebuildear la imagen con `--build api` si se agregaron archivos nuevos.
 
-### 1. Seed RBAC (roles, permisos, asignaciones)
+> ⚠️ **IMPORTANTE**: Usar `alembic upgrade head`, NO `stamp head`.
+> `stamp` solo marca la revisión sin crear tablas. `upgrade` ejecuta las migraciones.
+
+### 1. Ejecutar migraciones (crea todas las tablas)
+
+```bash
+docker exec active-trace-api-1 alembic upgrade head
+```
+
+### 2. Seed RBAC (roles, permisos, asignaciones)
 
 ```bash
 docker exec active-trace-api-1 python scripts/seed_rbac.py
@@ -59,7 +69,7 @@ docker exec active-trace-api-1 python scripts/seed_rbac.py
 > Crea 7 roles (ALUMNO, TUTOR, PROFESOR, COORDINADOR, NEXO, ADMIN, FINANZAS), 32 permisos y 85 asignaciones rol→permiso.
 > **Idempotente**: se puede ejecutar múltiples veces sin duplicar datos.
 
-### 2. Seed completo de datos de desarrollo
+### 3. Seed completo de datos de desarrollo
 
 ```bash
 docker exec active-trace-api-1 python scripts/seed_dev_data.py
@@ -69,7 +79,7 @@ docker exec active-trace-api-1 python scripts/seed_dev_data.py
 > **Idempotente**: usa ON CONFLICT DO NOTHING donde es posible.
 > **Usuarios creados**: todos con contraseña `test123`, tenant `UTN_MENDOZA_GLOBAL`.
 
-### 3. Verificar que todo esté cargado
+### 4. Verificar que todo esté cargado
 
 ```bash
 docker exec active-trace-api-1 python scripts/verify_seed.py
@@ -114,9 +124,9 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/admin/materias" -Method Get -H
 
 ```bash
 docker compose down -v
-docker compose up -d
-# Esperar a que postgres esté listo
-docker exec active-trace-api-1 alembic stamp head
+docker compose up -d --build api
+# Esperar a que postgres esté listo (unos segundos)
+docker exec active-trace-api-1 alembic upgrade head
 docker exec active-trace-api-1 python scripts/seed_rbac.py
 docker exec active-trace-api-1 python scripts/seed_dev_data.py
 ```
