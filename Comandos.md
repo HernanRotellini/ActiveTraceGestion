@@ -6,28 +6,28 @@
 # Iniciar todos los servicios
 docker compose up -d
 
+# Rebuildear + iniciar la API (tras cambios en código o dependencias)
+docker compose up -d --build api
+
 # Ver logs de la API
 docker compose logs -f api
 
-# Rebuildear la API (tras cambios en requirements, etc.)
-docker compose build api
-
-# Reiniciar un servicio
+# Reiniciar un servicio sin rebuild
 docker compose restart api
 ```
 
 ## 🗄️ Base de Datos
 
 ```bash
-# Ingresar a psql
+# Ingresar a psql interactivo
 docker exec -it active-trace-postgres-1 psql -U trace -d trace
 
 # Consultas rápidas
-docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT count(*) FROM auth_users"
+docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT count(*) FROM usuarios"
 docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT email, roles FROM auth_users ORDER BY email"
-docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT codigo, nombre FROM roles WHERE tenant_id = '00000000-0000-0000-0000-000000000001'"
-docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT count(*) FROM permisos WHERE tenant_id = '00000000-0000-0000-0000-000000000001'"
-docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT count(*) FROM roles_permisos WHERE tenant_id = '00000000-0000-0000-0000-000000000001'"
+docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT nombre FROM roles WHERE tenant_id = '00000000-0000-0000-0000-000000000001'"
+docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT count(*) FROM permisos"
+docker exec active-trace-postgres-1 psql -U trace -d trace -c "SELECT count(*) FROM roles_permisos"
 ```
 
 ## 🔄 Migraciones (Alembic)
@@ -49,7 +49,7 @@ docker exec active-trace-api-1 alembic downgrade -1
 ## 🌱 Seeds — Orden correcto
 
 Los seeds deben ejecutarse EN ESTE ORDEN después de un reset completo.
-Siempre rebuildear la imagen con `--build api` si se agregaron archivos nuevos.
+Siempre rebuildear la imagen si se agregaron archivos nuevos al backend.
 
 > ⚠️ **IMPORTANTE**: Usar `alembic upgrade head`, NO `stamp head`.
 > `stamp` solo marca la revisión sin crear tablas. `upgrade` ejecuta las migraciones.
@@ -66,8 +66,13 @@ docker exec active-trace-api-1 alembic upgrade head
 docker exec active-trace-api-1 python scripts/seed_rbac.py
 ```
 
-> Crea 7 roles (ALUMNO, TUTOR, PROFESOR, COORDINADOR, NEXO, ADMIN, FINANZAS), 32 permisos y 85 asignaciones rol→permiso.
+> Crea 7 roles, **33 permisos** y **88 asignaciones** rol→permiso.
 > **Idempotente**: se puede ejecutar múltiples veces sin duplicar datos.
+>
+> Permisos incluidos:
+> - 23 originales (`atrasados:ver`, `comunicacion:enviar`, `estructura:gestionar`, etc.)
+> - 9 de lectura separada (`calificaciones:ver`, `equipos:ver`, `avisos:ver`, etc.)
+> - 1 granular (`periodos:gestionar` — para Setup cuatrimestre, asignado a COORDINADOR y ADMIN)
 
 ### 3. Seed completo de datos de desarrollo
 
@@ -75,9 +80,8 @@ docker exec active-trace-api-1 python scripts/seed_rbac.py
 docker exec active-trace-api-1 python scripts/seed_dev_data.py
 ```
 
-> Crea: carreras, cohortes, materias, 19 usuarios de prueba, asignaciones docentes, padrón de alumnos, calificaciones, liquidaciones, facturas, tareas internas, avisos, comunicaciones, encuentros, guardias, coloquios, programas académicos, auditoría, mensajería interna.
-> **Idempotente**: usa ON CONFLICT DO NOTHING donde es posible.
-> **Usuarios creados**: todos con contraseña `test123`, tenant `UTN_MENDOZA_GLOBAL`.
+> Crea: carreras, cohortes, materias, 19 usuarios de prueba, asignaciones docentes, padrón de alumnos, calificaciones, liquidaciones, facturas, tareas, avisos, comunicaciones, encuentros, guardias, coloquios, programas académicos, auditoría, mensajería interna.
+> **Idempotente**: todos con contraseña `test123`, tenant `UTN_MENDOZA_GLOBAL`.
 
 ### 4. Verificar que todo esté cargado
 
@@ -118,15 +122,35 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/auth/me" -Method Get -Headers 
 Invoke-RestMethod -Uri "http://localhost:8000/api/admin/materias" -Method Get -Headers @{Authorization="Bearer $token"}
 ```
 
-## 🔧 Mantenimiento
-
-### Reset completo (destruye todo)
+## 🧪 Tests
 
 ```bash
+# Ejecutar todos los tests del backend
+docker exec active-trace-api-1 python -m pytest tests/ -v
+
+# Tests con reporte de cobertura
+docker exec active-trace-api-1 python -m pytest tests/ --cov=app --cov-report=term-missing
+
+# Tests de un módulo específico
+docker exec active-trace-api-1 python -m pytest tests/test_coloquios.py -v
+docker exec active-trace-api-1 python -m pytest tests/test_auth.py -v
+```
+
+## 🔧 Mantenimiento
+
+### Reset completo (destruye todo y reseed)
+
+```bash
+# 1. Destruir contenedores + volúmenes
 docker compose down -v
+
+# 2. Rebuildear + levantar (esperar a que postgres esté healthy)
 docker compose up -d --build api
-# Esperar a que postgres esté listo (unos segundos)
+
+# 3. Migraciones
 docker exec active-trace-api-1 alembic upgrade head
+
+# 4. Seeds (en orden)
 docker exec active-trace-api-1 python scripts/seed_rbac.py
 docker exec active-trace-api-1 python scripts/seed_dev_data.py
 ```

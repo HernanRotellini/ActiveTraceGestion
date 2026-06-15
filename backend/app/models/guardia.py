@@ -54,12 +54,22 @@ class Guardia(TenantScopedMixin, Base):
         index=True,
     )
     dia: Mapped[DiaSemana] = mapped_column(
-        Enum(DiaSemana, name="dia_semana_guardia", create_constraint=True),
+        Enum(
+            DiaSemana,
+            name="dia_semana_guardia",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
     )
     horario: Mapped[str] = mapped_column(String(50), nullable=False)
     estado: Mapped[EstadoGuardia] = mapped_column(
-        Enum(EstadoGuardia, name="estado_guardia", create_constraint=True),
+        Enum(
+            EstadoGuardia,
+            name="estado_guardia",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
         default=EstadoGuardia.PENDIENTE,
     )

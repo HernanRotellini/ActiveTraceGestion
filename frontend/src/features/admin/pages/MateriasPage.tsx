@@ -13,6 +13,7 @@ export default function MateriasPage() {
   const { data: cohortes } = useCohortes(carreraId || undefined)
   const { data, isLoading } = useMaterias(carreraId || undefined, cohorteId || undefined)
   const crear = useCrearMateria()
+  const actualizar = useActualizarMateria()
   const [editId, setEditId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
   const [codigo, setCodigo] = useState('')
@@ -46,8 +47,7 @@ export default function MateriasPage() {
     }
     try {
       if (editId) {
-        const actualizar = useActualizarMateria(editId)
-        await actualizar.mutateAsync({ nombre: nombre.trim() })
+        await actualizar.mutateAsync({ id: editId, nombre: nombre.trim(), codigo: codigo.trim(), carga_horaria: Number(cargaHoraria) })
       } else {
         const payload: MateriaPayload = { nombre: nombre.trim(), codigo: codigo.trim() }
         await crear.mutateAsync(payload)

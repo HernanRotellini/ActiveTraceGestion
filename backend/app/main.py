@@ -79,6 +79,7 @@ def create_app() -> FastAPI:
     from app.api.v1.routers.coloquios import router as coloquios_router  # noqa: PLC0415
     from app.api.v1.routers.comunicaciones import router as comunicaciones_router  # noqa: PLC0415
     from app.api.v1.routers.encuentros import router as encuentros_router  # noqa: PLC0415
+    from app.api.v1.routers.entregas import router as entregas_router  # noqa: PLC0415
     from app.api.v1.routers.equipos import router as equipos_router  # noqa: PLC0415
     from app.api.v1.routers.guardias import router as guardias_router  # noqa: PLC0415
     from app.api.v1.routers.estructura_academica import router as estructura_academica_router  # noqa: PLC0415
@@ -90,6 +91,7 @@ def create_app() -> FastAPI:
     from app.api.v1.routers.rbac import router as rbac_router  # noqa: PLC0415
     from app.api.v1.routers.moodle import router as moodle_router  # noqa: PLC0415
     from app.api.v1.routers.padron import router as padron_router  # noqa: PLC0415
+    from app.api.v1.routers.periodos_academicos import router as periodos_academicos_router  # noqa: PLC0415
     from app.api.v1.routers.tareas import router as tareas_router  # noqa: PLC0415
     from app.api.v1.routers.audit import router as audit_router  # noqa: PLC0415
     from app.api.v1.routers.auditoria import router as auditoria_router  # noqa: PLC0415
@@ -106,6 +108,7 @@ def create_app() -> FastAPI:
     app.include_router(coloquios_router)
     app.include_router(comunicaciones_router)
     app.include_router(encuentros_router)
+    app.include_router(entregas_router)
     app.include_router(equipos_router)
     app.include_router(estructura_academica_router)
     app.include_router(facturas_router)
@@ -115,6 +118,7 @@ def create_app() -> FastAPI:
     app.include_router(moodle_router)
     app.include_router(programas_router)
     app.include_router(padron_router)
+    app.include_router(periodos_academicos_router)
     app.include_router(perfil_router)
     app.include_router(inbox_router)
     app.include_router(health_router)

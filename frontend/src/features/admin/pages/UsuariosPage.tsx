@@ -14,6 +14,7 @@ export default function UsuariosPage() {
   const [filters, setFilters] = useState<UsuarioAdminFilters>({ page: 1, limit: 20 })
   const { data, isLoading } = useUsuarios(filters)
   const crear = useCrearUsuario()
+  const actualizar = useActualizarUsuario()
   const [editId, setEditId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
   const [apellidos, setApellidos] = useState('')
@@ -97,8 +98,7 @@ export default function UsuariosPage() {
         facturador,
       }
       if (editId) {
-        const actualizar = useActualizarUsuario(editId)
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync({ id: editId, ...payload })
       } else {
         await crear.mutateAsync(payload)
       }

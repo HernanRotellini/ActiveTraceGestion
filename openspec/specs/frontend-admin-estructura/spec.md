@@ -15,6 +15,10 @@ El frontend SHALL permitir ADMIN gestionar carreras con formulario ABM, tabla pa
 - **WHEN** el usuario selecciona "Editar" en una carrera
 - **THEN** se navega a un formulario precargado y al enviar se actualiza el registro
 
+#### Scenario: Editar carrera con todos los campos
+- **WHEN** el usuario selecciona "Editar" en una carrera y modifica nombre, código y descripción
+- **THEN** al enviar el formulario, el PATCH incluye `{ nombre, codigo, descripcion }` y la tabla se actualiza
+
 ### Requirement: CRUD de cohortes
 El frontend SHALL permitir ADMIN gestionar cohortes asociadas a una carrera, con formulario ABM y filtros.
 
@@ -26,6 +30,10 @@ El frontend SHALL permitir ADMIN gestionar cohortes asociadas a una carrera, con
 - **WHEN** el usuario completa el formulario de nueva cohorte y envía
 - **THEN** se crea la cohorte asociada a la carrera seleccionada
 
+#### Scenario: Editar cohorte sin enviar carrera_id
+- **WHEN** el usuario selecciona "Editar" en una cohorte y modifica nombre o año
+- **THEN** al enviar el formulario, el PATCH incluye solo `{ nombre, anio }` (sin `carrera_id`)
+
 ### Requirement: CRUD de materias
 El frontend SHALL permitir ADMIN gestionar materias asociadas a una carrera/cohorte, con formulario ABM y filtros.
 
@@ -36,3 +44,7 @@ El frontend SHALL permitir ADMIN gestionar materias asociadas a una carrera/coho
 #### Scenario: Editar materia
 - **WHEN** el usuario selecciona "Editar" en una materia
 - **THEN** se navega a un formulario precargado y al enviar se actualiza el registro
+
+#### Scenario: Editar materia con todos los campos
+- **WHEN** el usuario selecciona "Editar" en una materia y modifica nombre, código y carga horaria
+- **THEN** al enviar el formulario, el PATCH incluye `{ nombre, codigo, carga_horaria }` y la tabla se actualiza

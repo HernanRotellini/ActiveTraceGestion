@@ -29,6 +29,8 @@ FACTURAS_GESTIONAR = "facturas:gestionar"
 TENANT_CONFIGURAR = "tenant:configurar"
 IMPERSONACION_USAR = "impersonacion:usar"
 
+PERIODOS_GESTIONAR = "periodos:gestionar"
+
 # ── Permisos de lectura separados ────────────────────────────────
 CALIFICACIONES_VER = "calificaciones:ver"
 EQUIPOS_VER = "equipos:ver"

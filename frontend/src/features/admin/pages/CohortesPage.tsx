@@ -11,6 +11,7 @@ export default function CohortesPage() {
   const [carreraId, setCarreraId] = useState('')
   const { data, isLoading } = useCohortes(carreraId || undefined)
   const crear = useCrearCohorte()
+  const actualizar = useActualizarCohorte()
   const [editId, setEditId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
   const [anio, setAnio] = useState('')
@@ -41,11 +42,10 @@ export default function CohortesPage() {
     }
     try {
       const vig_desde = `${anio}-01-01`
-      const payload: CohortePayload = { carrera_id: carreraId, nombre: nombre.trim(), anio: Number(anio), vig_desde }
       if (editId) {
-        const actualizar = useActualizarCohorte(editId)
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync({ id: editId, nombre: nombre.trim(), anio: Number(anio) })
       } else {
+        const payload: CohortePayload = { carrera_id: carreraId, nombre: nombre.trim(), anio: Number(anio), vig_desde }
         await crear.mutateAsync(payload)
       }
       resetForm()

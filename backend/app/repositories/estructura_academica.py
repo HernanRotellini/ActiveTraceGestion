@@ -24,18 +24,22 @@ class CarreraRepository(TenantScopedRepository[Carrera]):
         )
         return result.scalar_one_or_none()
 
-    async def create(self, codigo: str, nombre: str) -> Carrera:
-        record = Carrera(tenant_id=self.tenant_id, codigo=codigo, nombre=nombre)
+    async def create(self, codigo: str, nombre: str, descripcion: str | None = None) -> Carrera:
+        record = Carrera(tenant_id=self.tenant_id, codigo=codigo, nombre=nombre, descripcion=descripcion or "")
         self.session.add(record)
         await self.session.flush()
         return record
 
-    async def update(self, carrera_id: UUID, *, nombre: str | None = None, estado: str | None = None) -> Carrera | None:
+    async def update(self, carrera_id: UUID, *, nombre: str | None = None, codigo: str | None = None, descripcion: str | None = None, estado: str | None = None) -> Carrera | None:
         record = await self.get(carrera_id)
         if record is None:
             return None
         if nombre is not None:
             record.nombre = nombre
+        if codigo is not None:
+            record.codigo = codigo
+        if descripcion is not None:
+            record.descripcion = descripcion
         if estado is not None:
             record.estado = estado
         return record
@@ -65,6 +69,20 @@ class CohorteRepository(TenantScopedRepository[Cohorte]):
             )
         )
         return list(result.scalars().all())
+
+    async def update(self, cohorte_id: UUID, *, nombre: str | None = None, anio: int | None = None, vig_desde: date | None = None, vig_hasta: date | None = None) -> Cohorte | None:
+        record = await self.get(cohorte_id)
+        if record is None:
+            return None
+        if nombre is not None:
+            record.nombre = nombre
+        if anio is not None:
+            record.anio = anio
+        if vig_desde is not None:
+            record.vig_desde = vig_desde
+        if vig_hasta is not None:
+            record.vig_hasta = vig_hasta
+        return record
 
     async def create(self, carrera_id: UUID, nombre: str, anio: int, vig_desde: date, vig_hasta: date | None = None) -> Cohorte:
         record = Cohorte(
@@ -100,12 +118,16 @@ class MateriaRepository(TenantScopedRepository[Materia]):
         await self.session.flush()
         return record
 
-    async def update(self, materia_id: UUID, *, nombre: str | None = None, estado: str | None = None) -> Materia | None:
+    async def update(self, materia_id: UUID, *, nombre: str | None = None, codigo: str | None = None, carga_horaria: int | None = None, estado: str | None = None) -> Materia | None:
         record = await self.get(materia_id)
         if record is None:
             return None
         if nombre is not None:
             record.nombre = nombre
+        if codigo is not None:
+            record.codigo = codigo
+        if carga_horaria is not None:
+            record.carga_horaria = carga_horaria
         if estado is not None:
             record.estado = estado
         return record

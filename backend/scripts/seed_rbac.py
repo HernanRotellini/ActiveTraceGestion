@@ -72,6 +72,7 @@ PERMISOS_NUEVOS = [
     ("encuentros:ver", "Ver encuentros", "encuentros", "ver"),
     ("coloquios:ver", "Ver coloquios", "coloquios", "ver"),
     ("liquidaciones:ver", "Ver liquidaciones y facturas", "liquidaciones", "ver"),
+    ("periodos:gestionar", "Gestionar períodos académicos", "periodos", "gestionar"),
 ]
 
 ALL_PERMISOS = PERMISOS_ORIGINALES + PERMISOS_NUEVOS
@@ -155,6 +156,7 @@ MATRIX_NUEVAS = [
     ("COORDINADOR", "encuentros:ver", "global"),
     ("COORDINADOR", "coloquios:ver", "global"),
     ("COORDINADOR", "liquidaciones:ver", "global"),
+    ("COORDINADOR", "periodos:gestionar", "global"),
     ("ADMIN", "calificaciones:ver", "global"),
     ("ADMIN", "equipos:ver", "global"),
     ("ADMIN", "equipos:gestionar", "global"),
@@ -167,7 +169,9 @@ MATRIX_NUEVAS = [
     ("ADMIN", "liquidaciones:operar_grilla", "global"),
     ("ADMIN", "liquidaciones:calcular_cerrar", "global"),
     ("ADMIN", "facturas:gestionar", "global"),
+    ("ADMIN", "periodos:gestionar", "global"),
     ("FINANZAS", "liquidaciones:ver", "global"),
+    ("FINANZAS", "liquidaciones:gestionar", "global"),
 ]
 
 ALL_MATRIX = MATRIX_ORIGINAL + MATRIX_NUEVAS

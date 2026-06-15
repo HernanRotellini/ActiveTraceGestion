@@ -36,7 +36,9 @@ async def estructura_schema(db_engine: None):
         connection = await session.connection()
         await connection.execute(
             text(
-                "DROP TABLE IF EXISTS cohortes, carreras, materias, "
+                "DROP TABLE IF EXISTS "
+                "slots_encuentro, guardias, comision_docentes, comisiones, "
+                "asignaciones, cohortes, carreras, materias, "
                 "roles_permisos, permisos, roles, "
                 "password_recovery_tokens, two_factor_challenges, "
                 "totp_factors, refresh_sessions, auth_users, tenants CASCADE"
@@ -201,8 +203,9 @@ class TestCarreraCRUD:
         resp = await async_client.get("/api/admin/carreras", headers=headers)
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 2
-        assert {"TUPAD", "TSSD"} == {c["codigo"] for c in data}
+        assert data["total"] == 2
+        assert len(data["items"]) == 2
+        assert {"TUPAD", "TSSD"} == {c["codigo"] for c in data["items"]}
 
     async def test_update_carrera_name(
         self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
@@ -247,6 +250,27 @@ class TestCarreraCRUD:
         get_resp = await async_client.get(f"/api/admin/carreras/{cid}", headers=headers)
         assert get_resp.status_code == 404
 
+    async def test_carrera_response_has_activo_and_creada_en(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        resp = await async_client.post(
+            "/api/admin/carreras",
+            json={"codigo": "TUPAD", "nombre": "Tecnicatura"},
+            headers=headers,
+        )
+
+        data = resp.json()
+        assert data["activo"] is True
+        assert data["creada_en"] == data["created_at"]
+
+        # toggle to inactive
+        cid = data["id"]
+        resp2 = await async_client.patch(f"/api/admin/carreras/{cid}", json={"estado": "inactiva"}, headers=headers)
+        assert resp2.json()["activo"] is False
+
     async def test_tenant_a_cannot_see_tenant_b_carreras(
         self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
         seed_tenant_admin: dict[str, Any],
@@ -272,9 +296,65 @@ class TestCarreraCRUD:
         await async_client.post("/api/admin/carreras", json={"codigo": "T2", "nombre": "T2"}, headers=h2)
 
         resp = await async_client.get("/api/admin/carreras", headers=h1)
-        codigos = [c["codigo"] for c in resp.json()]
+        codigos = [c["codigo"] for c in resp.json()["items"]]
         assert "T1" in codigos
         assert "T2" not in codigos
+
+    # ── Descripcion tests ─────────────────────────────────────
+
+    async def test_create_carrera_with_descripcion_persists(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        resp = await async_client.post(
+            "/api/admin/carreras",
+            json={"codigo": "TUPAD", "nombre": "Tecnicatura", "descripcion": "Nueva tecnicatura"},
+            headers=headers,
+        )
+
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["descripcion"] == "Nueva tecnicatura"
+
+    async def test_create_carrera_without_descripcion_returns_empty(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        resp = await async_client.post(
+            "/api/admin/carreras",
+            json={"codigo": "TUPAD", "nombre": "Tecnicatura"},
+            headers=headers,
+        )
+
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["descripcion"] == ""
+
+    async def test_update_carrera_descripcion(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        created = await async_client.post(
+            "/api/admin/carreras",
+            json={"codigo": "TUPAD", "nombre": "Original"},
+            headers=headers,
+        )
+        cid = created.json()["id"]
+
+        resp = await async_client.patch(
+            f"/api/admin/carreras/{cid}",
+            json={"descripcion": "Updated desc"},
+            headers=headers,
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["descripcion"] == "Updated desc"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -406,8 +486,59 @@ class TestCohorteCRUD:
         resp = await async_client.get(f"/api/admin/cohortes?carrera_id={carrera_id}", headers=headers)
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 1
-        assert data[0]["carrera_id"] == carrera_id
+        assert data["total"] == 1
+        assert len(data["items"]) == 1
+        assert data["items"][0]["carrera_id"] == carrera_id
+
+
+    async def test_patch_cohorte_updates_fields(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any], carrera_id: str,
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        created = await async_client.post(
+            "/api/admin/cohortes",
+            json={"carrera_id": carrera_id, "nombre": "MAR-2026", "anio": 2026, "vig_desde": "2026-03-01"},
+            headers=headers,
+        )
+        cid = created.json()["id"]
+
+        resp = await async_client.patch(
+            f"/api/admin/cohortes/{cid}",
+            json={"nombre": "2027", "anio": 2027},
+            headers=headers,
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["nombre"] == "2027"
+        assert data["anio"] == 2027
+
+    async def test_patch_cohorte_not_found_returns_404(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        resp = await async_client.patch(f"/api/admin/cohortes/{fake_id}", json={"nombre": "test"}, headers=headers)
+        assert resp.status_code == 404
+
+    async def test_cohorte_response_has_activo_and_creada_en(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any], carrera_id: str,
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        resp = await async_client.post(
+            "/api/admin/cohortes",
+            json={"carrera_id": carrera_id, "nombre": "MAR-2026", "anio": 2026, "vig_desde": "2026-03-01"},
+            headers=headers,
+        )
+
+        data = resp.json()
+        assert data["activo"] is True
+        assert data["creada_en"] == data["created_at"]
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -485,7 +616,9 @@ class TestMateriaCRUD:
 
         resp = await async_client.get("/api/admin/materias", headers=headers)
         assert resp.status_code == 200
-        assert len(resp.json()) == 2
+        data = resp.json()
+        assert data["total"] == 2
+        assert len(data["items"]) == 2
 
     async def test_soft_delete_materia(
         self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
@@ -515,6 +648,61 @@ class TestMateriaCRUD:
         assert resp.status_code == 200
         assert resp.json()["nombre"] == "Updated"
 
+    async def test_materia_response_has_computed_fields(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        resp = await async_client.post(
+            "/api/admin/materias",
+            json={"codigo": "PROG_I", "nombre": "Programacion I"},
+            headers=headers,
+        )
+
+        data = resp.json()
+        assert data["activo"] is True
+        assert data["creada_en"] == data["created_at"]
+        assert data["carrera_id"] is None
+        assert data["cohorte_id"] is None
+        assert data["carga_horaria"] == 0
+        assert data["carrera_nombre"] is None
+        assert data["cohorte_nombre"] is None
+
+    async def test_list_materias_filter_by_carrera_and_cohorte(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        carrera_a = await async_client.post("/api/admin/carreras", json={"codigo": "CARR-A", "nombre": "Carrera A"}, headers=headers)
+        carrera_a_id = carrera_a.json()["id"]
+        carrera_b = await async_client.post("/api/admin/carreras", json={"codigo": "CARR-B", "nombre": "Carrera B"}, headers=headers)
+        carrera_b_id = carrera_b.json()["id"]
+
+        cohorte_a = await async_client.post(
+            "/api/admin/cohortes",
+            json={"carrera_id": carrera_a_id, "nombre": "COH-A", "anio": 2026, "vig_desde": "2026-03-01"},
+            headers=headers,
+        )
+        cohorte_a_id = cohorte_a.json()["id"]
+
+        from app.models.estructura_academica import Materia
+
+        m1 = Materia(tenant_id=seed_tenant_admin["tenant_id"], codigo="M1", nombre="Materia 1", carrera_id=UUID(carrera_a_id), cohorte_id=UUID(cohorte_a_id))
+        m2 = Materia(tenant_id=seed_tenant_admin["tenant_id"], codigo="M2", nombre="Materia 2", carrera_id=UUID(carrera_b_id))
+        db_session.add_all([m1, m2])
+        await db_session.commit()
+
+        resp_all = await async_client.get("/api/admin/materias", headers=headers)
+        assert resp_all.json()["total"] == 2
+
+        resp_filtered = await async_client.get(f"/api/admin/materias?carrera_id={carrera_a_id}&cohorte_id={cohorte_a_id}", headers=headers)
+        assert resp_filtered.status_code == 200
+        data = resp_filtered.json()
+        assert data["total"] == 1
+        assert data["items"][0]["codigo"] == "M1"
+
     async def test_tenant_a_cannot_update_tenant_b_materia(
         self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
         seed_tenant_admin: dict[str, Any],
@@ -540,6 +728,58 @@ class TestMateriaCRUD:
         h1 = await admin_headers(async_client)
         resp = await async_client.patch(f"/api/admin/materias/{mid}", json={"nombre": "Hacked"}, headers=h1)
         assert resp.status_code == 404
+
+    # ── Codigo / carga_horaria tests ──────────────────────────
+
+    async def test_update_materia_codigo_and_carga_horaria(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        created = await async_client.post(
+            "/api/admin/materias",
+            json={"codigo": "PROG_I", "nombre": "Original"},
+            headers=headers,
+        )
+        mid = created.json()["id"]
+
+        resp = await async_client.patch(
+            f"/api/admin/materias/{mid}",
+            json={"codigo": "PROG_II", "carga_horaria": 120},
+            headers=headers,
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["codigo"] == "PROG_II"
+        assert data["carga_horaria"] == 120
+
+    async def test_update_materia_duplicate_codigo_returns_409(
+        self, estructura_schema, db_session: AsyncSession, async_client: AsyncClient,
+        seed_tenant_admin: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        await async_client.post(
+            "/api/admin/materias",
+            json={"codigo": "PROG_I", "nombre": "First"},
+            headers=headers,
+        )
+        created = await async_client.post(
+            "/api/admin/materias",
+            json={"codigo": "PROG_II", "nombre": "Second"},
+            headers=headers,
+        )
+        mid = created.json()["id"]
+
+        resp = await async_client.patch(
+            f"/api/admin/materias/{mid}",
+            json={"codigo": "PROG_I"},
+            headers=headers,
+        )
+
+        assert resp.status_code == 409
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -578,12 +818,15 @@ class TestAuthGuard:
             ("POST", "/api/admin/carreras"),
             ("GET", "/api/admin/cohortes"),
             ("POST", "/api/admin/cohortes"),
+            ("PATCH", "/api/admin/cohortes/00000000-0000-0000-0000-000000000000"),
             ("GET", "/api/admin/materias"),
             ("POST", "/api/admin/materias"),
         ]
         for method, url in endpoints:
             if method == "GET":
                 resp = await async_client.get(url, headers=headers)
+            elif method == "PATCH":
+                resp = await async_client.patch(url, json={}, headers=headers)
             else:
                 resp = await async_client.post(url, json={}, headers=headers)
             assert resp.status_code == 403, f"{method} {url} expected 403, got {resp.status_code}"

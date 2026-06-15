@@ -131,12 +131,14 @@ async def main() -> None:
             codigo="LIC-SIST",
             nombre="Licenciatura en Sistemas",
             estado="activa",
+            descripcion="Formación integral en desarrollo de software, bases de datos y redes.",
         )
         carrera_contador = Carrera(
             tenant_id=TENANT_SEED_UUID,
             codigo="CONT-PUB",
             nombre="Contador Público",
             estado="activa",
+            descripcion="Formación en contabilidad, impuestos y auditoría.",
         )
         session.add_all([carrera_sistemas, carrera_contador])
         await session.flush()
@@ -181,24 +183,36 @@ async def main() -> None:
                 codigo="PROG-I",
                 nombre="Programación I",
                 estado="activa",
+                carrera_id=carrera_sistemas.id,
+                cohorte_id=cohorte_2026_sist.id,
+                carga_horaria=120,
             ),
             Materia(
                 tenant_id=TENANT_SEED_UUID,
                 codigo="BD-I",
                 nombre="Base de Datos I",
                 estado="activa",
+                carrera_id=carrera_sistemas.id,
+                cohorte_id=cohorte_2026_sist.id,
+                carga_horaria=90,
             ),
             Materia(
                 tenant_id=TENANT_SEED_UUID,
                 codigo="REDES",
                 nombre="Redes y Comunicaciones",
                 estado="activa",
+                carrera_id=carrera_sistemas.id,
+                cohorte_id=cohorte_2026_sist.id,
+                carga_horaria=80,
             ),
             Materia(
                 tenant_id=TENANT_SEED_UUID,
                 codigo="ING-SW",
                 nombre="Ingeniería de Software",
                 estado="activa",
+                carrera_id=carrera_sistemas.id,
+                cohorte_id=cohorte_2026_sist.id,
+                carga_horaria=100,
             ),
         ]
         materias_cont = [
@@ -207,18 +221,27 @@ async def main() -> None:
                 codigo="CONT-I",
                 nombre="Contabilidad I",
                 estado="activa",
+                carrera_id=carrera_contador.id,
+                cohorte_id=cohorte_2026_cont.id,
+                carga_horaria=110,
             ),
             Materia(
                 tenant_id=TENANT_SEED_UUID,
                 codigo="IMP-2026",
                 nombre="Impuestos",
                 estado="activa",
+                carrera_id=carrera_contador.id,
+                cohorte_id=cohorte_2026_cont.id,
+                carga_horaria=95,
             ),
             Materia(
                 tenant_id=TENANT_SEED_UUID,
                 codigo="AUDIT",
                 nombre="Auditoría",
                 estado="activa",
+                carrera_id=carrera_contador.id,
+                cohorte_id=cohorte_2026_cont.id,
+                carga_horaria=85,
             ),
         ]
         all_materias = materias_sist + materias_cont

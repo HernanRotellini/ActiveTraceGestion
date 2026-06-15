@@ -7,11 +7,13 @@ NO crea nuevas tablas ni migraciones.
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Float, func, select, case
+from sqlalchemy import Float, func, select, case, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.calificaciones import Calificacion, UmbralMateria
+from app.models.estructura_academica import Materia
 from app.models.padron import EntradaPadron, VersionPadron
+from app.models.programas import FechaAcademica
 
 DEFAULT_UMBRAL = 60
 
@@ -407,7 +409,215 @@ class AnalisisRepository:
 
         return resultado
 
-    # ── 2.6 — monitor general ───────────────────────────────────
+    # ── 2.9 — entregas_pendientes ────────────────────────────────
+
+    async def entregas_pendientes(self, comision: str | None = None) -> list[dict]:
+        """Detecta textual TPs sin calificar para TODAS las materias.
+
+        Reporta actividades textual-scale donde el alumno no tiene
+        Calificacion o donde nota_textual es NULL.
+        Opcionalmente filtra por comisión del alumno.
+
+        Returns:
+            Lista de dicts con entrega_id, alumno_id, alumno_nombre,
+            actividad, materia, fecha_entrega, dias_pendiente.
+        """
+        from datetime import date, timedelta
+
+        # 1. Obtener versiones activas del padrón + materias
+        version_result = await self.session.execute(
+            select(
+                VersionPadron.id,
+                VersionPadron.materia_id,
+                Materia.nombre.label("materia_nombre"),
+            )
+            .join(Materia, VersionPadron.materia_id == Materia.id)
+            .where(
+                VersionPadron.tenant_id == self.tenant_id,
+                VersionPadron.activa.is_(True),
+                VersionPadron.deleted_at.is_(None),
+                Materia.tenant_id == self.tenant_id,
+                Materia.deleted_at.is_(None),
+            )
+        )
+        version_rows = version_result.all()
+        if not version_rows:
+            return []
+
+        # Build materia lookup
+        materia_map: dict[UUID, str] = {}
+        version_ids: list[UUID] = []
+        version_materia: dict[UUID, UUID] = {}
+        for row in version_rows:
+            materia_map[row.materia_id] = row.materia_nombre
+            version_ids.append(row.id)
+            version_materia[row.id] = row.materia_id
+
+        # 2. Obtener entradas del padrón activo
+        query_entradas = (
+            select(EntradaPadron)
+            .where(
+                EntradaPadron.tenant_id == self.tenant_id,
+                EntradaPadron.version_id.in_(version_ids),
+                EntradaPadron.deleted_at.is_(None),
+            )
+        )
+        if comision:
+            query_entradas = query_entradas.where(EntradaPadron.comision == comision)
+
+        entrada_result = await self.session.execute(query_entradas)
+        entradas = list(entrada_result.scalars().all())
+        if not entradas:
+            return []
+
+        entrada_version: dict[UUID, UUID] = {}
+        for e in entradas:
+            entrada_version[e.id] = e.version_id
+
+        # 3. Obtener calificaciones para estas entradas
+        entrada_ids = [e.id for e in entradas]
+        calif_result = await self.session.execute(
+            select(Calificacion).where(
+                Calificacion.tenant_id == self.tenant_id,
+                Calificacion.entrada_padron_id.in_(entrada_ids),
+                Calificacion.deleted_at.is_(None),
+            )
+        )
+        calificaciones = list(calif_result.scalars().all())
+
+        # 4. Determinar actividades textuales GLOBALMENTE
+        # Una actividad es "textual" si existe al menos una calificación
+        # con nota_textual no nulo para el tenant
+        global_textual_result = await self.session.execute(
+            select(
+                Calificacion.materia_id,
+                Calificacion.actividad,
+            ).where(
+                Calificacion.tenant_id == self.tenant_id,
+                Calificacion.nota_textual.isnot(None),
+                Calificacion.deleted_at.is_(None),
+            ).distinct()
+        )
+        textual_activities: set[tuple[UUID, str]] = set()
+        for row in global_textual_result.all():
+            textual_activities.add((row.materia_id, row.actividad))
+
+        if not textual_activities:
+            return []
+
+        # 5. Build lookup: (entrada_padron_id, materia_id) -> set of activities with grades
+        student_materia_actividades: dict[tuple[UUID, UUID], set[str]] = {}
+        for c in calificaciones:
+            key = (c.entrada_padron_id, c.materia_id)
+            if key not in student_materia_actividades:
+                student_materia_actividades[key] = set()
+            student_materia_actividades[key].add(c.actividad)
+
+        # 6. Build FechaAcademica lookup: (materia_id, actividad) -> fecha
+        # First get all fechas for the materias we care about
+        materia_ids = list(materia_map.keys())
+        fechas_result = await self.session.execute(
+            select(FechaAcademica).where(
+                FechaAcademica.tenant_id == self.tenant_id,
+                FechaAcademica.materia_id.in_(materia_ids),
+                FechaAcademica.deleted_at.is_(None),
+            )
+        )
+        fechas = list(fechas_result.scalars().all())
+
+        # Map (materia_id, tipo, numero) to FechaAcademica
+        # Also create a simpler map by matching the titulo to actividad
+        fechas_por_titulo: dict[UUID, dict[str, FechaAcademica]] = {}
+        for f in fechas:
+            if f.materia_id not in fechas_por_titulo:
+                fechas_por_titulo[f.materia_id] = {}
+            fechas_por_titulo[f.materia_id][f.titulo.lower()] = f
+
+        # Also try matching (tipo, numero) pattern
+        fechas_por_tipo_numero: dict[UUID, dict[tuple[str, int], FechaAcademica]] = {}
+        for f in fechas:
+            if f.materia_id not in fechas_por_tipo_numero:
+                fechas_por_tipo_numero[f.materia_id] = {}
+            fechas_por_tipo_numero[f.materia_id][(f.tipo, f.numero)] = f
+
+        today = date.today()
+
+        # 7. For each student x materia combination, find missing textual activities
+        resultado: list[dict] = []
+        # Track processed entries to generate unique entrega_ids
+        seen_combos: set[tuple[UUID, UUID, str]] = set()
+
+        # Group entradas by version_id to know their materia
+        for entrada in entradas:
+            version_id = entrada_version.get(entrada.id)
+            if version_id is None:
+                continue
+            materia_id = version_materia.get(version_id)
+            if materia_id is None:
+                continue
+
+            materia_nombre = materia_map.get(materia_id, "Desconocida")
+
+            # Get existing graded activities for this student in this materia
+            key = (entrada.id, materia_id)
+            existing = student_materia_actividades.get(key, set())
+
+            # Check all textual activities for this materia
+            for (act_materia_id, actividad) in sorted(textual_activities):
+                if act_materia_id != materia_id:
+                    continue
+                if actividad in existing:
+                    continue
+
+                # This is a pending delivery
+                combo_key = (entrada.id, materia_id, actividad)
+                if combo_key in seen_combos:
+                    continue
+                seen_combos.add(combo_key)
+
+                # Try to find a fecha_entrega from FechaAcademica
+                fecha_entrega = today
+                actividad_lower = actividad.lower().strip()
+
+                # Try matching by titulo
+                materia_fechas = fechas_por_titulo.get(materia_id, {})
+                if actividad_lower in materia_fechas:
+                    fecha_entrega = materia_fechas[actividad_lower].fecha
+                else:
+                    # Try parsing actividad name like "TP1" -> (tipo="TP", numero=1)
+                    import re
+                    match = re.match(r"^([A-Za-z]+)\s*(\d+)$", actividad)
+                    if match:
+                        tipo = match.group(1)
+                        numero = int(match.group(2))
+                        tipo_numero_map = fechas_por_tipo_numero.get(materia_id, {})
+                        fa = tipo_numero_map.get((tipo, numero))
+                        if fa is not None:
+                            fecha_entrega = fa.fecha
+
+                dias_pendiente = (today - fecha_entrega).days
+                if dias_pendiente < 0:
+                    dias_pendiente = 0
+
+                # Generate a deterministic UUID for entrega_id
+                import hashlib
+                hash_input = f"{entrada.id}:{materia_id}:{actividad}"
+                entrega_id = UUID(hashlib.md5(hash_input.encode()).hexdigest())
+
+                nombre = f"{entrada.nombre} {entrada.apellidos}".strip()
+                resultado.append({
+                    "entrega_id": entrega_id,
+                    "alumno_id": entrada.id,
+                    "alumno_nombre": nombre,
+                    "actividad": actividad,
+                    "materia": materia_nombre,
+                    "fecha_entrega": fecha_entrega,
+                    "dias_pendiente": dias_pendiente,
+                })
+
+        return resultado
+
+    # ── 2.7 — monitor general ───────────────────────────────────
 
     async def monitor(
         self, filtros: dict, limit: int = 50, offset: int = 0

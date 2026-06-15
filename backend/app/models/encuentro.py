@@ -44,7 +44,12 @@ class SlotEncuentro(TenantScopedMixin, Base):
     )
     titulo: Mapped[str] = mapped_column(String(255), nullable=False)
     dia_semana: Mapped[DiaSemana] = mapped_column(
-        Enum(DiaSemana, name="dia_semana", create_constraint=True),
+        Enum(
+            DiaSemana,
+            name="dia_semana",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
     )
     hora: Mapped[time] = mapped_column(Time, nullable=False)
@@ -75,7 +80,12 @@ class InstanciaEncuentro(TenantScopedMixin, Base):
     hora: Mapped[time] = mapped_column(Time, nullable=False)
     titulo: Mapped[str] = mapped_column(String(255), nullable=False)
     estado: Mapped[EstadoInstancia] = mapped_column(
-        Enum(EstadoInstancia, name="estado_instancia", create_constraint=True),
+        Enum(
+            EstadoInstancia,
+            name="estado_instancia",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
         default=EstadoInstancia.PROGRAMADO,
     )

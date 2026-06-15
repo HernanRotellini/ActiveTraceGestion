@@ -9,6 +9,7 @@ import type { Carrera, CarreraPayload } from '@/features/admin/types'
 export default function CarrerasPage() {
   const { data, isLoading } = useCarreras()
   const crear = useCrearCarrera()
+  const actualizar = useActualizarCarrera()
   const eliminar = useEliminarCarrera()
   const [editId, setEditId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
@@ -42,10 +43,9 @@ export default function CarrerasPage() {
       return
     }
     try {
-      const payload: CarreraPayload = { nombre: nombre.trim(), codigo: codigo.trim() }
+      const payload: CarreraPayload = { nombre: nombre.trim(), codigo: codigo.trim(), descripcion: descripcion.trim() || undefined }
       if (editId) {
-        const actualizar = useActualizarCarrera(editId)
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync({ id: editId, ...payload })
       } else {
         await crear.mutateAsync(payload)
       }

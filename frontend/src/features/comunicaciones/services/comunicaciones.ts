@@ -9,8 +9,8 @@ import type {
 } from '@/features/comunicaciones/types/comunicaciones'
 
 export async function fetchMaterias(): Promise<MateriaOption[]> {
-  const { data } = await api.get<MateriaOption[]>('/admin/materias')
-  return data
+  const { data } = await api.get<{ items: MateriaOption[]; total: number }>('/admin/materias')
+  return data.items
 }
 
 export async function generarPreview(data: PreviewRequest): Promise<PreviewResponse> {

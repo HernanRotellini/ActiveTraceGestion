@@ -1,12 +1,14 @@
-"""fix frontend permissions — agregar permisos de lectura separados + ADMIN liquidaciones
+"""fix frontend permissions — agregar permisos de lectura separados + ADMIN liquidaciones + periodos:gestionar
 
-Nuevos permisos (9):
+Nuevos permisos (10):
   - calificaciones:ver, equipos:ver, equipos:gestionar
   - avisos:ver, avisos:gestionar, tareas:ver
   - encuentros:ver, coloquios:ver, liquidaciones:ver
+  - periodos:gestionar
 
 Asignaciones nuevas a roles según design.md D1.
-ADMIN ahora tiene liquidaciones:operar_grilla, liquidaciones:calcular_cerrar, facturas:gestionar.
+ADMIN ahora tiene liquidaciones:operar_grilla, liquidaciones:calcular_cerrar, facturas:gestionar, periodos:gestionar.
+COORDINADOR ahora tiene periodos:gestionar para acceder a Setup cuatrimestre.
 
 Revision ID: 20260613_0001
 Revises: 20260608_0015
@@ -28,7 +30,7 @@ SEED_TENANT_ID = "00000000-0000-0000-0000-000000000001"
 
 
 def upgrade() -> None:
-    # ── Nuevos permisos (9) ──────────────────────────────────────
+    # ── Nuevos permisos (10) ──────────────────────────────────────
     nuevos_permisos = [
         ("calificaciones:ver", "Ver calificaciones", "calificaciones", "ver"),
         ("equipos:ver", "Ver equipos docentes", "equipos", "ver"),
@@ -39,6 +41,7 @@ def upgrade() -> None:
         ("encuentros:ver", "Ver encuentros", "encuentros", "ver"),
         ("coloquios:ver", "Ver coloquios", "coloquios", "ver"),
         ("liquidaciones:ver", "Ver liquidaciones y facturas", "liquidaciones", "ver"),
+        ("periodos:gestionar", "Gestionar períodos académicos", "periodos", "gestionar"),
     ]
     permisos_table = sa.table(
         "permisos",
@@ -91,6 +94,7 @@ def upgrade() -> None:
         ("COORDINADOR", "encuentros:ver", "global"),
         ("COORDINADOR", "coloquios:ver", "global"),
         ("COORDINADOR", "liquidaciones:ver", "global"),
+        ("COORDINADOR", "periodos:gestionar", "global"),
         # -- ADMIN -- (todo excepto alumno)
         ("ADMIN", "calificaciones:ver", "global"),
         ("ADMIN", "equipos:ver", "global"),
@@ -105,8 +109,10 @@ def upgrade() -> None:
         ("ADMIN", "liquidaciones:operar_grilla", "global"),
         ("ADMIN", "liquidaciones:calcular_cerrar", "global"),
         ("ADMIN", "facturas:gestionar", "global"),
+        ("ADMIN", "periodos:gestionar", "global"),
         # -- FINANZAS --
         ("FINANZAS", "liquidaciones:ver", "global"),
+        ("FINANZAS", "liquidaciones:gestionar", "global"),
     ]
 
     roles_table = sa.table(
@@ -157,6 +163,7 @@ def downgrade() -> None:
         "calificaciones:ver", "equipos:ver", "equipos:gestionar",
         "avisos:ver", "avisos:gestionar", "tareas:ver",
         "encuentros:ver", "coloquios:ver", "liquidaciones:ver",
+        "periodos:gestionar",
     ]
     for code in permisos_nuevos_codes:
         op.execute(

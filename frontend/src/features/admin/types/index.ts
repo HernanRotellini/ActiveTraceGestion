@@ -10,6 +10,7 @@ export interface Carrera {
 export interface CarreraPayload {
   nombre: string
   codigo: string
+  descripcion?: string
 }
 
 export interface Cohorte {
@@ -44,6 +45,7 @@ export interface Materia {
 export interface MateriaPayload {
   nombre: string
   codigo: string
+  carga_horaria?: number
 }
 
 export interface UsuarioAdmin {

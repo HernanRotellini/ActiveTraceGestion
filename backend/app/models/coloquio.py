@@ -45,12 +45,22 @@ class Evaluacion(TenantScopedMixin, Base):
         index=True,
     )
     tipo: Mapped[TipoEvaluacion] = mapped_column(
-        Enum(TipoEvaluacion, name="tipo_evaluacion", create_constraint=True),
+        Enum(
+            TipoEvaluacion,
+            name="tipo_evaluacion",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
     )
     instancia: Mapped[str] = mapped_column(String(255), nullable=False)
     estado: Mapped[EstadoEvaluacion] = mapped_column(
-        Enum(EstadoEvaluacion, name="estado_evaluacion", create_constraint=True),
+        Enum(
+            EstadoEvaluacion,
+            name="estado_evaluacion",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
         default=EstadoEvaluacion.ACTIVA,
     )
@@ -94,7 +104,12 @@ class ReservaEvaluacion(TenantScopedMixin, Base):
         index=True,
     )
     estado: Mapped[EstadoReserva] = mapped_column(
-        Enum(EstadoReserva, name="estado_reserva", create_constraint=True),
+        Enum(
+            EstadoReserva,
+            name="estado_reserva",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
         default=EstadoReserva.ACTIVA,
     )
