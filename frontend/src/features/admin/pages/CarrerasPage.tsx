@@ -9,6 +9,7 @@ import type { Carrera, CarreraPayload } from '@/features/admin/types'
 export default function CarrerasPage() {
   const { data, isLoading } = useCarreras()
   const crear = useCrearCarrera()
+  const actualizar = useActualizarCarrera()
   const eliminar = useEliminarCarrera()
   const [editId, setEditId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
@@ -44,8 +45,7 @@ export default function CarrerasPage() {
     try {
       const payload: CarreraPayload = { nombre: nombre.trim(), codigo: codigo.trim(), descripcion: descripcion.trim() || undefined }
       if (editId) {
-        const actualizar = useActualizarCarrera(editId)
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync({ id: editId, ...payload })
       } else {
         await crear.mutateAsync(payload)
       }
@@ -59,7 +59,7 @@ export default function CarrerasPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Carreras</h1>
-        <Button onClick={() => resetForm() || setShowForm(true)}>Nueva carrera</Button>
+        <Button onClick={() => { resetForm(); setShowForm(true); }}>Nueva carrera</Button>
       </div>
 
       {showForm && (
@@ -121,7 +121,7 @@ export default function CarrerasPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data?.items.map((c) => (
+              {data?.items?.map((c) => (
                 <tr key={c.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{c.nombre}</td>
                   <td className="px-4 py-3 text-gray-600">{c.codigo}</td>

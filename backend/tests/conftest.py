@@ -49,7 +49,7 @@ def test_settings() -> Settings:
     """
     os.environ.setdefault(
         "DATABASE_URL",
-        "postgresql+asyncpg://trace:trace@localhost:5432/trace_test",
+        "postgresql+asyncpg://trace:trace@localhost:5434/trace_test",
     )
     os.environ.setdefault("SECRET_KEY", "a" * 32)
     os.environ.setdefault("ENCRYPTION_KEY", "b" * 32)

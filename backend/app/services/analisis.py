@@ -89,6 +89,31 @@ class AnalisisService:
             ])
         return output.getvalue()
 
+    async def get_entregas_pendientes(self, comision: str | None = None) -> list[dict]:
+        """Obtiene entregas pendientes de corrección."""
+        self._registrar_auditoria(ANALISIS_CONSULTAR, None, {"tipo": "entregas_pendientes", "comision": comision})
+        return await self._repo.entregas_pendientes(comision)
+
+    async def exportar_entregas_csv(self, comision: str | None = None) -> str:
+        """Exporta entregas pendientes como CSV."""
+        items = await self._repo.entregas_pendientes(comision)
+        self._registrar_auditoria(ANALISIS_EXPORTAR, None, {"tipo": "exportar_entregas_csv", "cantidad": len(items)})
+
+        output = io.StringIO()
+        output.write("\ufeff")
+        writer = csv.writer(output)
+        writer.writerow(["alumno_id", "alumno_nombre", "actividad", "materia", "fecha_entrega", "dias_pendiente"])
+        for item in items:
+            writer.writerow([
+                str(item.get("alumno_id", "")),
+                item.get("alumno_nombre", ""),
+                item.get("actividad", ""),
+                item.get("materia", ""),
+                item.get("fecha_entrega", ""),
+                item.get("dias_pendiente", 0),
+            ])
+        return output.getvalue()
+
     def _registrar_auditoria(self, accion: str, materia_id: UUID | None, detalle: dict | None = None) -> None:
         try:
             from app.models.audit import AuditLog  # noqa: PLC0415

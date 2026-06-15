@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import ESTRUCTURA_GESTIONAR
+from app.models.permisos import PERIODOS_GESTIONAR
 from app.models.programas import TipoFechaAcademica
 from app.schemas.programas import (
     FechaAcademicaCalendarResponse,
@@ -26,7 +26,7 @@ from app.services.fecha_academica_service import (
 
 router = APIRouter(prefix="/api/fechas-academicas", tags=["fechas-academicas"])
 
-FechasGuard = Depends(require_permission(ESTRUCTURA_GESTIONAR))
+FechasGuard = Depends(require_permission(PERIODOS_GESTIONAR))
 
 
 def _service(db: AsyncSession, current_user: CurrentUser) -> FechaAcademicaService:

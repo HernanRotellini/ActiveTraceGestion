@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Spinner } from '@/shared/components/Spinner'
+import { Combobox } from '@/shared/components/Combobox'
 import { useColoquiosList } from '@/features/coloquios/hooks/useColoquios'
+import { useMaterias } from '@/features/admin/hooks/useAdmin'
 import type { ColoquiosFilters } from '@/features/coloquios/types'
 
 export default function ColoquiosListPage() {
@@ -11,20 +13,26 @@ export default function ColoquiosListPage() {
   const items = data?.items ?? []
   const total = data?.total ?? items.length
 
+  const { data: materiasResp, isLoading: loadingMaterias } = useMaterias()
+  const materiaItems = (materiasResp?.items ?? []).map((m) => ({
+    value: m.id,
+    label: `${m.nombre} (${m.codigo})${m.carrera_nombre ? ` - ${m.carrera_nombre}` : ''}`,
+  }))
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Coloquios</h1>
 
       <Card className="p-4">
         <div className="flex flex-wrap gap-4">
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Materia</label>
-            <input
-              type="text"
+          <div className="w-48">
+            <Combobox
+              label="Materia"
+              items={materiaItems}
               value={filters.materia_id ?? ''}
-              onChange={(e) => setFilters({ ...filters, materia_id: e.target.value || undefined, page: 1 })}
-              placeholder="ID de materia"
-              className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              onChange={(val) => setFilters({ ...filters, materia_id: val || undefined, page: 1 })}
+              placeholder="Buscar materia..."
+              isLoading={loadingMaterias}
             />
           </div>
           <div className="space-y-1">

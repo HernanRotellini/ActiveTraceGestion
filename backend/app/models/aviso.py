@@ -34,7 +34,12 @@ class Aviso(TenantScopedMixin, Base):
     __tablename__ = "avisos"
 
     alcance: Mapped[AlcanceAviso] = mapped_column(
-        Enum(AlcanceAviso, name="alcance_aviso", create_constraint=True),
+        Enum(
+            AlcanceAviso,
+            name="alcance_aviso",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
         index=True,
     )
@@ -52,7 +57,12 @@ class Aviso(TenantScopedMixin, Base):
     )
     rol_destino: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     severidad: Mapped[SeveridadAviso] = mapped_column(
-        Enum(SeveridadAviso, name="severidad_aviso", create_constraint=True),
+        Enum(
+            SeveridadAviso,
+            name="severidad_aviso",
+            create_constraint=True,
+            values_callable=lambda values: [item.value for item in values],
+        ),
         nullable=False,
         default=SeveridadAviso.INFO,
     )

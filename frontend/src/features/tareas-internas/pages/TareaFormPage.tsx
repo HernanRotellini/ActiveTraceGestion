@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Button } from '@/shared/components/Button'
 import { Alert } from '@/shared/components/Alert'
+import { Combobox } from '@/shared/components/Combobox'
 import { useTarea, useCrearTarea, useActualizarTarea } from '@/features/tareas-internas/hooks/useTareas'
 import { Spinner } from '@/shared/components/Spinner'
+import { useUsuarios } from '@/features/admin/hooks/useAdmin'
 import type { Prioridad } from '@/features/tareas-internas/types'
 
 const PRIORIDADES: Prioridad[] = ['baja', 'media', 'alta', 'critica']
@@ -25,6 +27,12 @@ export default function TareaFormPage() {
   const [fechaLimite, setFechaLimite] = useState('')
   const [error, setError] = useState('')
 
+  const { data: usuariosResp, isLoading: loadingUsuarios } = useUsuarios()
+  const usuarioItems = (usuariosResp?.items ?? []).map((u) => ({
+    value: u.id,
+    label: `${u.nombre} (${u.email})`,
+  }))
+
   useState(() => {
     if (tarea) {
       setTitulo(tarea.titulo)
@@ -42,18 +50,20 @@ export default function TareaFormPage() {
       setError('El título es obligatorio.')
       return
     }
+    if (!asignadoId) {
+      setError('Debe seleccionar un usuario asignado.')
+      return
+    }
     try {
-      const payload = {
+      const base = {
         titulo: titulo.trim(),
         descripcion: descripcion.trim(),
-        prioridad,
-        asignado_id: asignadoId || undefined,
-        fecha_limite: fechaLimite || undefined,
+        asignado_a: asignadoId,
       }
       if (isEdit) {
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync(base)
       } else {
-        await crear.mutateAsync(payload)
+        await crear.mutateAsync(base)
       }
       navigate('/coordinacion/tareas')
     } catch {
@@ -109,16 +119,14 @@ export default function TareaFormPage() {
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Asignado a</label>
-            <input
-              type="text"
-              value={asignadoId}
-              onChange={(e) => setAsignadoId(e.target.value)}
-              placeholder="ID de usuario"
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
+          <Combobox
+            label="Asignado a"
+            items={usuarioItems}
+            value={asignadoId}
+            onChange={setAsignadoId}
+            placeholder="Buscar usuario..."
+            isLoading={loadingUsuarios}
+          />
 
           <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">Fecha límite</label>

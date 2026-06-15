@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useEntregasPendientes } from '@/features/entregas-sin-corregir/hooks/useEntregasPendientes'
 import { EntregasTable } from '@/features/entregas-sin-corregir/components/EntregasTable'
 import { ExportButton } from '@/features/entregas-sin-corregir/components/ExportButton'
@@ -8,6 +8,25 @@ import { Card } from '@/shared/components/Card'
 export default function EntregasPendientesPage() {
   const [comisionFilter, setComisionFilter] = useState<string>('')
   const { query, exportMutation } = useEntregasPendientes(comisionFilter || undefined)
+
+  // ── Debug: log datos recibidos desde el backend ──────────────
+  useEffect(() => {
+    if (query.data) {
+      console.log('[EntregasPendientesPage] GET /api/entregas/pendientes →', query.data)
+    }
+  }, [query.data])
+
+  useEffect(() => {
+    if (query.error) {
+      console.error('[EntregasPendientesPage] Error al cargar entregas:', query.error)
+    }
+  }, [query.error])
+
+  useEffect(() => {
+    if (exportMutation.data) {
+      console.log('[EntregasPendientesPage] Export CSV completado')
+    }
+  }, [exportMutation.data])
 
   return (
     <div className="space-y-6">

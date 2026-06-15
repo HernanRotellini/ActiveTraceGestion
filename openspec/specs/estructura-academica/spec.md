@@ -10,6 +10,14 @@ The system SHALL provide CRUD operations for Carrera entities scoped to the auth
 - **WHEN** an ADMIN sends a POST to `/api/admin/carreras` with `{ "codigo": "TUPAD", "nombre": "Tecnicatura en Programación y Análisis de Datos" }`
 - **THEN** the system creates a new Carrera with `estado: "activa"` and returns 201 with the full record including `id`, `created_at`, `updated_at`
 
+#### Scenario: Create a new carrera with optional description
+- **WHEN** an ADMIN sends a POST to `/api/admin/carreras` with `{ "codigo": "TUPAD", "nombre": "Tecnicatura en Programación", "descripcion": "Nueva tecnicatura" }`
+- **THEN** the system creates a new Carrera with the provided `descripcion` and returns 201
+
+#### Scenario: Create a new carrera without description
+- **WHEN** an ADMIN sends a POST to `/api/admin/carreras` with `{ "codigo": "TUPAD", "nombre": "Tecnicatura" }` (no `descripcion`)
+- **THEN** the system creates a new Carrera with `descripcion: ""` and returns 201
+
 #### Scenario: Create carrera with duplicate codigo returns 409
 - **WHEN** an ADMIN sends a POST to `/api/admin/carreras` with a `codigo` that already exists in the same tenant
 - **THEN** the system returns 409 Conflict with an error message indicating the duplicate
@@ -25,6 +33,14 @@ The system SHALL provide CRUD operations for Carrera entities scoped to the auth
 #### Scenario: Update a carrera name
 - **WHEN** an ADMIN sends a PATCH to `/api/admin/carreras/{id}` with `{ "nombre": "New Name" }`
 - **THEN** the system updates the nombre field and returns the updated record
+
+#### Scenario: Update a carrera name and description
+- **WHEN** an ADMIN sends a PATCH to `/api/admin/carreras/{id}` with `{ "nombre": "New Name", "descripcion": "Updated description" }`
+- **THEN** the system updates both `nombre` and `descripcion` fields and returns the updated record
+
+#### Scenario: Update a carrera codigo
+- **WHEN** an ADMIN sends a PATCH to `/api/admin/carreras/{id}` with `{ "codigo": "NEW-CODE" }`
+- **THEN** the system updates the `codigo` field and returns the updated record
 
 #### Scenario: Toggle carrera to inactive
 - **WHEN** an ADMIN sends a PATCH to `/api/admin/carreras/{id}` with `{ "estado": "inactiva" }`
@@ -79,6 +95,14 @@ The system SHALL provide CRUD operations for Materia entities (tenant-scoped aca
 #### Scenario: List materias
 - **WHEN** an ADMIN sends a GET to `/api/admin/materias`
 - **THEN** the system returns all non-deleted materias in the current tenant
+
+#### Scenario: Update a materia name, codigo, and carga_horaria
+- **WHEN** an ADMIN sends a PATCH to `/api/admin/materias/{id}` with `{ "nombre": "New Name", "codigo": "NEW-CODE", "carga_horaria": 120 }`
+- **THEN** the system updates all provided fields and returns the updated record
+
+#### Scenario: Update materia codigo to an existing one returns 409
+- **WHEN** an ADMIN sends a PATCH to `/api/admin/materias/{id}` with a `codigo` that already exists in the same tenant
+- **THEN** the system returns 409 Conflict with a duplicate error message
 
 ### Requirement: Multi-tenant isolation
 Data from different tenants SHALL never be accessible across tenant boundaries.

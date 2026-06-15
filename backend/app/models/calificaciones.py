@@ -38,7 +38,12 @@ class Calificacion(TenantScopedMixin, Base):
     nota_textual: Mapped[str | None] = mapped_column(String(255), nullable=True)
     aprobado: Mapped[bool] = mapped_column(Boolean, nullable=False)
     origen: Mapped[OrigenCalificacion] = mapped_column(
-        Enum(OrigenCalificacion, name="origen_calificacion", create_constraint=True),
+        Enum(
+            OrigenCalificacion,
+            name="origen_calificacion",
+            create_constraint=True,
+            values_callable=lambda obj: [m.value for m in obj],
+        ),
         nullable=False,
     )
     importado_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

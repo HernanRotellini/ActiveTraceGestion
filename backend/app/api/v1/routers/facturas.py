@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
 from app.models.liquidaciones import EstadoFactura
-from app.models.permisos import FACTURAS_GESTIONAR
+from app.models.permisos import FACTURAS_GESTIONAR, LIQUIDACIONES_VER
 from app.schemas.liquidaciones import FacturaCreate, FacturaResponse, FacturaUpdate
 from app.services.auth import CurrentUser
 from app.services.factura_service import (
@@ -22,6 +22,7 @@ from app.services.factura_service import (
 router = APIRouter(prefix="/api/facturas", tags=["facturas"])
 
 FacturasGuard = Depends(require_permission(FACTURAS_GESTIONAR))
+FacturasVerGuard = Depends(require_permission(LIQUIDACIONES_VER))
 
 
 def _service(db: AsyncSession, current_user: CurrentUser) -> FacturaService:
@@ -52,7 +53,7 @@ async def create_factura(
 
 @router.get("", response_model=list[FacturaResponse])
 async def list_facturas(
-    _: CurrentUser = FacturasGuard,
+    _: CurrentUser = FacturasVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
     usuario_id: UUID | None = Query(default=None),
@@ -70,7 +71,7 @@ async def list_facturas(
 @router.get("/{factura_id}", response_model=FacturaResponse)
 async def get_factura(
     factura_id: UUID,
-    _: CurrentUser = FacturasGuard,
+    _: CurrentUser = FacturasVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> FacturaResponse:

@@ -5,9 +5,23 @@ import { Spinner } from '@/shared/components/Spinner'
 import { useAvisosList } from '@/features/avisos/hooks/useAvisos'
 import type { AvisosFilters } from '@/features/avisos/types'
 
+const SEVERIDAD_BADGES: Record<string, string> = {
+  Info: 'bg-blue-100 text-blue-700',
+  Advertencia: 'bg-yellow-100 text-yellow-700',
+  Critico: 'bg-red-100 text-red-700',
+}
+
 export default function AvisosListPage() {
   const [filters, setFilters] = useState<AvisosFilters>({ page: 1, limit: 20 })
-  const { data, isLoading } = useAvisosList(filters)
+  const { data, isLoading, error } = useAvisosList(filters)
+
+  if (error) {
+    return (
+      <Card className="p-12 text-center">
+        <p className="text-red-500">Error al cargar avisos: {(error as Error).message}</p>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -24,35 +38,29 @@ export default function AvisosListPage() {
       <Card className="p-4">
         <div className="flex flex-wrap gap-4">
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Estado</label>
+            <label className="block text-xs font-medium text-gray-600">Activo</label>
             <select
-              value={filters.estado ?? ''}
-              onChange={(e) => setFilters({ ...filters, estado: e.target.value || undefined, page: 1 })}
+              value={filters.activo ?? ''}
+              onChange={(e) => setFilters({ ...filters, activo: e.target.value || undefined, page: 1 })}
               className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Todos</option>
-              <option value="borrador">Borrador</option>
-              <option value="publicado">Publicado</option>
-              <option value="archivado">Archivado</option>
+              <option value="true">Activos</option>
+              <option value="false">Inactivos</option>
             </select>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Desde</label>
-            <input
-              type="date"
-              value={filters.fecha_desde ?? ''}
-              onChange={(e) => setFilters({ ...filters, fecha_desde: e.target.value || undefined, page: 1 })}
-              className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Hasta</label>
-            <input
-              type="date"
-              value={filters.fecha_hasta ?? ''}
-              onChange={(e) => setFilters({ ...filters, fecha_hasta: e.target.value || undefined, page: 1 })}
-              className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+            <label className="block text-xs font-medium text-gray-600">Severidad</label>
+            <select
+              value={filters.severidad ?? ''}
+              onChange={(e) => setFilters({ ...filters, severidad: e.target.value || undefined, page: 1 })}
+              className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">Todas</option>
+              <option value="Info">Info</option>
+              <option value="Advertencia">Advertencia</option>
+              <option value="Critico">Crítico</option>
+            </select>
           </div>
         </div>
       </Card>
@@ -61,26 +69,24 @@ export default function AvisosListPage() {
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : (
         <div className="space-y-4">
-          {data?.items.map((aviso) => (
+          {data?.items?.map((aviso) => (
             <Link key={aviso.id} to={`/coordinacion/avisos/${aviso.id}`}>
               <Card className="p-4 transition-shadow hover:shadow-md">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900">{aviso.titulo}</h3>
-                    <p className="mt-1 text-sm text-gray-500 line-clamp-2">{aviso.contenido}</p>
+                    <p className="mt-1 text-sm text-gray-500 line-clamp-2">{aviso.cuerpo}</p>
                   </div>
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                    aviso.estado === 'publicado' ? 'bg-green-100 text-green-700'
-                    : aviso.estado === 'borrador' ? 'bg-yellow-100 text-yellow-700'
-                    : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {aviso.estado}
+                  <span className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${SEVERIDAD_BADGES[aviso.severidad] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {aviso.severidad}
                   </span>
                 </div>
                 <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
-                  <span>{aviso.autor_nombre}</span>
-                  <span>{new Date(aviso.creado_en).toLocaleDateString()}</span>
-                  <span>Alcance: {aviso.scope}</span>
+                  <span>{new Date(aviso.created_at).toLocaleDateString()}</span>
+                  <span>Alcance: {aviso.alcance}</span>
+                  {aviso.requiere_ack && (
+                    <span className="font-medium text-amber-600">Requiere confirmación</span>
+                  )}
                 </div>
               </Card>
             </Link>

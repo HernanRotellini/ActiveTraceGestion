@@ -31,9 +31,9 @@ export interface Comentario {
 export interface TareaPayload {
   titulo: string
   descripcion: string
-  prioridad: Prioridad
-  asignado_id?: string
-  fecha_limite?: string
+  asignado_a: string
+  materia_id?: string
+  contexto_id?: string
 }
 
 export interface ComentarioPayload {

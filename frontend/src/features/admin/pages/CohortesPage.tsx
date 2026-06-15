@@ -11,6 +11,7 @@ export default function CohortesPage() {
   const [carreraId, setCarreraId] = useState('')
   const { data, isLoading } = useCohortes(carreraId || undefined)
   const crear = useCrearCohorte()
+  const actualizar = useActualizarCohorte()
   const [editId, setEditId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
   const [anio, setAnio] = useState('')
@@ -40,11 +41,11 @@ export default function CohortesPage() {
       return
     }
     try {
-      const payload: CohortePayload = { carrera_id: carreraId, nombre: nombre.trim(), anio: Number(anio) }
+      const vig_desde = `${anio}-01-01`
       if (editId) {
-        const actualizar = useActualizarCohorte(editId)
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync({ id: editId, nombre: nombre.trim(), anio: Number(anio) })
       } else {
+        const payload: CohortePayload = { carrera_id: carreraId, nombre: nombre.trim(), anio: Number(anio), vig_desde }
         await crear.mutateAsync(payload)
       }
       resetForm()
@@ -71,7 +72,7 @@ export default function CohortesPage() {
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">Seleccione una carrera</option>
-            {carreras?.items.map((c) => (
+            {carreras?.items?.map((c) => (
               <option key={c.id} value={c.id}>{c.nombre}</option>
             ))}
           </select>
@@ -129,7 +130,7 @@ export default function CohortesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data?.items.map((c) => (
+              {data?.items?.map((c) => (
                 <tr key={c.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{c.nombre}</td>
                   <td className="px-4 py-3 text-gray-600">{c.anio}</td>

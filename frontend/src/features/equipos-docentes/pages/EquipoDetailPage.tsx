@@ -98,7 +98,7 @@ export default function EquipoDetailPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => actualizarVigencia.mutate({ id: asig.id, payload: { desde: asig.desde, hasta: asig.activo ? new Date().toISOString() : undefined } })}
+                      onClick={() => actualizarVigencia.mutate({ id: asig.id, payload: { asignacion_id: asig.id, desde: asig.desde, hasta: asig.activo ? new Date().toISOString() : undefined } })}
                     >
                       {asig.activo ? 'Finalizar' : 'Reactivar'}
                     </Button>

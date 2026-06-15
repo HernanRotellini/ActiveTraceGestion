@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import COLOQUIOS_GESTIONAR, COLOQUIOS_RESERVAR
+from app.models.permisos import COLOQUIOS_GESTIONAR, COLOQUIOS_RESERVAR, COLOQUIOS_VER
 from app.schemas.coloquio import (
     AgendaResponse,
     AgendaReservaResponse,
@@ -31,11 +31,12 @@ router = APIRouter(prefix="/api/coloquios", tags=["coloquios"])
 
 GestionarGuard = Depends(require_permission(COLOQUIOS_GESTIONAR))
 ReservarGuard = Depends(require_permission(COLOQUIOS_RESERVAR))
+ColoquiosVerGuard = Depends(require_permission(COLOQUIOS_VER))
 
 
 @router.get("/metricas", response_model=MetricasResponse)
 async def panel_metricas(
-    _: CurrentUser = GestionarGuard,
+    _: CurrentUser = ColoquiosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> MetricasResponse:
@@ -70,7 +71,7 @@ async def crear_convocatoria(
 @router.get("", response_model=list[EvaluacionListResponse])
 async def listar_convocatorias(
     materia_id: UUID | None = None,
-    _: CurrentUser = GestionarGuard,
+    _: CurrentUser = ColoquiosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[EvaluacionListResponse]:
@@ -83,7 +84,7 @@ async def listar_convocatorias(
 @router.get("/{evaluacion_id}", response_model=EvaluacionResponse)
 async def detalle_convocatoria(
     evaluacion_id: UUID,
-    _: CurrentUser = GestionarGuard,
+    _: CurrentUser = ColoquiosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> EvaluacionResponse:
@@ -160,7 +161,7 @@ async def cancelar_reserva(
 @router.get("/{evaluacion_id}/reservas", response_model=list[ReservaResponse])
 async def listar_reservas(
     evaluacion_id: UUID,
-    _: CurrentUser = GestionarGuard,
+    _: CurrentUser = ColoquiosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[ReservaResponse]:
@@ -192,7 +193,7 @@ async def registrar_resultado(
 @router.get("/{evaluacion_id}/resultados", response_model=list[ResultadoResponse])
 async def consultar_resultados(
     evaluacion_id: UUID,
-    _: CurrentUser = GestionarGuard,
+    _: CurrentUser = ColoquiosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[ResultadoResponse]:
@@ -220,7 +221,7 @@ async def cerrar_convocatoria(
 
 @router.get("/admin/agenda", response_model=AgendaResponse)
 async def agenda_global(
-    _: CurrentUser = GestionarGuard,
+    _: CurrentUser = ColoquiosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> AgendaResponse:

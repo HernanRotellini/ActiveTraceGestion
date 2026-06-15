@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card } from '@/shared/components/Card'
 import { Spinner } from '@/shared/components/Spinner'
 import { Button } from '@/shared/components/Button'
@@ -6,22 +6,59 @@ import { Alert } from '@/shared/components/Alert'
 import { usePeriodosList, useCrearPeriodo, useActivarPeriodo, useDesactivarPeriodo } from '@/features/setup-cuatrimestre/hooks/usePeriodos'
 
 export default function SetupCuatrimestrePage() {
-  const { data, isLoading } = usePeriodosList()
+  const { data, isLoading, error } = usePeriodosList()
   const crearPeriodo = useCrearPeriodo()
   const activarPeriodo = useActivarPeriodo()
   const desactivarPeriodo = useDesactivarPeriodo()
+
+  // ── Debug: log datos recibidos desde el backend ──────────────
+  useEffect(() => {
+    if (data) {
+      console.log('[SetupCuatrimestrePage] GET /api/periodos-academicos →', data)
+    }
+  }, [data])
+
+  useEffect(() => {
+    if (error) {
+      console.error('[SetupCuatrimestrePage] Error al cargar períodos:', error)
+    }
+  }, [error])
+
+  useEffect(() => {
+    if (crearPeriodo.data) {
+      console.log('[SetupCuatrimestrePage] POST /api/periodos-academicos →', crearPeriodo.data)
+    }
+  }, [crearPeriodo.data])
+
+  useEffect(() => {
+    if (crearPeriodo.error) {
+      console.error('[SetupCuatrimestrePage] Error al crear período:', crearPeriodo.error)
+    }
+  }, [crearPeriodo.error])
+
+  useEffect(() => {
+    if (activarPeriodo.data) {
+      console.log('[SetupCuatrimestrePage] POST /api/periodos-academicos/{id}/activar →', activarPeriodo.data)
+    }
+  }, [activarPeriodo.data])
+
+  useEffect(() => {
+    if (desactivarPeriodo.data) {
+      console.log('[SetupCuatrimestrePage] POST /api/periodos-academicos/{id}/desactivar →', desactivarPeriodo.data)
+    }
+  }, [desactivarPeriodo.data])
 
   const [showForm, setShowForm] = useState(false)
   const [nombre, setNombre] = useState('')
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
-  const [error, setError] = useState('')
+  const [formError, setFormError] = useState('')
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setFormError('')
     if (!nombre.trim() || !fechaInicio || !fechaFin) {
-      setError('Complete todos los campos.')
+      setFormError('Complete todos los campos.')
       return
     }
     try {
@@ -31,7 +68,7 @@ export default function SetupCuatrimestrePage() {
       setFechaInicio('')
       setFechaFin('')
     } catch {
-      setError('Error al crear el período.')
+      setFormError('Error al crear el período.')
     }
   }
 
@@ -51,7 +88,7 @@ export default function SetupCuatrimestrePage() {
       {showForm && (
         <Card className="p-6">
           <form onSubmit={handleCrear} className="space-y-4">
-            {error && <Alert variant="error">{error}</Alert>}
+            {formError && <Alert variant="error">{formError}</Alert>}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">Nombre del período</label>
               <input
@@ -93,7 +130,7 @@ export default function SetupCuatrimestrePage() {
       )}
 
       <div className="space-y-4">
-        {data?.items.map((periodo) => (
+        {data?.items?.map((periodo) => (
           <Card key={periodo.id} className="p-4">
             <div className="flex items-center justify-between">
               <div>

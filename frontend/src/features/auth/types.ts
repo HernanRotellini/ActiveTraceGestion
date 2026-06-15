@@ -39,4 +39,8 @@ export interface MeResponse {
   user_id: string
   tenant_id: string
   roles: string[]
+  email: string | null
+  permissions: string[]
+  nombre: string | null
+  apellidos: string | null
 }

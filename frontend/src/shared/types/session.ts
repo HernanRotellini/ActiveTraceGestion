@@ -3,6 +3,9 @@ export interface SessionUser {
   tenant_id: string
   roles: string[]
   permissions?: string[]
+  email?: string | null
+  nombre?: string | null
+  apellidos?: string | null
 }
 
 export interface Session {

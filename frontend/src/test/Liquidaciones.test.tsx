@@ -57,15 +57,15 @@ describe('SalarioBaseForm', () => {
   it('renders form fields', () => {
     render(<SalarioBaseForm onSave={async () => {}} onCancel={() => {}} />)
     expect(screen.getByText('Rol *')).toBeInTheDocument()
-    expect(screen.getByText('Importe *')).toBeInTheDocument()
-    expect(screen.getByText('Vigencia desde *')).toBeInTheDocument()
+    expect(screen.getByText('Monto *')).toBeInTheDocument()
+    expect(screen.getByText('Desde *')).toBeInTheDocument()
     expect(screen.getByText('Crear')).toBeInTheDocument()
   })
 
   it('renders edit mode with values', () => {
     render(
       <SalarioBaseForm
-        salario={{ id: '1', rol: 'PROFESOR', importe: 50000, vigencia_desde: '2026-01-01', vigencia_hasta: '', activo: true }}
+        salario={{ id: '1', rol: 'PROFESOR', monto: 50000, desde: '2026-01-01', hasta: undefined, activo: true }}
         onSave={async () => {}}
         onCancel={() => {}}
       />,
@@ -77,7 +77,7 @@ describe('SalarioBaseForm', () => {
 describe('PlusForm', () => {
   it('renders plus form fields', () => {
     render(<PlusForm onSave={async () => {}} onCancel={() => {}} />)
-    expect(screen.getByText('Clave *')).toBeInTheDocument()
+    expect(screen.getByText('Grupo *')).toBeInTheDocument()
     expect(screen.getByText('Descripción *')).toBeInTheDocument()
   })
 })

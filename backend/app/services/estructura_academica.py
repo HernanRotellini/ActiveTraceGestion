@@ -3,6 +3,7 @@
 from datetime import date
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.estructura_academica import (
@@ -34,11 +35,11 @@ class EstructuraAcademicaService:
 
     # ── Carrera ──────────────────────────────────────────────
 
-    async def create_carrera(self, codigo: str, nombre: str) -> CarreraRepository:
+    async def create_carrera(self, codigo: str, nombre: str, descripcion: str | None = None) -> CarreraRepository:
         existing = await self._carreras.get_by_codigo(codigo)
         if existing is not None:
             raise DuplicateError(f"Carrera with codigo '{codigo}' already exists")
-        return await self._carreras.create(codigo=codigo, nombre=nombre)
+        return await self._carreras.create(codigo=codigo, nombre=nombre, descripcion=descripcion)
 
     async def get_carrera(self, carrera_id: UUID):
         return await self._carreras.get(carrera_id)
@@ -46,8 +47,8 @@ class EstructuraAcademicaService:
     async def list_carreras(self):
         return await self._carreras.list()
 
-    async def update_carrera(self, carrera_id: UUID, *, nombre: str | None = None, estado: str | None = None):
-        record = await self._carreras.update(carrera_id, nombre=nombre, estado=estado)
+    async def update_carrera(self, carrera_id: UUID, *, nombre: str | None = None, codigo: str | None = None, descripcion: str | None = None, estado: str | None = None):
+        record = await self._carreras.update(carrera_id, nombre=nombre, codigo=codigo, descripcion=descripcion, estado=estado)
         if record is None:
             raise NotFoundError(f"Carrera with id '{carrera_id}' not found")
         return record
@@ -76,6 +77,12 @@ class EstructuraAcademicaService:
             return await self._cohortes.list_by_carrera(carrera_id)
         return await self._cohortes.list()
 
+    async def update_cohorte(self, cohorte_id: UUID, *, nombre: str | None = None, anio: int | None = None, vig_desde: date | None = None, vig_hasta: date | None = None):
+        record = await self._cohortes.update(cohorte_id, nombre=nombre, anio=anio, vig_desde=vig_desde, vig_hasta=vig_hasta)
+        if record is None:
+            raise NotFoundError(f"Cohorte with id '{cohorte_id}' not found")
+        return record
+
     async def delete_cohorte(self, cohorte_id: UUID) -> bool:
         return await self._cohortes.soft_delete(cohorte_id)
 
@@ -90,11 +97,35 @@ class EstructuraAcademicaService:
     async def get_materia(self, materia_id: UUID):
         return await self._materias.get(materia_id)
 
-    async def list_materias(self):
-        return await self._materias.list()
+    async def list_materias(self, carrera_id: UUID | None = None, cohorte_id: UUID | None = None):
+        from app.models.estructura_academica import Carrera, Cohorte as CohorteModel, Materia as MateriaModel
 
-    async def update_materia(self, materia_id: UUID, *, nombre: str | None = None, estado: str | None = None):
-        record = await self._materias.update(materia_id, nombre=nombre, estado=estado)
+        query = (
+            select(MateriaModel, Carrera.nombre, CohorteModel.nombre)
+            .outerjoin(Carrera, MateriaModel.carrera_id == Carrera.id)
+            .outerjoin(CohorteModel, MateriaModel.cohorte_id == CohorteModel.id)
+            .where(MateriaModel.tenant_id == self.tenant_id, MateriaModel.deleted_at.is_(None))
+        )
+        if carrera_id is not None:
+            query = query.where(MateriaModel.carrera_id == carrera_id)
+        if cohorte_id is not None:
+            query = query.where(MateriaModel.cohorte_id == cohorte_id)
+
+        result = await self.session.execute(query)
+        rows = result.all()
+        materias = []
+        for materia, carrera_nombre, cohorte_nombre in rows:
+            materia.carrera_nombre = carrera_nombre
+            materia.cohorte_nombre = cohorte_nombre
+            materias.append(materia)
+        return materias
+
+    async def update_materia(self, materia_id: UUID, *, nombre: str | None = None, codigo: str | None = None, carga_horaria: int | None = None, estado: str | None = None):
+        if codigo is not None:
+            existing = await self._materias.get_by_codigo(codigo)
+            if existing is not None and existing.id != materia_id:
+                raise DuplicateError(f"Materia with codigo '{codigo}' already exists")
+        record = await self._materias.update(materia_id, nombre=nombre, codigo=codigo, carga_horaria=carga_horaria, estado=estado)
         if record is None:
             raise NotFoundError(f"Materia with id '{materia_id}' not found")
         return record

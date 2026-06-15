@@ -14,6 +14,7 @@ from app.schemas.estructura_academica import (
     CarreraUpdate,
     CohorteCreate,
     CohorteResponse,
+    CohorteUpdate,
     MateriaCreate,
     MateriaResponse,
     MateriaUpdate,
@@ -31,6 +32,10 @@ router = APIRouter(prefix="/api/admin", tags=["estructura-academica"])
 EstructuraGuard = Depends(require_permission(ESTRUCTURA_GESTIONAR))
 
 
+def wrap_list(items: list) -> dict:
+    return {"items": items, "total": len(items)}
+
+
 # ── Carreras ────────────────────────────────────────────────────
 
 
@@ -43,21 +48,21 @@ async def create_carrera(
 ) -> CarreraResponse:
     service = EstructuraAcademicaService(db, current_user.tenant_id)
     try:
-        carrera = await service.create_carrera(codigo=body.codigo, nombre=body.nombre)
+        carrera = await service.create_carrera(codigo=body.codigo, nombre=body.nombre, descripcion=body.descripcion)
     except DuplicateError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     return CarreraResponse.model_validate(carrera)
 
 
-@router.get("/carreras", response_model=list[CarreraResponse])
+@router.get("/carreras")
 async def list_carreras(
     _: CurrentUser = EstructuraGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
-) -> list[CarreraResponse]:
+) -> dict:
     service = EstructuraAcademicaService(db, current_user.tenant_id)
     carreras = await service.list_carreras()
-    return [CarreraResponse.model_validate(c) for c in carreras]
+    return wrap_list([CarreraResponse.model_validate(c) for c in carreras])
 
 
 @router.get("/carreras/{carrera_id}", response_model=CarreraResponse)
@@ -84,7 +89,7 @@ async def update_carrera(
 ) -> CarreraResponse:
     service = EstructuraAcademicaService(db, current_user.tenant_id)
     try:
-        carrera = await service.update_carrera(carrera_id, nombre=body.nombre, estado=body.estado)
+        carrera = await service.update_carrera(carrera_id, nombre=body.nombre, codigo=body.codigo, descripcion=body.descripcion, estado=body.estado)
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     return CarreraResponse.model_validate(carrera)
@@ -129,16 +134,16 @@ async def create_cohorte(
     return CohorteResponse.model_validate(cohorte)
 
 
-@router.get("/cohortes", response_model=list[CohorteResponse])
+@router.get("/cohortes")
 async def list_cohortes(
     carrera_id: UUID | None = Query(default=None),
     _: CurrentUser = EstructuraGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
-) -> list[CohorteResponse]:
+) -> dict:
     service = EstructuraAcademicaService(db, current_user.tenant_id)
     cohortes = await service.list_cohortes(carrera_id=carrera_id)
-    return [CohorteResponse.model_validate(c) for c in cohortes]
+    return wrap_list([CohorteResponse.model_validate(c) for c in cohortes])
 
 
 @router.get("/cohortes/{cohorte_id}", response_model=CohorteResponse)
@@ -168,6 +173,28 @@ async def delete_cohorte(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cohorte not found")
 
 
+@router.patch("/cohortes/{cohorte_id}", response_model=CohorteResponse)
+async def update_cohorte(
+    cohorte_id: UUID,
+    body: CohorteUpdate,
+    _: CurrentUser = EstructuraGuard,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = CurrentUserDep,
+) -> CohorteResponse:
+    service = EstructuraAcademicaService(db, current_user.tenant_id)
+    try:
+        cohorte = await service.update_cohorte(
+            cohorte_id,
+            nombre=body.nombre,
+            anio=body.anio,
+            vig_desde=body.vig_desde,
+            vig_hasta=body.vig_hasta,
+        )
+    except NotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    return CohorteResponse.model_validate(cohorte)
+
+
 # ── Materias ────────────────────────────────────────────────────
 
 
@@ -186,15 +213,17 @@ async def create_materia(
     return MateriaResponse.model_validate(materia)
 
 
-@router.get("/materias", response_model=list[MateriaResponse])
+@router.get("/materias")
 async def list_materias(
+    carrera_id: UUID | None = Query(default=None),
+    cohorte_id: UUID | None = Query(default=None),
     _: CurrentUser = EstructuraGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
-) -> list[MateriaResponse]:
+) -> dict:
     service = EstructuraAcademicaService(db, current_user.tenant_id)
-    materias = await service.list_materias()
-    return [MateriaResponse.model_validate(m) for m in materias]
+    materias = await service.list_materias(carrera_id=carrera_id, cohorte_id=cohorte_id)
+    return wrap_list([MateriaResponse.model_validate(m) for m in materias])
 
 
 @router.get("/materias/{materia_id}", response_model=MateriaResponse)
@@ -221,9 +250,11 @@ async def update_materia(
 ) -> MateriaResponse:
     service = EstructuraAcademicaService(db, current_user.tenant_id)
     try:
-        materia = await service.update_materia(materia_id, nombre=body.nombre, estado=body.estado)
+        materia = await service.update_materia(materia_id, nombre=body.nombre, codigo=body.codigo, carga_horaria=body.carga_horaria, estado=body.estado)
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except DuplicateError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     return MateriaResponse.model_validate(materia)
 
 

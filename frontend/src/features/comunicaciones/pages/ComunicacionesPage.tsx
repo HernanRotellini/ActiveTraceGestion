@@ -8,7 +8,7 @@ import { EnvioForm } from '@/features/comunicaciones/components/EnvioForm'
 import { TrackingTimeline } from '@/features/comunicaciones/components/TrackingTimeline'
 
 interface FormValues {
-  comisionId: string
+  materiaId: string
   tipo: string
   asunto: string
   cuerpo: string
@@ -41,7 +41,7 @@ export default function ComunicacionesPage() {
     setError(null)
     try {
       const result = await enviarMutation.mutateAsync({
-        comision_id: values.comisionId,
+        materia_id: values.materiaId,
         tipo: values.tipo,
         asunto: values.asunto,
         cuerpo: values.cuerpo,

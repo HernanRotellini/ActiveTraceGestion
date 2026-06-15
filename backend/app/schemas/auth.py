@@ -38,6 +38,10 @@ class CurrentUserResponse(BaseModel):
     user_id: str
     tenant_id: str
     roles: list[str]
+    email: str | None = None
+    permissions: list[str] = Field(default_factory=list)
+    nombre: str | None = None
+    apellidos: str | None = None
 
 
 class TotpEnrollmentResponse(BaseModel):

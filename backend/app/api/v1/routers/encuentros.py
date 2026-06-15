@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import ENCUENTROS_GESTIONAR
+from app.models.permisos import ENCUENTROS_GESTIONAR, ENCUENTROS_VER
 from app.schemas.encuentro import (
     HtmlBlockResponse,
     InstanciaEncuentroCreate,
@@ -22,13 +22,14 @@ from app.services.encuentro_service import EncuentroError, EncuentroService
 
 router = APIRouter(prefix="/api/v1/encuentros", tags=["encuentros"])
 
-Guard = Depends(require_permission(ENCUENTROS_GESTIONAR))
+EncuentrosGestionarGuard = Depends(require_permission(ENCUENTROS_GESTIONAR))
+EncuentrosVerGuard = Depends(require_permission(ENCUENTROS_VER))
 
 
 @router.post("/slots", response_model=SlotEncuentroResponse, status_code=status.HTTP_201_CREATED)
 async def crear_slot(
     body: SlotEncuentroCreate,
-    _: CurrentUser = Guard,
+    _: CurrentUser = EncuentrosGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> SlotEncuentroResponse:
@@ -54,7 +55,7 @@ async def crear_slot(
 @router.get("/slots", response_model=list[SlotEncuentroResponse])
 async def listar_slots(
     materia_id: UUID | None = Query(None),
-    _: CurrentUser = Guard,
+    _: CurrentUser = EncuentrosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[SlotEncuentroResponse]:
@@ -67,7 +68,7 @@ async def listar_slots(
 @router.post("/instancias", response_model=InstanciaEncuentroResponse, status_code=status.HTTP_201_CREATED)
 async def crear_instancia_unica(
     body: InstanciaEncuentroCreate,
-    _: CurrentUser = Guard,
+    _: CurrentUser = EncuentrosGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> InstanciaEncuentroResponse:
@@ -89,7 +90,7 @@ async def crear_instancia_unica(
 @router.get("/instancias", response_model=list[InstanciaEncuentroResponse])
 async def listar_instancias(
     materia_id: UUID | None = Query(None),
-    _: CurrentUser = Guard,
+    _: CurrentUser = EncuentrosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[InstanciaEncuentroResponse]:
@@ -103,7 +104,7 @@ async def listar_instancias(
 async def actualizar_instancia(
     instancia_id: UUID,
     body: InstanciaEncuentroUpdate,
-    _: CurrentUser = Guard,
+    _: CurrentUser = EncuentrosGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> InstanciaEncuentroResponse:
@@ -125,7 +126,7 @@ async def actualizar_instancia(
 @router.get("/instancias/{instancia_id}/html", response_model=HtmlBlockResponse)
 async def generar_html(
     instancia_id: UUID,
-    _: CurrentUser = Guard,
+    _: CurrentUser = EncuentrosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> HtmlBlockResponse:
@@ -144,7 +145,7 @@ async def admin_listar_instancias(
     fecha_desde: date | None = Query(None),
     fecha_hasta: date | None = Query(None),
     estado: str | None = Query(None),
-    _: CurrentUser = Guard,
+    _: CurrentUser = EncuentrosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[InstanciaEncuentroResponse]:

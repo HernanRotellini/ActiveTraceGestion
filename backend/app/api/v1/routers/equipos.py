@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.config import Settings
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import EQUIPOS_ASIGNAR
+from app.models.permisos import EQUIPOS_ASIGNAR, EQUIPOS_GESTIONAR, EQUIPOS_VER
 from app.schemas.asignaciones import AsignacionResponse
 from app.schemas.equipos import (
     AsignacionMasivaRequest,
@@ -23,6 +23,8 @@ from app.services.equipos import EquipoService, NotFoundError
 router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 
 EquiposGuard = Depends(require_permission(EQUIPOS_ASIGNAR))
+EquiposVerGuard = Depends(require_permission(EQUIPOS_VER))
+EquiposGestionarGuard = Depends(require_permission(EQUIPOS_GESTIONAR))
 
 settings = Settings()
 
@@ -51,7 +53,7 @@ async def list_mis_equipos(
 @router.post("/asignacion-masiva", response_model=list[AsignacionResponse], status_code=status.HTTP_201_CREATED)
 async def asignacion_masiva(
     body: AsignacionMasivaRequest,
-    _: CurrentUser = EquiposGuard,
+    _: CurrentUser = EquiposGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[AsignacionResponse]:
@@ -73,7 +75,7 @@ async def asignacion_masiva(
 @router.post("/clonar", response_model=list[AsignacionResponse], status_code=status.HTTP_201_CREATED)
 async def clone_equipo(
     body: CloneEquipoRequest,
-    _: CurrentUser = EquiposGuard,
+    _: CurrentUser = EquiposGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[AsignacionResponse]:
@@ -92,7 +94,7 @@ async def clone_equipo(
 @router.patch("/vigencia", response_model=VigenciaUpdateResponse)
 async def update_vigencia(
     body: VigenciaUpdateRequest,
-    _: CurrentUser = EquiposGuard,
+    _: CurrentUser = EquiposGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> VigenciaUpdateResponse:
@@ -112,7 +114,7 @@ async def export_equipo_csv(
     materia_id: UUID = Query(...),
     carrera_id: UUID = Query(...),
     cohorte_id: UUID = Query(...),
-    _: CurrentUser = EquiposGuard,
+    _: CurrentUser = EquiposVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> StreamingResponse:

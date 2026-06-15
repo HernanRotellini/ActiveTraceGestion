@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import CALIFICACIONES_IMPORTAR
+from app.models.permisos import CALIFICACIONES_IMPORTAR, CALIFICACIONES_VER
 from app.schemas.calificaciones import (
     CalificacionListResponse,
     CalificacionResponse,
@@ -31,6 +31,7 @@ from app.services.lms_parser import LmsParseError
 router = APIRouter(prefix="/api/calificaciones", tags=["calificaciones"])
 
 CalifGuard = Depends(require_permission(CALIFICACIONES_IMPORTAR))
+CalifVerGuard = Depends(require_permission(CALIFICACIONES_VER))
 
 
 # ── Import Preview ──────────────────────────────────────────────
@@ -146,7 +147,7 @@ async def completion_report(
 async def get_umbral(
     materia_id: UUID = Query(...),
     asignacion_id: UUID = Query(...),
-    _: CurrentUser = CalifGuard,
+    _: CurrentUser = CalifVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> UmbralMateriaResponse:
@@ -200,7 +201,7 @@ async def set_umbral(
 @router.get("", response_model=CalificacionListResponse)
 async def list_calificaciones(
     materia_id: UUID = Query(...),
-    _: CurrentUser = CalifGuard,
+    _: CurrentUser = CalifVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> CalificacionListResponse:

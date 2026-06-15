@@ -30,6 +30,7 @@ COPY --from=builder /install /usr/local
 
 # Copiar código de la aplicación
 COPY app/ app/
+COPY scripts/ scripts/
 COPY alembic.ini .
 COPY alembic/ alembic/
 COPY tests/ tests/

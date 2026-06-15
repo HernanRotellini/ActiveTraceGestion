@@ -11,26 +11,26 @@ interface SalarioBaseFormProps {
 
 export function SalarioBaseForm({ salario, onSave, onCancel }: SalarioBaseFormProps) {
   const [rol, setRol] = useState(salario?.rol ?? '')
-  const [importe, setImporte] = useState(salario?.importe.toString() ?? '')
-  const [vigenciaDesde, setVigenciaDesde] = useState(salario?.vigencia_desde ?? '')
-  const [vigenciaHasta, setVigenciaHasta] = useState(salario?.vigencia_hasta ?? '')
+  const [monto, setMonto] = useState(salario?.monto.toString() ?? '')
+  const [desde, setDesde] = useState(salario?.desde ?? '')
+  const [hasta, setHasta] = useState(salario?.hasta ?? '')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!rol.trim() || !importe || !vigenciaDesde) {
-      setError('Rol, importe y vigencia desde son obligatorios.')
+    if (!rol.trim() || !monto || !desde) {
+      setError('Rol, monto y desde son obligatorios.')
       return
     }
     setSaving(true)
     try {
       await onSave({
         rol: rol.trim(),
-        importe: Number(importe),
-        vigencia_desde: vigenciaDesde,
-        vigencia_hasta: vigenciaHasta || undefined,
+        monto: Number(monto),
+        desde,
+        hasta: hasta || undefined,
       })
     } catch {
       setError('Error al guardar el salario base.')
@@ -54,11 +54,11 @@ export function SalarioBaseForm({ salario, onSave, onCancel }: SalarioBaseFormPr
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Importe *</label>
+          <label className="block text-sm font-medium text-gray-700">Monto *</label>
           <input
             type="number"
-            value={importe}
-            onChange={(e) => setImporte(e.target.value)}
+            value={monto}
+            onChange={(e) => setMonto(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
             min={0}
@@ -66,21 +66,21 @@ export function SalarioBaseForm({ salario, onSave, onCancel }: SalarioBaseFormPr
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Vigencia desde *</label>
+          <label className="block text-sm font-medium text-gray-700">Desde *</label>
           <input
             type="date"
-            value={vigenciaDesde}
-            onChange={(e) => setVigenciaDesde(e.target.value)}
+            value={desde}
+            onChange={(e) => setDesde(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Vigencia hasta</label>
+          <label className="block text-sm font-medium text-gray-700">Hasta</label>
           <input
             type="date"
-            value={vigenciaHasta}
-            onChange={(e) => setVigenciaHasta(e.target.value)}
+            value={hasta}
+            onChange={(e) => setHasta(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>

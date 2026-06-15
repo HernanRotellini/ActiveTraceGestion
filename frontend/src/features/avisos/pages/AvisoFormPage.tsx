@@ -3,9 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Button } from '@/shared/components/Button'
 import { Alert } from '@/shared/components/Alert'
+import { Combobox } from '@/shared/components/Combobox'
 import { useAviso, useCrearAviso, useActualizarAviso } from '@/features/avisos/hooks/useAvisos'
 import { Spinner } from '@/shared/components/Spinner'
-import type { AvisoScope } from '@/features/avisos/types'
+import { useUsuarios } from '@/features/admin/hooks/useAdmin'
+import type { AvisoScope, AvisoAlcance, AvisoPayload } from '@/features/avisos/types'
 
 const SCOPES: { value: AvisoScope; label: string }[] = [
   { value: 'todos', label: 'Todos los usuarios' },
@@ -29,12 +31,29 @@ export default function AvisoFormPage() {
   const [scopeValor, setScopeValor] = useState('')
   const [error, setError] = useState('')
 
+  const { data: usuariosResp, isLoading: loadingUsuarios } = useUsuarios()
+
+  // Map API alcance back to form scope
+  function alcanceToScope(alcance: string): AvisoScope {
+    const map: Record<string, AvisoScope> = {
+      Global: 'todos',
+      PorRol: 'por_rol',
+      PorMateria: 'por_comision',
+      PorCohorte: 'todos',
+    }
+    return map[alcance] ?? 'todos'
+  }
+  const usuarioItems = (usuariosResp?.items ?? []).map((u) => ({
+    value: u.id,
+    label: `${u.nombre} (${u.email})`,
+  }))
+
   useState(() => {
     if (aviso) {
       setTitulo(aviso.titulo)
-      setContenido(aviso.contenido)
-      setScope(aviso.scope)
-      setScopeValor(aviso.scope_valor ?? '')
+      setContenido(aviso.contenido ?? aviso.cuerpo ?? '')
+      setScope(alcanceToScope(aviso.scope ?? aviso.alcance ?? ''))
+      setScopeValor(aviso.scope_valor ?? aviso.materia_id ?? aviso.rol_destino ?? '')
     }
   })
 
@@ -45,8 +64,30 @@ export default function AvisoFormPage() {
       setError('El título y el contenido son obligatorios.')
       return
     }
+
+    // Map form scope/scope_valor to API alcance + target fields
+    const alcanceMap: Record<string, AvisoAlcance> = {
+      todos: 'Global',
+      por_rol: 'PorRol',
+      por_comision: 'PorMateria',
+      por_usuario: 'Global', // fallback
+    }
+
+    const payload: AvisoPayload = {
+      titulo: titulo.trim(),
+      cuerpo: contenido.trim(),
+      alcance: alcanceMap[scope] ?? 'Global',
+      inicio_en: new Date().toISOString(),
+    }
+
+    if (scope === 'por_rol' && scopeValor) {
+      payload.rol_destino = scopeValor
+    }
+    if (scope === 'por_comision' && scopeValor) {
+      payload.materia_id = scopeValor
+    }
+
     try {
-      const payload = { titulo: titulo.trim(), contenido: contenido.trim(), scope, scope_valor: scopeValor || undefined }
       if (isEdit) {
         await actualizar.mutateAsync(payload)
       } else {
@@ -107,15 +148,27 @@ export default function AvisoFormPage() {
             </select>
           </div>
 
-          {scope !== 'todos' && (
+          {scope !== 'todos' && scope === 'por_usuario' && (
+            <Combobox
+              label="Usuario"
+              items={usuarioItems}
+              value={scopeValor}
+              onChange={setScopeValor}
+              placeholder="Buscar usuario..."
+              isLoading={loadingUsuarios}
+            />
+          )}
+
+          {scope !== 'todos' && scope !== 'por_usuario' && (
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                {scope === 'por_rol' ? 'Rol' : scope === 'por_comision' ? 'Comisión ID' : 'Usuario ID'}
+                {scope === 'por_rol' ? 'Rol' : 'Comisión ID'}
               </label>
               <input
                 type="text"
                 value={scopeValor}
                 onChange={(e) => setScopeValor(e.target.value)}
+                placeholder={scope === 'por_rol' ? 'Ej: PROFESOR, ALUMNO' : 'ID de comisión'}
                 className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>

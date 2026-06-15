@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/Button'
 import { Alert } from '@/shared/components/Alert'
+import { Combobox } from '@/shared/components/Combobox'
+import { useUsuarios } from '@/features/admin/hooks/useAdmin'
 import type { Factura, FacturaPayload } from '@/features/liquidaciones/types'
 
 interface FacturaFormProps {
@@ -16,6 +18,12 @@ export function FacturaForm({ factura, onSave, onCancel }: FacturaFormProps) {
   const [observaciones, setObservaciones] = useState(factura?.observaciones ?? '')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const { data: usuariosResp, isLoading: loadingUsuarios } = useUsuarios()
+  const usuarioItems = (usuariosResp?.items ?? []).map((u) => ({
+    value: u.id,
+    label: `${u.nombre} (${u.email})`,
+  }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,16 +51,14 @@ export function FacturaForm({ factura, onSave, onCancel }: FacturaFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <Alert variant="error">{error}</Alert>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Docente ID *</label>
-          <input
-            type="text"
-            value={docenteId}
-            onChange={(e) => setDocenteId(e.target.value)}
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            required
-          />
-        </div>
+        <Combobox
+          label="Docente *"
+          items={usuarioItems}
+          value={docenteId}
+          onChange={setDocenteId}
+          placeholder="Buscar docente..."
+          isLoading={loadingUsuarios}
+        />
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Período *</label>
           <input

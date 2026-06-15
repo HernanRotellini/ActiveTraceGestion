@@ -37,37 +37,37 @@ export interface LiquidacionFilters {
 export interface SalarioBase {
   id: string
   rol: string
-  importe: number
-  vigencia_desde: string
-  vigencia_hasta?: string
+  monto: number
+  desde: string
+  hasta?: string
   activo: boolean
 }
 
 export interface SalarioBasePayload {
   rol: string
-  importe: number
-  vigencia_desde: string
-  vigencia_hasta?: string
+  monto: number
+  desde: string
+  hasta?: string
 }
 
 export interface Plus {
   id: string
-  clave: string
+  grupo: string
   rol: string
   descripcion: string
-  importe: number
-  vigencia_desde: string
-  vigencia_hasta?: string
+  monto: number
+  desde: string
+  hasta?: string
   activo: boolean
 }
 
 export interface PlusPayload {
-  clave: string
+  grupo: string
   rol: string
   descripcion: string
-  importe: number
-  vigencia_desde: string
-  vigencia_hasta?: string
+  monto: number
+  desde: string
+  hasta?: string
 }
 
 export interface Factura {

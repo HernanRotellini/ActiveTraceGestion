@@ -25,10 +25,11 @@ export function useCrearCarrera() {
   })
 }
 
-export function useActualizarCarrera(id: string) {
+export function useActualizarCarrera() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: Partial<CarreraPayload>) => api.actualizarCarrera(id, payload),
+    mutationFn: ({ id, ...payload }: { id: string } & Partial<CarreraPayload>) =>
+      api.actualizarCarrera(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['carreras'] }),
   })
 }
@@ -58,10 +59,11 @@ export function useCrearCohorte() {
   })
 }
 
-export function useActualizarCohorte(id: string) {
+export function useActualizarCohorte() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: Partial<CohortePayload>) => api.actualizarCohorte(id, payload),
+    mutationFn: ({ id, ...payload }: { id: string } & Partial<CohortePayload>) =>
+      api.actualizarCohorte(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cohortes'] }),
   })
 }
@@ -82,10 +84,11 @@ export function useCrearMateria() {
   })
 }
 
-export function useActualizarMateria(id: string) {
+export function useActualizarMateria() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: Partial<MateriaPayload>) => api.actualizarMateria(id, payload),
+    mutationFn: ({ id, ...payload }: { id: string } & Partial<MateriaPayload>) =>
+      api.actualizarMateria(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['materias'] }),
   })
 }
@@ -106,10 +109,11 @@ export function useCrearUsuario() {
   })
 }
 
-export function useActualizarUsuario(id: string) {
+export function useActualizarUsuario() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: Partial<UsuarioAdminPayload>) => api.actualizarUsuario(id, payload),
+    mutationFn: ({ id, ...payload }: { id: string } & Partial<UsuarioAdminPayload>) =>
+      api.actualizarUsuario(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['usuarios-admin'] }),
   })
 }

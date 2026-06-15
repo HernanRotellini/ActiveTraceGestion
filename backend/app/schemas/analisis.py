@@ -1,5 +1,6 @@
 """Schemas Pydantic para análisis de calificaciones y reportes."""
 
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -106,4 +107,23 @@ class MonitorResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     items: list[MonitorItem]
+    total: int
+
+
+class EntregaPendienteResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    entrega_id: UUID
+    alumno_id: UUID
+    alumno_nombre: str
+    actividad: str
+    materia: str
+    fecha_entrega: datetime
+    dias_pendiente: int
+
+
+class EntregasPendientesResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[EntregaPendienteResponse]
     total: int

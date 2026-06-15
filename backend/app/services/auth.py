@@ -49,6 +49,7 @@ class CurrentUser:
     user_id: UUID
     tenant_id: UUID
     roles: list[str]
+    email: str | None = None
     impersonator_id: UUID | None = None
 
 
@@ -151,7 +152,10 @@ class AuthService:
         user = await AuthUserRepository(self.session, tenant_id).get_active_by_id(user_id)
         if user is None or not user.is_active:
             raise AuthenticationError("invalid access token")
-        return CurrentUser(user_id=user.id, tenant_id=user.tenant_id, roles=list(user.roles))
+        return CurrentUser(
+            user_id=user.id, tenant_id=user.tenant_id, roles=list(user.roles),
+            email=claims.get("email", user.email),
+        )
 
     async def enroll_totp(self, current_user: CurrentUser) -> tuple[str, str]:
         secret = generate_totp_secret()
@@ -223,7 +227,10 @@ class AuthService:
         await RefreshSessionRepository(self.session, user.tenant_id).create(
             user.id, hash_token(refresh_token), datetime.now(UTC) + timedelta(days=30)
         )
-        access_token = create_access_token(user_id=user.id, tenant_id=user.tenant_id, roles=list(user.roles), settings=self.settings)
+        access_token = create_access_token(
+            user_id=user.id, tenant_id=user.tenant_id, roles=list(user.roles),
+            email=user.email, settings=self.settings,
+        )
         await self.session.commit()
         return LoginResult(access_token=access_token, refresh_token=refresh_token)
 

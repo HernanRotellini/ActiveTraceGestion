@@ -1,11 +1,15 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/shared/components/Button'
 import { Input } from '@/shared/components/Input'
+import { Combobox } from '@/shared/components/Combobox'
+import { fetchMaterias } from '@/features/comunicaciones/services/comunicaciones'
+import type { MateriaOption } from '@/features/comunicaciones/types/comunicaciones'
 
 const envioSchema = z.object({
-  comisionId: z.string().min(1, 'La comisión es requerida'),
+  materiaId: z.string().min(1, 'La materia es requerida'),
   tipo: z.string().min(1, 'El tipo es requerido'),
   asunto: z.string().min(1, 'El asunto es requerido'),
   cuerpo: z.string().min(1, 'El cuerpo es requerido'),
@@ -25,6 +29,8 @@ export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend }
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<EnvioFormValues>({
     resolver: zodResolver(envioSchema),
@@ -33,15 +39,31 @@ export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend }
     },
   })
 
+  const materiaId = watch('materiaId')
+
+  const { data: materias = [], isLoading: loadingMaterias } = useQuery({
+    queryKey: ['materias-comunicaciones'],
+    queryFn: fetchMaterias,
+    staleTime: 60_000,
+  })
+
+  const materiaItems: { value: string; label: string }[] = materias.map((m: MateriaOption) => ({
+    value: m.id,
+    label: `${m.codigo ? `[${m.codigo}] ` : ''}${m.nombre}`,
+  }))
+
   return (
     <form className="space-y-4">
       <h2 className="text-lg font-semibold">Nueva Comunicación</h2>
 
-      <Input
-        label="ID de Comisión"
-        placeholder="ej: COM-001"
-        error={errors.comisionId?.message}
-        {...register('comisionId')}
+      <Combobox
+        label="Materia"
+        items={materiaItems}
+        value={materiaId ?? ''}
+        onChange={(val) => setValue('materiaId', val, { shouldValidate: true })}
+        placeholder="Buscar materia..."
+        error={errors.materiaId?.message}
+        isLoading={loadingMaterias}
       />
 
       <div className="space-y-1">

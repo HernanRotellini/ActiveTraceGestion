@@ -25,6 +25,9 @@ export function useChallenge2fa() {
         user_id: me.user_id,
         tenant_id: me.tenant_id,
         roles: me.roles,
+        permissions: me.permissions,
+        nombre: me.nombre,
+        apellidos: me.apellidos,
       })
 
       const redirectTo = sessionStorage.getItem('redirectTo') ?? '/'

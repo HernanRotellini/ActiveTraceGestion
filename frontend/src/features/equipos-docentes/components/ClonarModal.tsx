@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/Button'
 import { Card } from '@/shared/components/Card'
+import { Combobox } from '@/shared/components/Combobox'
 import { useClonarEquipo } from '@/features/equipos-docentes/hooks/useEquipos'
-import type { ClonePayload } from '@/features/equipos-docentes/types'
+import { useMaterias } from '@/features/admin/hooks/useAdmin'
 
 interface ClonarModalProps {
   origenEquipoId: string
@@ -13,6 +14,12 @@ export function ClonarModal({ origenEquipoId, onClose }: ClonarModalProps) {
   const [destinoMateriaId, setDestinoMateriaId] = useState('')
   const [periodo, setPeriodo] = useState('')
   const mutation = useClonarEquipo()
+
+  const { data: materiasResp, isLoading: loadingMaterias } = useMaterias()
+  const materiaItems = (materiasResp?.items ?? []).map((m) => ({
+    value: m.id,
+    label: `${m.nombre} (${m.codigo})${m.carrera_nombre ? ` - ${m.carrera_nombre}` : ''}`,
+  }))
 
   const handleSubmit = async () => {
     if (!destinoMateriaId.trim() || !periodo.trim()) return
@@ -30,16 +37,14 @@ export function ClonarModal({ origenEquipoId, onClose }: ClonarModalProps) {
         <h2 className="mb-4 text-lg font-semibold text-gray-900">Clonar Equipo</h2>
 
         <div className="space-y-4">
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Materia destino</label>
-            <input
-              type="text"
-              value={destinoMateriaId}
-              onChange={(e) => setDestinoMateriaId(e.target.value)}
-              placeholder="ID de materia destino"
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
+          <Combobox
+            label="Materia destino"
+            items={materiaItems}
+            value={destinoMateriaId}
+            onChange={setDestinoMateriaId}
+            placeholder="Buscar materia destino..."
+            isLoading={loadingMaterias}
+          />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">Período</label>
             <input

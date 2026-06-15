@@ -10,31 +10,31 @@ interface PlusFormProps {
 }
 
 export function PlusForm({ plus, onSave, onCancel }: PlusFormProps) {
-  const [clave, setClave] = useState(plus?.clave ?? '')
+  const [grupo, setGrupo] = useState(plus?.grupo ?? '')
   const [rol, setRol] = useState(plus?.rol ?? '')
   const [descripcion, setDescripcion] = useState(plus?.descripcion ?? '')
-  const [importe, setImporte] = useState(plus?.importe.toString() ?? '')
-  const [vigenciaDesde, setVigenciaDesde] = useState(plus?.vigencia_desde ?? '')
-  const [vigenciaHasta, setVigenciaHasta] = useState(plus?.vigencia_hasta ?? '')
+  const [monto, setMonto] = useState(plus?.monto.toString() ?? '')
+  const [desde, setDesde] = useState(plus?.desde ?? '')
+  const [hasta, setHasta] = useState(plus?.hasta ?? '')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!clave.trim() || !rol.trim() || !descripcion.trim() || !importe || !vigenciaDesde) {
-      setError('Clave, rol, descripción, importe y vigencia son obligatorios.')
+    if (!grupo.trim() || !rol.trim() || !descripcion.trim() || !monto || !desde) {
+      setError('Grupo, rol, descripción, monto y desde son obligatorios.')
       return
     }
     setSaving(true)
     try {
       await onSave({
-        clave: clave.trim(),
+        grupo: grupo.trim(),
         rol: rol.trim(),
         descripcion: descripcion.trim(),
-        importe: Number(importe),
-        vigencia_desde: vigenciaDesde,
-        vigencia_hasta: vigenciaHasta || undefined,
+        monto: Number(monto),
+        desde,
+        hasta: hasta || undefined,
       })
     } catch {
       setError('Error al guardar el plus.')
@@ -48,11 +48,11 @@ export function PlusForm({ plus, onSave, onCancel }: PlusFormProps) {
       {error && <Alert variant="error">{error}</Alert>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Clave *</label>
+          <label className="block text-sm font-medium text-gray-700">Grupo *</label>
           <input
             type="text"
-            value={clave}
-            onChange={(e) => setClave(e.target.value)}
+            value={grupo}
+            onChange={(e) => setGrupo(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           />
@@ -78,11 +78,11 @@ export function PlusForm({ plus, onSave, onCancel }: PlusFormProps) {
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Importe *</label>
+          <label className="block text-sm font-medium text-gray-700">Monto *</label>
           <input
             type="number"
-            value={importe}
-            onChange={(e) => setImporte(e.target.value)}
+            value={monto}
+            onChange={(e) => setMonto(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
             min={0}
@@ -90,21 +90,21 @@ export function PlusForm({ plus, onSave, onCancel }: PlusFormProps) {
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Vigencia desde *</label>
+          <label className="block text-sm font-medium text-gray-700">Desde *</label>
           <input
             type="date"
-            value={vigenciaDesde}
-            onChange={(e) => setVigenciaDesde(e.target.value)}
+            value={desde}
+            onChange={(e) => setDesde(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Vigencia hasta</label>
+          <label className="block text-sm font-medium text-gray-700">Hasta</label>
           <input
             type="date"
-            value={vigenciaHasta}
-            onChange={(e) => setVigenciaHasta(e.target.value)}
+            value={hasta}
+            onChange={(e) => setHasta(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>

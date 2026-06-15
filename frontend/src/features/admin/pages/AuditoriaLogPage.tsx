@@ -51,7 +51,7 @@ export default function AuditoriaLogPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {data?.items.map((entry) => (
+                {data?.items?.map((entry) => (
                   <tr key={entry.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                       {new Date(entry.fecha_hora).toLocaleString()}

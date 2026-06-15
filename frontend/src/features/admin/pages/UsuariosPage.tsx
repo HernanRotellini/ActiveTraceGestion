@@ -14,12 +14,20 @@ export default function UsuariosPage() {
   const [filters, setFilters] = useState<UsuarioAdminFilters>({ page: 1, limit: 20 })
   const { data, isLoading } = useUsuarios(filters)
   const crear = useCrearUsuario()
+  const actualizar = useActualizarUsuario()
   const [editId, setEditId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
+  const [apellidos, setApellidos] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [dni, setDni] = useState('')
+  const [cuil, setCuil] = useState('')
   const [cbu, setCbu] = useState('')
+  const [telefono, setTelefono] = useState('')
+  const [direccion, setDireccion] = useState('')
+  const [legajo, setLegajo] = useState('')
+  const [banco, setBanco] = useState('')
+  const [facturador, setFacturador] = useState(false)
   const [roles, setRoles] = useState<string[]>([])
   const [showForm, setShowForm] = useState(false)
   const [error, setError] = useState('')
@@ -29,10 +37,17 @@ export default function UsuariosPage() {
 
   const resetForm = () => {
     setNombre('')
+    setApellidos('')
     setEmail('')
     setPassword('')
     setDni('')
+    setCuil('')
     setCbu('')
+    setTelefono('')
+    setDireccion('')
+    setLegajo('')
+    setBanco('')
+    setFacturador(false)
     setRoles([])
     setEditId(null)
     setShowForm(false)
@@ -42,9 +57,16 @@ export default function UsuariosPage() {
   const handleEdit = (u: UsuarioAdmin) => {
     setEditId(u.id)
     setNombre(u.nombre)
+    setApellidos(u.apellidos ?? '')
     setEmail(u.email)
     setDni(u.dni ?? '')
+    setCuil(u.cuil ?? '')
     setCbu(u.cbu ?? '')
+    setTelefono(u.telefono ?? '')
+    setDireccion(u.direccion ?? '')
+    setLegajo(u.legajo ?? '')
+    setBanco(u.banco ?? '')
+    setFacturador(u.facturador ?? false)
     setRoles(u.roles)
     setPassword('')
     setShowForm(true)
@@ -57,26 +79,26 @@ export default function UsuariosPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!nombre.trim() || !email.trim() || roles.length === 0) {
-      setError('Nombre, email y al menos un rol son obligatorios.')
-      return
-    }
-    if (!editId && !password.trim()) {
-      setError('La contraseña es obligatoria para nuevos usuarios.')
+    if (!nombre.trim() || !apellidos.trim() || !email.trim()) {
+      setError('Nombre, apellidos y email son obligatorios.')
       return
     }
     try {
       const payload: UsuarioAdminPayload = {
         nombre: nombre.trim(),
+        apellidos: apellidos.trim(),
         email: email.trim(),
-        password: password.trim() || 'temp123',
         dni: dni.trim() || undefined,
+        cuil: cuil.trim() || undefined,
         cbu: cbu.trim() || undefined,
-        roles,
+        telefono: telefono.trim() || undefined,
+        direccion: direccion.trim() || undefined,
+        legajo: legajo.trim() || undefined,
+        banco: banco.trim() || undefined,
+        facturador,
       }
       if (editId) {
-        const actualizar = useActualizarUsuario(editId)
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync({ id: editId, ...payload })
       } else {
         await crear.mutateAsync(payload)
       }
@@ -161,6 +183,16 @@ export default function UsuariosPage() {
                 />
               </div>
               <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">Apellidos *</label>
+                <input
+                  type="text"
+                  value={apellidos}
+                  onChange={(e) => setApellidos(e.target.value)}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">Email *</label>
                 <input
                   type="email"
@@ -172,13 +204,12 @@ export default function UsuariosPage() {
               </div>
               {!editId && (
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">Contraseña *</label>
+                  <label className="block text-sm font-medium text-gray-700">Contraseña</label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    required={!editId}
                   />
                 </div>
               )}
@@ -194,6 +225,15 @@ export default function UsuariosPage() {
                     />
                   </div>
                   <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">CUIL</label>
+                    <input
+                      type="text"
+                      value={cuil}
+                      onChange={(e) => setCuil(e.target.value)}
+                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">CBU</label>
                     <input
                       type="text"
@@ -201,6 +241,53 @@ export default function UsuariosPage() {
                       onChange={(e) => setCbu(e.target.value)}
                       className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+                    <input
+                      type="text"
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value)}
+                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700">Dirección</label>
+                    <input
+                      type="text"
+                      value={direccion}
+                      onChange={(e) => setDireccion(e.target.value)}
+                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Legajo</label>
+                    <input
+                      type="text"
+                      value={legajo}
+                      onChange={(e) => setLegajo(e.target.value)}
+                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Banco</label>
+                    <input
+                      type="text"
+                      value={banco}
+                      onChange={(e) => setBanco(e.target.value)}
+                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 pt-6 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={facturador}
+                        onChange={(e) => setFacturador(e.target.checked)}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      Facturador
+                    </label>
                   </div>
                 </>
               )}
@@ -246,7 +333,7 @@ export default function UsuariosPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data?.items.map((u) => (
+              {data?.items?.map((u) => (
                 <tr key={u.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{u.nombre}</td>
                   <td className="px-4 py-3 text-gray-600">{u.email}</td>
@@ -262,8 +349,8 @@ export default function UsuariosPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${u.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {u.activo ? 'Sí' : 'No'}
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${u.estado === 'activo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {u.estado === 'activo' ? 'Sí' : 'No'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
