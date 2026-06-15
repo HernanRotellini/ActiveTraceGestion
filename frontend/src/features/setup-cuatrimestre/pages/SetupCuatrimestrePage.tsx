@@ -93,7 +93,7 @@ export default function SetupCuatrimestrePage() {
       )}
 
       <div className="space-y-4">
-        {data?.items.map((periodo) => (
+        {data?.items?.map((periodo) => (
           <Card key={periodo.id} className="p-4">
             <div className="flex items-center justify-between">
               <div>

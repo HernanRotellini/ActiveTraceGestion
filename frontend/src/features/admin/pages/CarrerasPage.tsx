@@ -42,7 +42,7 @@ export default function CarrerasPage() {
       return
     }
     try {
-      const payload: CarreraPayload = { nombre: nombre.trim(), codigo: codigo.trim(), descripcion: descripcion.trim() || undefined }
+      const payload: CarreraPayload = { nombre: nombre.trim(), codigo: codigo.trim() }
       if (editId) {
         const actualizar = useActualizarCarrera(editId)
         await actualizar.mutateAsync(payload)
@@ -121,7 +121,7 @@ export default function CarrerasPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data?.items.map((c) => (
+              {data?.items?.map((c) => (
                 <tr key={c.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{c.nombre}</td>
                   <td className="px-4 py-3 text-gray-600">{c.codigo}</td>

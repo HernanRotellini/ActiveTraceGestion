@@ -1,11 +1,14 @@
 """Router de autenticación."""
 
+import hashlib
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
+from app.models.usuarios_asignaciones import Usuario
 from app.schemas.auth import (
     CurrentUserResponse,
     ForgotPasswordRequest,
@@ -20,6 +23,7 @@ from app.schemas.auth import (
     TwoFactorChallengeResponse,
 )
 from app.services.auth import AuthService, AuthenticationError, CurrentUser, InactiveUserError, RateLimitExceededError
+from app.services.authorization import AuthorizationService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -46,10 +50,36 @@ async def login(payload: LoginRequest, request: Request, db: AsyncSession = Depe
 
 
 @router.get("/me", response_model=CurrentUserResponse)
-async def me(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUserResponse:
+async def me(
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> CurrentUserResponse:
+    authz = AuthorizationService(db)
+    perms = await authz.effective_permissions(current_user.roles, current_user.tenant_id)
+
+    nombre: str | None = None
+    apellidos: str | None = None
+    email_hash = hashlib.sha256(current_user.email.lower().encode("utf-8")).hexdigest() if current_user.email else None
+    if email_hash:
+        result = await db.execute(
+            select(Usuario.nombre, Usuario.apellidos).where(
+                Usuario.email_hash == email_hash,
+                Usuario.tenant_id == current_user.tenant_id,
+            )
+        )
+        row = result.one_or_none()
+        if row is not None:
+            nombre = row.nombre
+            apellidos = row.apellidos
+
     return CurrentUserResponse(
-        user_id=str(current_user.user_id), tenant_id=str(current_user.tenant_id), roles=current_user.roles,
+        user_id=str(current_user.user_id),
+        tenant_id=str(current_user.tenant_id),
+        roles=current_user.roles,
         email=current_user.email,
+        permissions=sorted(perms),
+        nombre=nombre,
+        apellidos=apellidos,
     )
 
 

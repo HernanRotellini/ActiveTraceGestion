@@ -12,7 +12,7 @@ Requiere que las migraciones ya se hayan ejecutado (alembic upgrade head).
 
 import asyncio
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, time, timezone
 from uuid import UUID, uuid4
 
 # ── Windows event loop fix ───────────────────────────────────────
@@ -31,10 +31,10 @@ PASSWORD = "test123"  # misma password para todos los usuarios de prueba
 
 ROLES_DOMINIO = ["ALUMNO", "TUTOR", "PROFESOR", "COORDINADOR", "NEXO", "ADMIN", "FINANZAS"]
 
-NOW = datetime.utcnow()
+NOW = datetime.now(timezone.utc)
 PERIODO_ACTUAL = f"{NOW.year}-{NOW.month:02d}"
 PERIODO_ANTERIOR = (
-    f"{NOW.year - 1}-{NOW.month + 6:02d}" if NOW.month > 6 else f"{NOW.year - 1}-{NOW.month + 6:02d}"
+    f"{NOW.year}-{NOW.month - 6:02d}" if NOW.month > 6 else f"{NOW.year - 1}-{NOW.month + 6:02d}"
 )
 
 # ── Usuarios de prueba ───────────────────────────────────────────
@@ -82,6 +82,16 @@ async def main() -> None:
         RolLiquidacion,
         SegmentoLiquidacion,
     )
+    from app.models.tarea import Tarea, ComentarioTarea, EstadoTarea
+    from app.models.coloquio import Evaluacion, TurnoEvaluacion, ReservaEvaluacion, TipoEvaluacion, EstadoEvaluacion, EstadoReserva
+    from app.models.encuentro import SlotEncuentro, InstanciaEncuentro, DiaSemana as DiaSemanaEnc, EstadoInstancia
+    from app.models.guardia import Guardia, DiaSemana as DiaSemanaGuardia, EstadoGuardia
+    from app.models.aviso import Aviso, AlcanceAviso, SeveridadAviso
+    from app.models.comunicacion import Comunicacion, EstadoComunicacion
+    from app.models.programas import ProgramaMateria, FechaAcademica, TipoFechaAcademica
+    from app.models.audit_log import AuditLog
+    from app.models.hilo_mensaje import HiloMensaje
+    from app.models.mensaje_interno import MensajeInterno
 
     # ── Init engine ──────────────────────────────────────────────
     settings = Settings()  # type: ignore[call-arg]
@@ -665,6 +675,361 @@ async def main() -> None:
         )
         await session.flush()
         print("  ✓ Factura de ejemplo (profesor facturante)")
+
+        # ================================================================
+        # 10. TAREAS INTERNAS
+        # ================================================================
+        print("\n── Creando tareas internas ──")
+
+        tarea_specs = [
+            ("Revisar trabajos prácticos", "Revisar los TP entregados por los alumnos de Programación I", EstadoTarea.PENDIENTE, "profesor@test.com", "coordinador@test.com", materias_sist[0]),
+            ("Preparar material didáctico", "Preparar la clase sobre JOINs en SQL", EstadoTarea.EN_PROGRESO, "profesor2@test.com", "coordinador@test.com", materias_sist[1]),
+            ("Actualizar planilla de notas", "Pasar las notas del parcial a la planilla maestra", EstadoTarea.RESUELTA, "tutor@test.com", "coordinador@test.com", materias_sist[0]),
+            ("Reunión de equipo docente", "Coordinar reunión con el equipo de Sistemas", EstadoTarea.PENDIENTE, "profesor@test.com", "admin@test.com", None),
+            ("Actualizar programa de Contabilidad", "Revisar y actualizar el programa de Contabilidad I", EstadoTarea.CANCELADA, "profesor3@test.com", "coordinador@test.com", materias_cont[0]),
+        ]
+
+        tareas_ids: list[UUID] = []
+        for titulo, descripcion, estado, asignado_email, asig_por_email, materia in tarea_specs:
+            t = Tarea(
+                tenant_id=TENANT_SEED_UUID,
+                titulo=titulo,
+                descripcion=descripcion,
+                estado=estado,
+                asignado_a=usuario_map[asignado_email],
+                asignado_por=usuario_map[asig_por_email],
+                materia_id=materia.id if materia else None,
+            )
+            session.add(t)
+            await session.flush()
+            tareas_ids.append(t.id)
+
+        # Comentarios en la primera tarea
+        for texto, autor_email in [
+            ("Revisé los primeros 5 TP, están aprobados", "profesor@test.com"),
+            ("Completé la revisión de todos los TP del grupo A", "profesor@test.com"),
+        ]:
+            session.add(ComentarioTarea(
+                tenant_id=TENANT_SEED_UUID,
+                tarea_id=tareas_ids[0],
+                autor_id=usuario_map[autor_email],
+                texto=texto,
+            ))
+
+        await session.flush()
+        print(f"  ✓ {len(tarea_specs)} tareas, 2 comentarios")
+
+        # ================================================================
+        # 11. EVALUACIONES / COLOQUIOS
+        # ================================================================
+        print("\n── Creando evaluaciones y coloquios ──")
+
+        coloquio = Evaluacion(
+            tenant_id=TENANT_SEED_UUID,
+            materia_id=materias_sist[0].id,
+            cohorte_id=cohorte_2026_sist.id,
+            tipo=TipoEvaluacion.COLOQUIO,
+            instancia="Coloquio Final - Julio 2026",
+            estado=EstadoEvaluacion.ACTIVA,
+        )
+        session.add(coloquio)
+        await session.flush()
+
+        turno_coloquio = TurnoEvaluacion(
+            tenant_id=TENANT_SEED_UUID,
+            evaluacion_id=coloquio.id,
+            fecha=date(2026, 7, 15),
+            hora_inicio=time(9, 0),
+            hora_fin=time(12, 0),
+            cupo_maximo=30,
+            cupo_restante=20,
+        )
+        session.add(turno_coloquio)
+
+        eval_parcial = Evaluacion(
+            tenant_id=TENANT_SEED_UUID,
+            materia_id=materias_sist[1].id,
+            cohorte_id=cohorte_2026_sist.id,
+            tipo=TipoEvaluacion.PARCIAL,
+            instancia="Primer Parcial - Base de Datos I",
+            estado=EstadoEvaluacion.CERRADA,
+        )
+        session.add(eval_parcial)
+        await session.flush()
+
+        for alumno_email in alumnos_emails[:5]:
+            session.add(ReservaEvaluacion(
+                tenant_id=TENANT_SEED_UUID,
+                evaluacion_id=coloquio.id,
+                turno_id=turno_coloquio.id,
+                alumno_id=usuario_map[alumno_email],
+                estado=EstadoReserva.ACTIVA,
+            ))
+
+        await session.flush()
+        print("  ✓ 2 evaluaciones, 5 reservas de coloquio")
+
+        # ================================================================
+        # 12. ENCUENTROS Y GUARDIAS
+        # ================================================================
+        print("\n── Creando encuentros y guardias ──")
+
+        asignacion_prof = (
+            await session.execute(
+                __import__("sqlalchemy").select(Asignacion).where(
+                    Asignacion.tenant_id == TENANT_SEED_UUID,
+                    Asignacion.rol == "PROFESOR",
+                    Asignacion.materia_id == materias_sist[0].id,
+                )
+            )
+        ).scalars().first()
+
+        slot = SlotEncuentro(
+            tenant_id=TENANT_SEED_UUID,
+            asignacion_id=asignacion_prof.id,
+            materia_id=materias_sist[0].id,
+            titulo="Clase de Programación I - Lunes",
+            dia_semana=DiaSemanaEnc.LUNES,
+            hora=time(18, 0),
+            fecha_inicio=date(2026, 3, 1),
+            cant_semanas=16,
+            meet_url="https://meet.google.com/abc-defg-hij",
+            vig_desde=datetime(2026, 3, 1, tzinfo=timezone.utc),
+            vig_hasta=datetime(2026, 7, 1, tzinfo=timezone.utc),
+        )
+        session.add(slot)
+        await session.flush()
+
+        session.add(InstanciaEncuentro(
+            tenant_id=TENANT_SEED_UUID,
+            slot_id=slot.id,
+            materia_id=materias_sist[0].id,
+            fecha=date(2026, 6, 15),
+            hora=time(18, 0),
+            titulo="Clase 24: Repaso general",
+            estado=EstadoInstancia.PROGRAMADO,
+            meet_url="https://meet.google.com/abc-defg-hij",
+        ))
+
+        session.add(InstanciaEncuentro(
+            tenant_id=TENANT_SEED_UUID,
+            slot_id=slot.id,
+            materia_id=materias_sist[0].id,
+            fecha=date(2026, 4, 10),
+            hora=time(18, 0),
+            titulo="Clase 8: Estructuras de control",
+            estado=EstadoInstancia.REALIZADO,
+            video_url="https://drive.google.com/file/d/xyz",
+            comentario="Buena participación de los alumnos",
+        ))
+
+        session.add(Guardia(
+            tenant_id=TENANT_SEED_UUID,
+            asignacion_id=asignacion_prof.id,
+            materia_id=materias_sist[0].id,
+            carrera_id=carrera_sistemas.id,
+            cohorte_id=cohorte_2026_sist.id,
+            dia=DiaSemanaGuardia.VIERNES,
+            horario="16:00 - 18:00",
+            estado=EstadoGuardia.PENDIENTE,
+            comentarios="Guardia de consultas previa al parcial",
+        ))
+
+        session.add(Guardia(
+            tenant_id=TENANT_SEED_UUID,
+            asignacion_id=asignacion_prof.id,
+            materia_id=materias_sist[1].id,
+            carrera_id=carrera_sistemas.id,
+            cohorte_id=cohorte_2026_sist.id,
+            dia=DiaSemanaGuardia.MARTES,
+            horario="14:00 - 16:00",
+            estado=EstadoGuardia.REALIZADA,
+            comentarios="Asistieron 5 alumnos",
+        ))
+
+        await session.flush()
+        print("  ✓ 1 slot encuentro, 2 instancias, 2 guardias")
+
+        # ================================================================
+        # 13. AVISOS
+        # ================================================================
+        print("\n── Creando avisos ──")
+
+        avisos = [
+            (AlcanceAviso.GLOBAL, SeveridadAviso.INFO, "Inscripciones abiertas", "Inscripciones para el próximo cuatrimestre ya están abiertas.", None, None),
+            (AlcanceAviso.POR_ROL, SeveridadAviso.ADVERTENCIA, "Cierre de actas próximo", "El cierre de actas del cuatrimestre vence el 31/07.", "PROFESOR", None),
+            (AlcanceAviso.POR_MATERIA, SeveridadAviso.INFO, "Coloquio programado", "El coloquio final de Programación I será el 15/07.", None, materias_sist[0].id),
+            (AlcanceAviso.GLOBAL, SeveridadAviso.CRITICO, "Corte de sistema programado", "El sistema estará fuera de línea el 01/07 de 2:00 a 6:00.", None, None),
+            (AlcanceAviso.POR_ROL, SeveridadAviso.INFO, "Nueva funcionalidad disponible", "Ya pueden cargar actas digitales desde el módulo de calificaciones.", "TUTOR", None),
+        ]
+
+        for alcance, severidad, titulo, cuerpo, rol_destino, materia_id in avisos:
+            session.add(Aviso(
+                tenant_id=TENANT_SEED_UUID,
+                alcance=alcance,
+                severidad=severidad,
+                titulo=titulo,
+                cuerpo=cuerpo,
+                rol_destino=rol_destino,
+                materia_id=materia_id,
+                activo=True,
+                inicio_en=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                fin_en=datetime(2026, 12, 31, tzinfo=timezone.utc),
+                requiere_ack=True,
+            ))
+
+        await session.flush()
+        print(f"  ✓ {len(avisos)} avisos creados")
+
+        # ================================================================
+        # 14. COMUNICACIONES
+        # ================================================================
+        print("\n── Creando comunicaciones ──")
+
+        for enviado_por_email, materia, destinatario, asunto, cuerpo, estado, enviado_at in [
+            ("coordinador@test.com", materias_sist[0], "profesor@test.com", "Recordatorio: cierre de notas", "Por favor cerrar las notas del parcial antes del viernes.", EstadoComunicacion.PENDIENTE, None),
+            ("profesor@test.com", materias_sist[0], "alumno1@test.com", "Consulta sobre TP", "Su TP Integrador tiene observaciones pendientes.", EstadoComunicacion.ENVIADO, datetime.now(timezone.utc) - timedelta(days=2)),
+            ("tutor@test.com", materias_sist[1], "alumno2@test.com", "Inasistencias", "Se registraron 3 inasistencias consecutivas en BD I.", EstadoComunicacion.ENVIADO, datetime.now(timezone.utc) - timedelta(days=5)),
+            ("admin@test.com", materias_sist[0], "profesor@test.com,profesor2@test.com", "Comunicado general", "Recordar completar las planillas antes del 30/06.", EstadoComunicacion.PENDIENTE, None),
+        ]:
+            session.add(Comunicacion(
+                tenant_id=TENANT_SEED_UUID,
+                enviado_por_id=usuario_map[enviado_por_email],
+                materia_id=materia.id,
+                destinatario=destinatario,
+                asunto=asunto,
+                cuerpo=cuerpo,
+                estado=estado,
+                enviado_at=enviado_at,
+            ))
+
+        await session.flush()
+        print("  ✓ 4 comunicaciones creadas")
+
+        # ================================================================
+        # 15. PROGRAMAS DE MATERIA
+        # ================================================================
+        print("\n── Creando programas de materia ──")
+
+        for materia in [materias_sist[0], materias_sist[1], materias_cont[0]]:
+            session.add(ProgramaMateria(
+                tenant_id=TENANT_SEED_UUID,
+                materia_id=materia.id,
+                carrera_id=carrera_sistemas.id if materia in materias_sist else carrera_contador.id,
+                cohorte_id=cohorte_2026_sist.id if materia in materias_sist else cohorte_2026_cont.id,
+                titulo=f"Programa {materia.nombre} - 2026",
+                referencia_archivo=f"programas/{materia.codigo}_2026.pdf",
+            ))
+
+        await session.flush()
+        print("  ✓ 3 programas de materia")
+
+        # ================================================================
+        # 16. FECHAS ACADÉMICAS
+        # ================================================================
+        print("\n── Creando fechas académicas ──")
+
+        fechas_specs = [
+            (materias_sist[0], cohorte_2026_sist, TipoFechaAcademica.PARCIAL, 1, date(2026, 4, 20), "Primer Parcial"),
+            (materias_sist[0], cohorte_2026_sist, TipoFechaAcademica.PARCIAL, 2, date(2026, 6, 22), "Segundo Parcial"),
+            (materias_sist[0], cohorte_2026_sist, TipoFechaAcademica.TP, 1, date(2026, 5, 15), "TP Integrador"),
+            (materias_sist[1], cohorte_2026_sist, TipoFechaAcademica.PARCIAL, 1, date(2026, 4, 25), "Primer Parcial"),
+            (materias_sist[1], cohorte_2026_sist, TipoFechaAcademica.COLOQUIO, 1, date(2026, 7, 10), "Coloquio Final"),
+        ]
+
+        for materia, cohorte, tipo, numero, fecha, titulo in fechas_specs:
+            session.add(FechaAcademica(
+                tenant_id=TENANT_SEED_UUID,
+                materia_id=materia.id,
+                cohorte_id=cohorte.id,
+                tipo=tipo,
+                numero=numero,
+                periodo=PERIODO_ACTUAL,
+                fecha=fecha,
+                titulo=titulo,
+            ))
+
+        await session.flush()
+        print(f"  ✓ {len(fechas_specs)} fechas académicas")
+
+        # ================================================================
+        # 17. AUDIT LOG
+        # ================================================================
+        print("\n── Creando entradas de auditoría ──")
+
+        audit_entries = [
+            ("admin@test.com", "auth.login", "Inicio de sesión exitoso", None),
+            ("coordinador@test.com", "calificaciones.importar", "Importación de calificaciones desde Moodle", materias_sist[0].id),
+            ("profesor@test.com", "calificaciones.actualizar", "Actualización de nota para alumno alumno1@test.com", materias_sist[0].id),
+            ("nexo@test.com", "usuarios.crear", "Creación de nuevo usuario alumno", None),
+            ("admin@test.com", "configuracion.actualizar", "Actualización de configuración del tenant", None),
+            ("finanzas@test.com", "liquidaciones.cerrar", "Cierre de liquidación del período", None),
+            ("coordinador@test.com", "materias.asignar", "Asignación de profesor a materia", materias_sist[2].id),
+            ("tutor@test.com", "comunicacion.enviar", "Envío de comunicación a alumno", materias_sist[1].id),
+        ]
+
+        for actor_email, accion, detalle_msg, materia_id in audit_entries:
+            session.add(AuditLog(
+                tenant_id=TENANT_SEED_UUID,
+                actor_id=auth_user_map[actor_email],
+                materia_id=materia_id,
+                accion=accion,
+                detalle={"mensaje": detalle_msg, "origen": "seed"},
+                filas_afectadas=1,
+                ip="127.0.0.1",
+                user_agent="seed-script/1.0",
+            ))
+
+        await session.flush()
+        print(f"  ✓ {len(audit_entries)} entradas de auditoría")
+
+        # ================================================================
+        # 18. MENSAJES INTERNOS
+        # ================================================================
+        print("\n── Creando mensajes internos ──")
+
+        hilo_1 = HiloMensaje(
+            tenant_id=TENANT_SEED_UUID,
+            asunto="Revisión de planillas de examen",
+            participantes_ids=[str(usuario_map["coordinador@test.com"]), str(usuario_map["profesor@test.com"])],
+        )
+        session.add(hilo_1)
+        await session.flush()
+
+        for remitente_email, cuerpo in [
+            ("coordinador@test.com", "Carlos, ¿podrías revisar las planillas de examen de Programación I antes del viernes?"),
+            ("profesor@test.com", "Sí, las tengo casi listas. Las termino mañana y las subo al sistema."),
+            ("coordinador@test.com", "Perfecto, avisame cuando estén listas para dar el ok."),
+        ]:
+            session.add(MensajeInterno(
+                hilo_id=hilo_1.id,
+                remitente_id=usuario_map[remitente_email],
+                cuerpo=cuerpo,
+            ))
+
+        hilo_2 = HiloMensaje(
+            tenant_id=TENANT_SEED_UUID,
+            asunto="Novedades sobre la cohorte 2026",
+            participantes_ids=[str(usuario_map["admin@test.com"]), str(usuario_map["coordinador@test.com"]), str(usuario_map["nexo@test.com"])],
+        )
+        session.add(hilo_2)
+        await session.flush()
+
+        for remitente_email, cuerpo in [
+            ("admin@test.com", "La cohorte 2026 de Sistemas ya tiene todos los cupos completos. Necesitamos coordinar los horarios."),
+            ("nexo@test.com", "Confirmado. Ya estamos gestionando los asignaciones docentes."),
+        ]:
+            session.add(MensajeInterno(
+                hilo_id=hilo_2.id,
+                remitente_id=usuario_map[remitente_email],
+                cuerpo=cuerpo,
+            ))
+
+        hilo_1.ultimo_mensaje_at = datetime.now(timezone.utc)
+        hilo_2.ultimo_mensaje_at = datetime.now(timezone.utc)
+
+        await session.flush()
+        print("  ✓ 2 hilos, 5 mensajes internos")
 
         # ================================================================
         # FINAL

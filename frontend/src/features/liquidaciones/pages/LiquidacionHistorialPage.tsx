@@ -25,7 +25,7 @@ export default function LiquidacionHistorialPage() {
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : (
         <div className="space-y-4">
-          {data?.items.map((liq) => (
+          {data?.items?.map((liq) => (
             <Card key={liq.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div>

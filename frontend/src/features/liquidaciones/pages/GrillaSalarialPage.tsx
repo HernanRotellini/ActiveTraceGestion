@@ -96,9 +96,9 @@ export default function GrillaSalarialPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-gray-600">Rol</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-600">Importe</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Vigencia desde</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Vigencia hasta</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600">Monto</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600">Desde</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600">Hasta</th>
                   <th className="px-4 py-3 text-center font-medium text-gray-600">Activo</th>
                   <th className="px-4 py-3" />
                 </tr>
@@ -107,9 +107,9 @@ export default function GrillaSalarialPage() {
                 {salarios?.map((s) => (
                   <tr key={s.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">{s.rol}</td>
-                    <td className="px-4 py-3 text-right">${s.importe.toLocaleString()}</td>
-                    <td className="px-4 py-3">{s.vigencia_desde}</td>
-                    <td className="px-4 py-3">{s.vigencia_hasta ?? '-'}</td>
+                    <td className="px-4 py-3 text-right">${s.monto.toLocaleString()}</td>
+                    <td className="px-4 py-3">{s.desde}</td>
+                    <td className="px-4 py-3">{s.hasta ?? '-'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${s.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                         {s.activo ? 'Sí' : 'No'}
@@ -138,7 +138,7 @@ export default function GrillaSalarialPage() {
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Clave</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600">Grupo</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600">Rol</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600">Descripción</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-600">Importe</th>
@@ -150,11 +150,11 @@ export default function GrillaSalarialPage() {
               <tbody className="divide-y divide-gray-100">
                 {pluses?.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{p.clave}</td>
+                    <td className="px-4 py-3 font-medium">{p.grupo}</td>
                     <td className="px-4 py-3">{p.rol}</td>
                     <td className="px-4 py-3">{p.descripcion}</td>
-                    <td className="px-4 py-3 text-right">${p.importe.toLocaleString()}</td>
-                    <td className="px-4 py-3">{p.vigencia_desde} - {p.vigencia_hasta ?? '∞'}</td>
+                    <td className="px-4 py-3 text-right">${p.monto.toLocaleString()}</td>
+                    <td className="px-4 py-3">{p.desde} - {p.hasta ?? '∞'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${p.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                         {p.activo ? 'Sí' : 'No'}

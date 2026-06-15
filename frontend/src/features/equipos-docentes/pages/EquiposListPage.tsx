@@ -80,7 +80,7 @@ export default function EquiposListPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {data?.items.map((eq) => (
+                {data?.items?.map((eq) => (
                   <tr key={eq.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{eq.materia_nombre}</td>
                     <td className="px-4 py-3 text-gray-600">{eq.carrera}</td>

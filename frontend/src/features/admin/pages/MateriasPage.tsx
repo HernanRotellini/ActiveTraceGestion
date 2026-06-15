@@ -45,17 +45,11 @@ export default function MateriasPage() {
       return
     }
     try {
-      const payload: MateriaPayload = {
-        carrera_id: carreraId,
-        cohorte_id: cohorteId,
-        nombre: nombre.trim(),
-        codigo: codigo.trim(),
-        carga_horaria: Number(cargaHoraria),
-      }
       if (editId) {
         const actualizar = useActualizarMateria(editId)
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync({ nombre: nombre.trim() })
       } else {
+        const payload: MateriaPayload = { nombre: nombre.trim(), codigo: codigo.trim() }
         await crear.mutateAsync(payload)
       }
       resetForm()
@@ -83,7 +77,7 @@ export default function MateriasPage() {
               className="block w-52 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Todas</option>
-              {carreras?.items.map((c) => (
+              {carreras?.items?.map((c) => (
                 <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
             </select>
@@ -97,7 +91,7 @@ export default function MateriasPage() {
               className="block w-52 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
             >
               <option value="">Todos</option>
-              {cohortes?.items.map((c) => (
+              {cohortes?.items?.map((c) => (
                 <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
             </select>
@@ -168,7 +162,7 @@ export default function MateriasPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data?.items.map((m) => (
+              {data?.items?.map((m) => (
                 <tr key={m.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{m.nombre}</td>
                   <td className="px-4 py-3 text-gray-600">{m.codigo}</td>

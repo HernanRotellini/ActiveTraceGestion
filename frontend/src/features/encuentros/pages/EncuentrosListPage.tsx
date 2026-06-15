@@ -71,7 +71,7 @@ export default function EncuentrosListPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {data?.items.map((enc) => (
+                {data?.items?.map((enc) => (
                   <tr key={enc.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{enc.comision_nombre}</td>
                     <td className="px-4 py-3 text-gray-600">{enc.materia_nombre}</td>

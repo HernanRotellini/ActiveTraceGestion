@@ -112,7 +112,7 @@ export default function TareasListPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {data?.items.map((t) => (
+                {data?.items?.map((t) => (
                   <tr key={t.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{t.titulo}</td>
                     <td className="px-4 py-3">

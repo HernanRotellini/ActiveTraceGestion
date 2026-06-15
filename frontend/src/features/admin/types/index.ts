@@ -10,8 +10,6 @@ export interface Carrera {
 export interface CarreraPayload {
   nombre: string
   codigo: string
-  descripcion?: string
-  activo?: boolean
 }
 
 export interface Cohorte {
@@ -27,7 +25,7 @@ export interface CohortePayload {
   carrera_id: string
   nombre: string
   anio: number
-  activo?: boolean
+  vig_desde: string
 }
 
 export interface Materia {
@@ -44,33 +42,42 @@ export interface Materia {
 }
 
 export interface MateriaPayload {
-  carrera_id: string
-  cohorte_id: string
   nombre: string
   codigo: string
-  carga_horaria: number
-  activo?: boolean
 }
 
 export interface UsuarioAdmin {
   id: string
   nombre: string
+  apellidos: string
   email: string
   dni?: string
+  cuil?: string
   cbu?: string
+  alias_cbu?: string
+  telefono?: string
+  direccion?: string
+  estado: string
+  legajo?: string
+  banco?: string
+  facturador: boolean
   roles: string[]
-  activo: boolean
   creado_en: string
+  actualizado_en?: string
 }
 
 export interface UsuarioAdminPayload {
   nombre: string
+  apellidos: string
   email: string
-  password: string
   dni?: string
+  cuil?: string
   cbu?: string
-  roles: string[]
-  activo?: boolean
+  telefono?: string
+  direccion?: string
+  legajo?: string
+  banco?: string
+  facturador?: boolean
 }
 
 export interface UsuarioAdminFilters {

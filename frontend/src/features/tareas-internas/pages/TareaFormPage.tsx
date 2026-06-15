@@ -50,18 +50,20 @@ export default function TareaFormPage() {
       setError('El título es obligatorio.')
       return
     }
+    if (!asignadoId) {
+      setError('Debe seleccionar un usuario asignado.')
+      return
+    }
     try {
-      const payload = {
+      const base = {
         titulo: titulo.trim(),
         descripcion: descripcion.trim(),
-        prioridad,
-        asignado_id: asignadoId || undefined,
-        fecha_limite: fechaLimite || undefined,
+        asignado_a: asignadoId,
       }
       if (isEdit) {
-        await actualizar.mutateAsync(payload)
+        await actualizar.mutateAsync(base)
       } else {
-        await crear.mutateAsync(payload)
+        await crear.mutateAsync(base)
       }
       navigate('/coordinacion/tareas')
     } catch {

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import TAREAS_GESTIONAR
+from app.models.permisos import TAREAS_GESTIONAR, TAREAS_VER
 from app.models.tarea import EstadoTarea
 from app.schemas.tarea import (
     ComentarioTareaCreate,
@@ -29,6 +29,7 @@ from app.services.tarea_service import (
 router = APIRouter(prefix="/api/tareas", tags=["tareas"])
 
 TareasGuard = Depends(require_permission(TAREAS_GESTIONAR))
+TareasVerGuard = Depends(require_permission(TAREAS_VER))
 
 
 def _service(db: AsyncSession, current_user: CurrentUser) -> TareaService:
@@ -58,7 +59,7 @@ async def crear_tarea(
 
 @router.get("/mis", response_model=list[TareaResponse])
 async def listar_mis_tareas(
-    _: CurrentUser = TareasGuard,
+    _: CurrentUser = TareasVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
     limit: int = Query(default=100, ge=1, le=500),
@@ -70,7 +71,7 @@ async def listar_mis_tareas(
 
 @router.get("", response_model=list[TareaResponse])
 async def listar_tareas(
-    _: CurrentUser = TareasGuard,
+    _: CurrentUser = TareasVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
     asignado_a: UUID | None = None,
@@ -96,7 +97,7 @@ async def listar_tareas(
 @router.get("/{tarea_id}", response_model=TareaDetailResponse)
 async def detalle_tarea(
     tarea_id: UUID,
-    _: CurrentUser = TareasGuard,
+    _: CurrentUser = TareasVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> TareaDetailResponse:

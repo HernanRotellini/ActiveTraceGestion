@@ -4,6 +4,8 @@ export interface SessionUser {
   roles: string[]
   permissions?: string[]
   email?: string | null
+  nombre?: string | null
+  apellidos?: string | null
 }
 
 export interface Session {

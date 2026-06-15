@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import LIQUIDACIONES_CALCULAR_CERRAR, LIQUIDACIONES_OPERAR_GRILLA
+from app.models.permisos import (
+    LIQUIDACIONES_CALCULAR_CERRAR,
+    LIQUIDACIONES_GESTIONAR,
+    LIQUIDACIONES_OPERAR_GRILLA,
+    LIQUIDACIONES_VER,
+)
 from app.models.liquidaciones import SegmentoLiquidacion
 from app.schemas.liquidaciones import (
     LiquidacionCloseRequest,
@@ -41,7 +46,8 @@ from app.services.liquidacion_service import (
 router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 
 GrillaGuard = Depends(require_permission(LIQUIDACIONES_OPERAR_GRILLA))
-LiquidacionesGuard = Depends(require_permission(LIQUIDACIONES_CALCULAR_CERRAR))
+LiquidacionesGestionarGuard = Depends(require_permission(LIQUIDACIONES_GESTIONAR))
+LiquidacionesVerGuard = Depends(require_permission(LIQUIDACIONES_VER))
 
 
 def _grilla_service(db: AsyncSession, current_user: CurrentUser) -> GrillaSalarialService:
@@ -78,7 +84,7 @@ async def create_salario_base(
 
 @router.get("/grilla/bases", response_model=list[SalarioBaseResponse])
 async def list_salarios_base(
-    _: CurrentUser = GrillaGuard,
+    _: CurrentUser = LiquidacionesVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[SalarioBaseResponse]:
@@ -141,7 +147,7 @@ async def create_salario_plus(
 
 @router.get("/grilla/pluses", response_model=list[SalarioPlusResponse])
 async def list_salarios_plus(
-    _: CurrentUser = GrillaGuard,
+    _: CurrentUser = LiquidacionesVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[SalarioPlusResponse]:
@@ -167,7 +173,7 @@ async def create_materia_plus(
 
 @router.get("/grilla/materia-plus", response_model=list[MateriaPlusResponse])
 async def list_materia_plus(
-    _: CurrentUser = GrillaGuard,
+    _: CurrentUser = LiquidacionesVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[MateriaPlusResponse]:
@@ -178,7 +184,7 @@ async def list_materia_plus(
 @router.post("/preview", response_model=LiquidacionPreviewResponse)
 async def preview_liquidacion(
     body: LiquidacionPreviewRequest,
-    _: CurrentUser = LiquidacionesGuard,
+    _: CurrentUser = LiquidacionesGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> LiquidacionPreviewResponse:
@@ -194,7 +200,7 @@ async def preview_liquidacion(
 @router.post("/cerrar", response_model=list[LiquidacionResponse], status_code=status.HTTP_201_CREATED)
 async def cerrar_liquidacion(
     body: LiquidacionCloseRequest,
-    _: CurrentUser = LiquidacionesGuard,
+    _: CurrentUser = LiquidacionesGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[LiquidacionResponse]:
@@ -213,7 +219,7 @@ async def cerrar_liquidacion(
 
 @router.get("", response_model=list[LiquidacionResponse])
 async def list_liquidaciones(
-    _: CurrentUser = LiquidacionesGuard,
+    _: CurrentUser = LiquidacionesVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
     periodo: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}$"),
@@ -230,7 +236,7 @@ async def list_liquidaciones(
 @router.get("/{liquidacion_id}", response_model=LiquidacionResponse)
 async def get_liquidacion(
     liquidacion_id: UUID,
-    _: CurrentUser = LiquidacionesGuard,
+    _: CurrentUser = LiquidacionesVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> LiquidacionResponse:

@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import AVISOS_PUBLICAR
+from app.models.permisos import AVISOS_GESTIONAR, AVISOS_PUBLICAR, AVISOS_VER
 from app.schemas.aviso import (
     AvisoCreate,
     AvisoListResponse,
@@ -35,6 +35,8 @@ from app.services.aviso_service import AvisoNotFoundError, AvisoService
 router = APIRouter(tags=["avisos"])
 
 AdminGuard = Depends(require_permission(AVISOS_PUBLICAR))
+AvisosVerGuard = Depends(require_permission(AVISOS_VER))
+AvisosGestionarGuard = Depends(require_permission(AVISOS_GESTIONAR))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -117,7 +119,7 @@ async def listar_avisos_admin(
     alcance: str | None = Query(None),
     severidad: str | None = Query(None),
     activo: bool | None = Query(None),
-    _: None = AdminGuard,
+    _: None = AvisosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[AvisoResponse]:
@@ -134,7 +136,7 @@ async def listar_avisos_admin(
 @router.post("/api/admin/avisos", response_model=AvisoResponse, status_code=status.HTTP_201_CREATED)
 async def crear_aviso(
     body: AvisoCreate,
-    _: None = AdminGuard,
+    _: None = AvisosGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> AvisoResponse:
@@ -150,7 +152,7 @@ async def crear_aviso(
 @router.get("/api/admin/avisos/{aviso_id}", response_model=AvisoResponse)
 async def obtener_aviso(
     aviso_id: UUID,
-    _: None = AdminGuard,
+    _: None = AvisosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> AvisoResponse:
@@ -169,7 +171,7 @@ async def obtener_aviso(
 async def actualizar_aviso(
     aviso_id: UUID,
     body: AvisoUpdate,
-    _: None = AdminGuard,
+    _: None = AvisosGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> AvisoResponse:
@@ -192,7 +194,7 @@ async def actualizar_aviso(
 @router.delete("/api/admin/avisos/{aviso_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def desactivar_aviso(
     aviso_id: UUID,
-    _: None = AdminGuard,
+    _: None = AvisosGestionarGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> None:
@@ -210,7 +212,7 @@ async def desactivar_aviso(
 @router.get("/api/admin/avisos/{aviso_id}/stats", response_model=AvisoStatsResponse)
 async def obtener_stats_aviso(
     aviso_id: UUID,
-    _: None = AdminGuard,
+    _: None = AvisosVerGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> AvisoStatsResponse:

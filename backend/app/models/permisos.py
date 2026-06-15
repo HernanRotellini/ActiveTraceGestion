@@ -29,6 +29,18 @@ FACTURAS_GESTIONAR = "facturas:gestionar"
 TENANT_CONFIGURAR = "tenant:configurar"
 IMPERSONACION_USAR = "impersonacion:usar"
 
+# ── Permisos de lectura separados ────────────────────────────────
+CALIFICACIONES_VER = "calificaciones:ver"
+EQUIPOS_VER = "equipos:ver"
+EQUIPOS_GESTIONAR = "equipos:gestionar"
+AVISOS_VER = "avisos:ver"
+AVISOS_GESTIONAR = "avisos:gestionar"
+TAREAS_VER = "tareas:ver"
+ENCUENTROS_VER = "encuentros:ver"
+COLOQUIOS_VER = "coloquios:ver"
+LIQUIDACIONES_VER = "liquidaciones:ver"
+LIQUIDACIONES_GESTIONAR = "liquidaciones:gestionar"
+
 # ── Audit action codes ──────────────────────────────────────────
 CALIFICACIONES_IMPORTAR_ACTION = "CALIFICACIONES_IMPORTAR"
 PADRON_CARGAR = "PADRON_CARGAR"

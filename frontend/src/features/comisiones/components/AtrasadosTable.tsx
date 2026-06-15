@@ -5,7 +5,7 @@ interface AtrasadosTableProps {
 }
 
 export function AtrasadosTable({ data }: AtrasadosTableProps) {
-  if (!data || data.items.length === 0) {
+  if (!data || !data.items || data.items.length === 0) {
     return (
       <div className="py-8 text-center">
         <p className="text-gray-500">No hay alumnos atrasados.</p>
@@ -28,7 +28,7 @@ export function AtrasadosTable({ data }: AtrasadosTableProps) {
           </tr>
         </thead>
         <tbody>
-          {data.items.map((item, idx) => (
+          {data.items?.map((item, idx) => (
             <tr key={`${item.alumno_id}-${idx}`} className="border-b last:border-0">
               <td className="py-2">{item.alumno_nombre}</td>
               <td className="py-2">{item.materia}</td>

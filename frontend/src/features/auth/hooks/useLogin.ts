@@ -52,6 +52,9 @@ export function useLogin() {
         tenant_id: me.tenant_id,
         roles: me.roles,
         email: me.email ?? initialEmail,
+        permissions: me.permissions,
+        nombre: me.nombre,
+        apellidos: me.apellidos,
       })
 
       const redirectTo = sessionStorage.getItem('redirectTo') ?? '/'
