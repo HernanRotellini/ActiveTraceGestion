@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Button } from '@/shared/components/Button'
@@ -27,12 +27,12 @@ export default function EquipoFormPage() {
     label: `${m.nombre} (${m.codigo})${m.carrera_nombre ? ` - ${m.carrera_nombre}` : ''}`,
   }))
 
-  useState(() => {
+  useEffect(() => {
     if (equipo) {
       setMateriaId(equipo.materia_id)
       setCarrera(equipo.carrera)
     }
-  })
+  }, [equipo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

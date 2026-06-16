@@ -36,9 +36,6 @@ export default function TareaDetailPage() {
           <Link to="/coordinacion/tareas" className="text-sm text-primary-600 hover:text-primary-800">&larr; Volver</Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">{tarea.titulo}</h1>
         </div>
-        <Link to={`/coordinacion/tareas/${id}/editar`}>
-          <Button variant="secondary">Editar</Button>
-        </Link>
       </div>
 
       <Card className="p-6">

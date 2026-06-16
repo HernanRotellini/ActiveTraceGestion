@@ -2,8 +2,11 @@ import api from '@/shared/services/api'
 import type { Tarea, TareaPayload, TareaEstado, ComentarioPayload, TareasFilters } from '@/features/tareas-internas/types'
 
 export async function listarTareas(filters?: TareasFilters) {
-  const { data } = await api.get<{ items: Tarea[]; total: number }>('/tareas', { params: filters })
-  return data
+  const { data } = await api.get<Tarea[] | { items: Tarea[]; total: number }>('/tareas', { params: filters })
+  if (Array.isArray(data)) {
+    return { items: data, total: data.length }
+  }
+  return { items: data.items ?? [], total: data.total ?? data.items?.length ?? 0 }
 }
 
 export async function obtenerTarea(id: string) {
