@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Button } from '@/shared/components/Button'
@@ -48,14 +48,14 @@ export default function AvisoFormPage() {
     label: `${u.nombre} (${u.email})`,
   }))
 
-  useState(() => {
+  useEffect(() => {
     if (aviso) {
       setTitulo(aviso.titulo)
       setContenido(aviso.contenido ?? aviso.cuerpo ?? '')
       setScope(alcanceToScope(aviso.scope ?? aviso.alcance ?? ''))
       setScopeValor(aviso.scope_valor ?? aviso.materia_id ?? aviso.rol_destino ?? '')
     }
-  })
+  }, [aviso])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

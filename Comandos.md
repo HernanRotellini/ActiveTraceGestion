@@ -124,16 +124,20 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/admin/materias" -Method Get -H
 
 ## 🧪 Tests
 
+> **Nota**: La imagen Docker optimizada excluye las herramientas de test por defecto. Para poder correr las pruebas sobre un contenedor levantado, instala las dependencias de prueba al vuelo ejecutando como `root`.
+
 ```bash
-# Ejecutar todos los tests del backend
-docker exec active-trace-api-1 python -m pytest tests/ -v
+# 1. Instalar dependencias de testing al vuelo
+docker-compose exec -u root api pip install pytest pytest-asyncio httpx coverage
 
-# Tests con reporte de cobertura
-docker exec active-trace-api-1 python -m pytest tests/ --cov=app --cov-report=term-missing
+# 2. Ejecutar todos los tests del backend
+docker-compose exec api pytest tests/ -v
 
-# Tests de un módulo específico
-docker exec active-trace-api-1 python -m pytest tests/test_coloquios.py -v
-docker exec active-trace-api-1 python -m pytest tests/test_auth.py -v
+# 3. Tests con reporte de cobertura
+docker-compose exec api pytest tests/ --cov=app --cov-report=term-missing
+
+# 4. Tests de un módulo específico (ej. cargas del frontend)
+docker-compose exec api pytest tests/test_frontend_payloads.py -v
 ```
 
 ## 🔧 Mantenimiento

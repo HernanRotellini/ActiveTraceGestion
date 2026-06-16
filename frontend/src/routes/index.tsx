@@ -230,14 +230,6 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: 'coordinacion/tareas/:id/editar',
-            element: (
-              <PermissionGuard requiredPermissions={['tareas:gestionar']}>
-                <SuspenseWrapper Component={TareaFormPage} />
-              </PermissionGuard>
-            ),
-          },
-          {
             path: 'coordinacion/encuentros',
             element: (
               <PermissionGuard requiredPermissions={['encuentros:ver']}>
