@@ -55,6 +55,14 @@ export function useCohortes(carreraId?: string) {
   })
 }
 
+export function useCohortesList() {
+  return useQuery({
+    queryKey: ['cohortes'],
+    queryFn: () => api.listarCohortes(),
+    staleTime: 30_000,
+  })
+}
+
 export function useCrearCohorte() {
   const qc = useQueryClient()
   return useMutation({

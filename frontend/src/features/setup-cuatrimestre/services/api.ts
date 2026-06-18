@@ -1,5 +1,17 @@
 import api from '@/shared/services/api'
-import type { PeriodoAcademico, PeriodoPayload, FechaPayload, ProgramaPayload } from '@/features/setup-cuatrimestre/types'
+import type {
+  FechaAcademicaOficial,
+  FechaAcademicaOficialPayload,
+  FechaAcademicaOficialUpdatePayload,
+  PeriodoAcademico,
+  PeriodoPayload,
+  FechaPayload,
+  ProgramaPayload,
+  ProgramaOficial,
+  ProgramaOficialPayload,
+  ProgramaOficialUpdatePayload,
+  TipoFechaAcademica,
+} from '@/features/setup-cuatrimestre/types'
 
 export async function listarPeriodos() {
   const { data } = await api.get<{ items: PeriodoAcademico[] }>('/periodos-academicos')
@@ -51,4 +63,55 @@ export async function agregarPrograma(periodoId: string, payload: ProgramaPayloa
 
 export async function quitarPrograma(periodoId: string, programaId: string) {
   await api.delete(`/periodos-academicos/${periodoId}/programas/${programaId}`)
+}
+
+export interface ProgramasFilters {
+  materia_id?: string
+  carrera_id?: string
+  cohorte_id?: string
+}
+
+export interface FechasFilters {
+  materia_id?: string
+  cohorte_id?: string
+  tipo?: TipoFechaAcademica
+  periodo?: string
+}
+
+export async function listarProgramas(filters?: ProgramasFilters) {
+  const { data } = await api.get<ProgramaOficial[]>('/programas', { params: filters })
+  return data
+}
+
+export async function crearPrograma(payload: ProgramaOficialPayload) {
+  const { data } = await api.post<ProgramaOficial>('/programas', payload)
+  return data
+}
+
+export async function actualizarPrograma(id: string, payload: ProgramaOficialUpdatePayload) {
+  const { data } = await api.put<ProgramaOficial>(`/programas/${id}`, payload)
+  return data
+}
+
+export async function eliminarPrograma(id: string) {
+  await api.delete(`/programas/${id}`)
+}
+
+export async function listarFechas(filters?: FechasFilters) {
+  const { data } = await api.get<FechaAcademicaOficial[]>('/fechas-academicas', { params: filters })
+  return data
+}
+
+export async function crearFecha(payload: FechaAcademicaOficialPayload) {
+  const { data } = await api.post<FechaAcademicaOficial>('/fechas-academicas', payload)
+  return data
+}
+
+export async function actualizarFecha(id: string, payload: FechaAcademicaOficialUpdatePayload) {
+  const { data } = await api.put<FechaAcademicaOficial>(`/fechas-academicas/${id}`, payload)
+  return data
+}
+
+export async function eliminarFecha(id: string) {
+  await api.delete(`/fechas-academicas/${id}`)
 }

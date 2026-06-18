@@ -1,4 +1,4 @@
-"""Router para fechas académicas."""
+"""Router para fechas academicas del calendario oficial."""
 
 from datetime import date
 from uuid import UUID
@@ -7,8 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
-from app.core.dependencies import get_db, require_permission
-from app.models.permisos import PERIODOS_GESTIONAR
+from app.core.dependencies import get_audit_service, get_db, require_permission
+from app.models.permisos import (
+    ESTRUCTURA_GESTIONAR,
+    FECHA_ACADEMICA_CREAR,
+    FECHA_ACADEMICA_EDITAR,
+    FECHA_ACADEMICA_ELIMINAR,
+)
 from app.models.programas import TipoFechaAcademica
 from app.schemas.programas import (
     FechaAcademicaCalendarResponse,
@@ -17,6 +22,7 @@ from app.schemas.programas import (
     FechaAcademicaUpdate,
     LMSFragmentResponse,
 )
+from app.services.audit import AuditService
 from app.services.auth import CurrentUser
 from app.services.fecha_academica_service import (
     FechaAcademicaService,
@@ -26,7 +32,20 @@ from app.services.fecha_academica_service import (
 
 router = APIRouter(prefix="/api/fechas-academicas", tags=["fechas-academicas"])
 
-FechasGuard = Depends(require_permission(PERIODOS_GESTIONAR))
+FechasGuard = Depends(require_permission(ESTRUCTURA_GESTIONAR))
+
+
+def fecha_audit_detail(fecha) -> dict[str, object]:
+    return {
+        "fecha_id": str(fecha.id),
+        "materia_id": str(fecha.materia_id),
+        "cohorte_id": str(fecha.cohorte_id),
+        "tipo": fecha.tipo.value,
+        "numero": fecha.numero,
+        "periodo": fecha.periodo,
+        "fecha": fecha.fecha.isoformat(),
+        "titulo": fecha.titulo,
+    }
 
 
 def _service(db: AsyncSession, current_user: CurrentUser) -> FechaAcademicaService:
@@ -39,6 +58,7 @@ async def create_fecha(
     _: CurrentUser = FechasGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
+    audit: AuditService = Depends(get_audit_service),
 ) -> FechaAcademicaResponse:
     try:
         fecha = await _service(db, current_user).create_fecha(
@@ -51,9 +71,21 @@ async def create_fecha(
             titulo=body.titulo,
         )
     except FechaNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
     except FechaValidationError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+
+    await audit.log(
+        accion=FECHA_ACADEMICA_CREAR,
+        detalle=fecha_audit_detail(fecha),
+        filas_afectadas=1,
+    )
     return FechaAcademicaResponse.model_validate(fecha)
 
 
@@ -73,7 +105,7 @@ async def list_fechas(
         tipo=tipo,
         periodo=periodo,
     )
-    return [FechaAcademicaResponse.model_validate(f) for f in fechas]
+    return [FechaAcademicaResponse.model_validate(fecha) for fecha in fechas]
 
 
 @router.get("/calendario", response_model=list[FechaAcademicaCalendarResponse])
@@ -81,11 +113,11 @@ async def list_calendario(
     _: CurrentUser = FechasGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
-    desde: date = Query(...),
-    hasta: date = Query(...),
+    desde: date = Query(),
+    hasta: date = Query(),
 ) -> list[FechaAcademicaCalendarResponse]:
     fechas = await _service(db, current_user).list_calendario(desde=desde, hasta=hasta)
-    return [FechaAcademicaCalendarResponse.model_validate(f) for f in fechas]
+    return [FechaAcademicaCalendarResponse.model_validate(fecha) for fecha in fechas]
 
 
 @router.get("/lms-fragment", response_model=LMSFragmentResponse)
@@ -93,8 +125,8 @@ async def get_lms_fragment(
     _: CurrentUser = FechasGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
-    materia_id: UUID = Query(...),
-    cohorte_id: UUID = Query(...),
+    materia_id: UUID = Query(),
+    cohorte_id: UUID = Query(),
 ) -> LMSFragmentResponse:
     contenido = await _service(db, current_user).generate_lms_fragment(
         materia_id=materia_id,
@@ -113,7 +145,10 @@ async def get_fecha(
     try:
         fecha = await _service(db, current_user).get_fecha(fecha_id)
     except FechaNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
     return FechaAcademicaResponse.model_validate(fecha)
 
 
@@ -124,9 +159,12 @@ async def update_fecha(
     _: CurrentUser = FechasGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
+    audit: AuditService = Depends(get_audit_service),
 ) -> FechaAcademicaResponse:
+    service = _service(db, current_user)
     try:
-        fecha = await _service(db, current_user).update_fecha(
+        current = await service.get_fecha(fecha_id)
+        fecha = await service.update_fecha(
             fecha_id,
             titulo=body.titulo,
             fecha=body.fecha,
@@ -134,7 +172,31 @@ async def update_fecha(
             periodo=body.periodo,
         )
     except FechaNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+    cambios: dict[str, dict[str, object]] = {}
+    if body.titulo is not None and body.titulo != current.titulo:
+        cambios["titulo"] = {"anterior": current.titulo, "nuevo": fecha.titulo}
+    if body.fecha is not None and body.fecha != current.fecha:
+        cambios["fecha"] = {
+            "anterior": current.fecha.isoformat(),
+            "nuevo": fecha.fecha.isoformat(),
+        }
+    if body.numero is not None and body.numero != current.numero:
+        cambios["numero"] = {"anterior": current.numero, "nuevo": fecha.numero}
+    if body.periodo is not None and body.periodo != current.periodo:
+        cambios["periodo"] = {"anterior": current.periodo, "nuevo": fecha.periodo}
+
+    if cambios:
+        await audit.log(
+            accion=FECHA_ACADEMICA_EDITAR,
+            detalle={**fecha_audit_detail(fecha), "cambios": cambios},
+            filas_afectadas=1,
+        )
+
     return FechaAcademicaResponse.model_validate(fecha)
 
 
@@ -144,8 +206,20 @@ async def delete_fecha(
     _: CurrentUser = FechasGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
+    audit: AuditService = Depends(get_audit_service),
 ) -> None:
+    service = _service(db, current_user)
     try:
-        await _service(db, current_user).delete_fecha(fecha_id)
+        fecha = await service.get_fecha(fecha_id)
+        await service.delete_fecha(fecha_id)
     except FechaNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+    await audit.log(
+        accion=FECHA_ACADEMICA_ELIMINAR,
+        detalle=fecha_audit_detail(fecha),
+        filas_afectadas=1,
+    )
