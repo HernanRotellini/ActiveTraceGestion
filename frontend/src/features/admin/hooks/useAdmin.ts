@@ -2,17 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/features/admin/services/api'
 import type {
   CarreraPayload,
+  CarreraUpdatePayload,
   CohortePayload,
+  CohorteUpdatePayload,
   MateriaPayload,
+  MateriaUpdatePayload,
   UsuarioAdminPayload,
   UsuarioAdminFilters,
   AuditoriaFilters,
+  CarreraFilters,
 } from '@/features/admin/types'
 
-export function useCarreras() {
+export function useCarreras(filters?: CarreraFilters) {
   return useQuery({
-    queryKey: ['carreras'],
-    queryFn: () => api.listarCarreras(),
+    queryKey: ['carreras', filters],
+    queryFn: () => api.listarCarreras(filters),
     staleTime: 30_000,
   })
 }
@@ -28,7 +32,7 @@ export function useCrearCarrera() {
 export function useActualizarCarrera() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...payload }: { id: string } & Partial<CarreraPayload>) =>
+    mutationFn: ({ id, ...payload }: { id: string } & CarreraUpdatePayload) =>
       api.actualizarCarrera(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['carreras'] }),
   })
@@ -62,8 +66,16 @@ export function useCrearCohorte() {
 export function useActualizarCohorte() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...payload }: { id: string } & Partial<CohortePayload>) =>
+    mutationFn: ({ id, ...payload }: { id: string } & CohorteUpdatePayload) =>
       api.actualizarCohorte(id, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cohortes'] }),
+  })
+}
+
+export function useEliminarCohorte() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.eliminarCohorte(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cohortes'] }),
   })
 }
@@ -87,8 +99,16 @@ export function useCrearMateria() {
 export function useActualizarMateria() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...payload }: { id: string } & Partial<MateriaPayload>) =>
+    mutationFn: ({ id, ...payload }: { id: string } & MateriaUpdatePayload) =>
       api.actualizarMateria(id, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['materias'] }),
+  })
+}
+
+export function useEliminarMateria() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.eliminarMateria(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['materias'] }),
   })
 }

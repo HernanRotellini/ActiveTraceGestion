@@ -20,6 +20,7 @@ from app.schemas.periodos_academicos import (
 )
 from app.services.auth import CurrentUser
 from app.services.periodos_academicos import (
+    InvalidPeriodoDatesError,
     NotFoundError,
     PeriodoAcademicoService,
 )
@@ -142,11 +143,14 @@ async def create_periodo(
 ) -> PeriodoAcademicoResponse:
     """Crea un nuevo período académico."""
     service = PeriodoAcademicoService(db, current_user.tenant_id)
-    periodo = await service.create(
-        nombre=body.nombre,
-        fecha_inicio=body.fecha_inicio,
-        fecha_fin=body.fecha_fin,
-    )
+    try:
+        periodo = await service.create(
+            nombre=body.nombre,
+            fecha_inicio=body.fecha_inicio,
+            fecha_fin=body.fecha_fin,
+        )
+    except InvalidPeriodoDatesError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     return _build_response(periodo, [], [], {})
 
 
@@ -169,6 +173,8 @@ async def update_periodo(
         )
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidPeriodoDatesError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
     fechas = await service.list_fechas(periodo_id)
     programas = await service.list_programas(periodo_id)

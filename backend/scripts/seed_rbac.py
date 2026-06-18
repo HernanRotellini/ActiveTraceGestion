@@ -77,8 +77,8 @@ PERMISOS_NUEVOS = [
 
 ALL_PERMISOS = PERMISOS_ORIGINALES + PERMISOS_NUEVOS
 
-# ── Role-Permission Assignments (76 total) ────────────────────────
-# 52 originales (from 20260602_0003)
+# ── Role-Permission Assignments (77 total) ────────────────────────
+# 53 originales (from 20260602_0003 + ajuste HU-21)
 MATRIX_ORIGINAL = [
     ("ALUMNO", "academico:ver_estado_propio", "global"),
     ("ALUMNO", "evaluaciones:reservar", "global"),
@@ -107,6 +107,7 @@ MATRIX_ORIGINAL = [
     ("COORDINADOR", "tareas:gestionar", "global"),
     ("COORDINADOR", "avisos:publicar", "global"),
     ("COORDINADOR", "equipos:asignar", "global"),
+    ("COORDINADOR", "estructura:gestionar", "global"),
     ("COORDINADOR", "auditoria:ver", "propio"),
     ("COORDINADOR", "coloquios:gestionar", "global"),
     ("NEXO", "avisos:confirmar", "global"),

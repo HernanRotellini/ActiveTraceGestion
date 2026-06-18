@@ -35,6 +35,18 @@ export function useActualizarPeriodo(id: string) {
   })
 }
 
+export function useActualizarPeriodoMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...payload }: { id: string } & Partial<PeriodoPayload>) =>
+      api.actualizarPeriodo(id, payload),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', variables.id] })
+    },
+  })
+}
+
 export function useActivarPeriodo() {
   const qc = useQueryClient()
   return useMutation({
@@ -51,11 +63,34 @@ export function useDesactivarPeriodo() {
   })
 }
 
+export function useEliminarPeriodo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.eliminarPeriodo(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['periodos-academicos'] }),
+  })
+}
+
 export function useAgregarFecha(periodoId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: FechaPayload) => api.agregarFecha(periodoId, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['periodo', periodoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', periodoId] })
+    },
+  })
+}
+
+export function useAgregarFechaMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ periodoId, ...payload }: { periodoId: string } & FechaPayload) =>
+      api.agregarFecha(periodoId, payload),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', variables.periodoId] })
+    },
   })
 }
 
@@ -63,7 +98,22 @@ export function useQuitarFecha(periodoId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (fechaId: string) => api.quitarFecha(periodoId, fechaId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['periodo', periodoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', periodoId] })
+    },
+  })
+}
+
+export function useQuitarFechaMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ periodoId, fechaId }: { periodoId: string; fechaId: string }) =>
+      api.quitarFecha(periodoId, fechaId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', variables.periodoId] })
+    },
   })
 }
 
@@ -71,7 +121,22 @@ export function useAgregarPrograma(periodoId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: ProgramaPayload) => api.agregarPrograma(periodoId, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['periodo', periodoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', periodoId] })
+    },
+  })
+}
+
+export function useAgregarProgramaMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ periodoId, ...payload }: { periodoId: string } & ProgramaPayload) =>
+      api.agregarPrograma(periodoId, payload),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', variables.periodoId] })
+    },
   })
 }
 
@@ -79,6 +144,21 @@ export function useQuitarPrograma(periodoId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (programaId: string) => api.quitarPrograma(periodoId, programaId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['periodo', periodoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', periodoId] })
+    },
+  })
+}
+
+export function useQuitarProgramaMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ periodoId, programaId }: { periodoId: string; programaId: string }) =>
+      api.quitarPrograma(periodoId, programaId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['periodos-academicos'] })
+      qc.invalidateQueries({ queryKey: ['periodo', variables.periodoId] })
+    },
   })
 }

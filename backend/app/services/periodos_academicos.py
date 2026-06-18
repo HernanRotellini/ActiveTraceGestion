@@ -19,6 +19,10 @@ class NotFoundError(ValueError):
     """Raised when a referenced entity is not found."""
 
 
+class InvalidPeriodoDatesError(ValueError):
+    """Raised when fecha_fin is before fecha_inicio."""
+
+
 class PeriodoAcademicoService:
     def __init__(self, session: AsyncSession, tenant_id: UUID) -> None:
         self.session = session
@@ -30,6 +34,8 @@ class PeriodoAcademicoService:
     # ── Periodo CRUD ─────────────────────────────────────────
 
     async def create(self, nombre: str, fecha_inicio, fecha_fin):
+        if fecha_fin < fecha_inicio:
+            raise InvalidPeriodoDatesError("fecha_fin must be greater than or equal to fecha_inicio")
         return await self._repo.create(
             nombre=nombre,
             fecha_inicio=fecha_inicio,
@@ -43,6 +49,13 @@ class PeriodoAcademicoService:
         return await self._repo.list()
 
     async def update(self, periodo_id: UUID, *, nombre: str | None = None, fecha_inicio=None, fecha_fin=None):
+        current = await self._repo.get(periodo_id)
+        if current is None:
+            raise NotFoundError(f"PeriodoAcademico with id '{periodo_id}' not found")
+        next_inicio = fecha_inicio if fecha_inicio is not None else current.fecha_inicio
+        next_fin = fecha_fin if fecha_fin is not None else current.fecha_fin
+        if next_fin < next_inicio:
+            raise InvalidPeriodoDatesError("fecha_fin must be greater than or equal to fecha_inicio")
         record = await self._repo.update(periodo_id, nombre=nombre, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
         if record is None:
             raise NotFoundError(f"PeriodoAcademico with id '{periodo_id}' not found")

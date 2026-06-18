@@ -1,9 +1,12 @@
 """Schemas Pydantic para estructura académica."""
 
 from datetime import date, datetime
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import BaseModel, ConfigDict, computed_field, field_validator
+
+EstadoAcademico = Literal["activa", "inactiva"]
 
 
 # ── Carrera ─────────────────────────────────────────────────────
@@ -15,6 +18,15 @@ class CarreraCreate(BaseModel):
     codigo: str
     nombre: str
     descripcion: str | None = None
+    estado: EstadoAcademico | None = None
+
+    @field_validator("codigo", "nombre")
+    @classmethod
+    def required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Field is required")
+        return value
 
 
 class CarreraUpdate(BaseModel):
@@ -23,7 +35,17 @@ class CarreraUpdate(BaseModel):
     codigo: str | None = None
     nombre: str | None = None
     descripcion: str | None = None
-    estado: str | None = None
+    estado: EstadoAcademico | None = None
+
+    @field_validator("codigo", "nombre")
+    @classmethod
+    def optional_required_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Field is required")
+        return value
 
 
 class CarreraResponse(BaseModel):
@@ -32,7 +54,7 @@ class CarreraResponse(BaseModel):
     id: UUID
     codigo: str
     nombre: str
-    estado: str
+    estado: EstadoAcademico
     created_at: datetime
     updated_at: datetime
     descripcion: str = ""
@@ -59,6 +81,15 @@ class CohorteCreate(BaseModel):
     anio: int
     vig_desde: date
     vig_hasta: date | None = None
+    estado: EstadoAcademico | None = None
+
+    @field_validator("nombre")
+    @classmethod
+    def required_nombre(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Field is required")
+        return value
 
 
 class CohorteResponse(BaseModel):
@@ -70,7 +101,7 @@ class CohorteResponse(BaseModel):
     anio: int
     vig_desde: date
     vig_hasta: date | None = None
-    estado: str
+    estado: EstadoAcademico
     created_at: datetime
     updated_at: datetime
 
@@ -93,6 +124,18 @@ class MateriaCreate(BaseModel):
 
     codigo: str
     nombre: str
+    carrera_id: UUID | None = None
+    cohorte_id: UUID | None = None
+    carga_horaria: int = 0
+    estado: EstadoAcademico | None = None
+
+    @field_validator("codigo", "nombre")
+    @classmethod
+    def required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Field is required")
+        return value
 
 
 class MateriaUpdate(BaseModel):
@@ -100,8 +143,20 @@ class MateriaUpdate(BaseModel):
 
     nombre: str | None = None
     codigo: str | None = None
+    carrera_id: UUID | None = None
+    cohorte_id: UUID | None = None
     carga_horaria: int | None = None
-    estado: str | None = None
+    estado: EstadoAcademico | None = None
+
+    @field_validator("codigo", "nombre")
+    @classmethod
+    def optional_required_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Field is required")
+        return value
 
 
 class CohorteUpdate(BaseModel):
@@ -111,6 +166,17 @@ class CohorteUpdate(BaseModel):
     anio: int | None = None
     vig_desde: date | None = None
     vig_hasta: date | None = None
+    estado: EstadoAcademico | None = None
+
+    @field_validator("nombre")
+    @classmethod
+    def optional_required_nombre(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Field is required")
+        return value
 
 
 class MateriaResponse(BaseModel):
@@ -119,7 +185,7 @@ class MateriaResponse(BaseModel):
     id: UUID
     codigo: str
     nombre: str
-    estado: str
+    estado: EstadoAcademico
     created_at: datetime
     updated_at: datetime
     carrera_id: UUID | None = None
