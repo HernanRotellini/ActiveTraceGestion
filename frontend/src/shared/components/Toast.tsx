@@ -69,7 +69,11 @@ export function Toast({ message, variant = 'error', onClose, autoCloseMs = 5000 
   const Icon = variant === 'success' ? SuccessIcon : ErrorIcon
 
   return (
-    <div className={`fixed right-4 top-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg ${styles.container}`} role={styles.role}>
+    <div
+      className={`fixed right-4 top-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg ${styles.container}`}
+      role={styles.role}
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+    >
       <div className="flex items-start gap-3">
         <span className={`mt-0.5 shrink-0 ${styles.icon}`}>
           <Icon />

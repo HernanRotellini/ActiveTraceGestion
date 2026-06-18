@@ -25,8 +25,8 @@ Segun `docs/SRS.md` y `FL-03`, el flujo completo de setup de cuatrimestre incluy
 
 Alcance funcional esperado para esta revision:
 - [x] Gestionar periodos academicos: crear, editar, activar/desactivar y baja tecnica si se expone.
-- [ ] Registrar fechas academicas asociadas al periodo, revisando si tambien deben asociarse a materia/cohorte.
-- [ ] Gestionar programas oficiales solo si se respeta HU-23: materia + carrera + cohorte + titulo + archivo PDF/referencia opaca.
+- [x] Registrar fechas academicas asociadas al periodo, revisando si tambien deben asociarse a materia/cohorte.
+- [x] Gestionar programas oficiales solo si se respeta HU-23: materia + carrera + cohorte + titulo + archivo PDF/referencia opaca.
 
 Fuera del alcance directo de esta pantalla, salvo decision explicita de producto:
 - [x] Clonado real de equipo docente: pertenece a `equipos:asignar`.
@@ -35,8 +35,9 @@ Fuera del alcance directo de esta pantalla, salvo decision explicita de producto
 - [x] Importacion de padron inicial: pertenece a padron/importacion.
 
 Estado:
-- La pantalla actual cubre periodos, fechas simples y asociacion simple de programas/materias.
-- Hay que revisar si las secciones de fechas y programas actuales cumplen los requisitos documentales o si deben recortarse/reformularse.
+- La pantalla ahora funciona como hub de setup: periodos, accesos operativos y paneles separados para programas oficiales y fechas academicas.
+- La seccion de programas usa el modelo oficial `/api/programas`.
+- La seccion de fechas usa `/api/fechas-academicas` con materia, cohorte, tipo, numero, periodo y titulo.
 
 ## Permisos esperados
 
@@ -47,27 +48,24 @@ Estado:
 
 Estado:
 - Permiso esperado documental: `estructura:gestionar`, declarado por `docs/SRS.md` para `/coordinacion/setup-cuatrimestre`.
-- Implementacion actual: ruta frontend, menu, backend y seed usan `periodos:gestionar`, por lo tanto no respeta literalmente el SRS.
-- Frontend actual: `PermissionGuard` y menu validan `periodos:gestionar`.
-- Backend actual: todos los endpoints `/api/periodos-academicos` usan `require_permission(PERIODOS_GESTIONAR)`.
-- `ADMIN` y `COORDINADOR` tienen `periodos:gestionar` en `backend/scripts/seed_rbac.py`.
-- Decision recomendada para respetar documentos: cambiar pantalla, menu y backend a `estructura:gestionar`.
-- Pendiente de implementacion: aplicar cambio RBAC en codigo si se confirma esta decision.
+- Implementacion aplicada: ruta frontend, menu y endpoints relevantes del setup validan `estructura:gestionar`.
+- El acceso sigue resolviendose por permisos efectivos via `PermissionGuard` y `require_permission(...)`.
+- El seed mantiene `periodos:gestionar` legacy, pero ya no es el permiso de acceso efectivo para esta pantalla.
 
 ## Campos esperados
 
-- [ ] Periodo academico:
+- [x] Periodo academico:
   - `nombre`.
   - `fecha_inicio`.
   - `fecha_fin`.
   - `activo`.
-- [ ] Fecha academica:
+- [x] Fecha academica:
   - Tipo o clave de fecha.
   - Titulo/etiqueta.
   - Fecha.
   - Asociacion al periodo.
   - Segun SRS/modelo objetivo: asociacion a materia/cohorte cuando aplique.
-- [ ] Programa:
+- [x] Programa:
   - Materia.
   - Carrera.
   - Cohorte.
@@ -75,158 +73,158 @@ Estado:
   - Archivo PDF o referencia de archivo opaca.
 
 Estado:
-- Frontend/backend actuales de periodo usan `nombre`, `fecha_inicio`, `fecha_fin`, `activo`.
-- Fechas actuales usan `key`, `label`, `fecha` dentro de un periodo; no capturan materia/cohorte.
-- Programas actuales dentro de periodo usan `materia_id`, `carrera` texto y `anio`; no capturan cohorte, titulo ni archivo PDF.
-- Existe router separado `/api/programas` que modela `materia_id`, `carrera_id`, `cohorte_id`, `titulo` y `referencia_archivo`, mas cercano a HU-23.
+- Periodos usan `nombre`, `fecha_inicio`, `fecha_fin` y `activo`.
+- Fechas academicas usan `tipo`, `titulo`, `fecha`, `periodo`, `materia_id` y `cohorte_id`.
+- Programas oficiales usan `materia_id`, `carrera_id`, `cohorte_id`, `titulo` y `referencia_archivo`.
 
 ## Listado
 
-- [ ] Listar periodos academicos.
-- [ ] Mostrar rango de vigencia inicio/fin.
-- [ ] Mostrar estado activo/inactivo.
-- [ ] Mostrar fechas academicas del periodo.
-- [ ] Mostrar programas asociados del periodo si la pantalla mantiene esa seccion.
-- [ ] No mostrar periodos eliminados por soft delete.
-- [ ] Mostrar acciones disponibles segun estado y reglas de negocio.
+- [x] Listar periodos academicos.
+- [x] Mostrar rango de vigencia inicio/fin.
+- [x] Mostrar estado activo/inactivo.
+- [x] Mostrar fechas academicas del periodo.
+- [x] Mostrar programas asociados del periodo si la pantalla mantiene esa seccion.
+- [x] No mostrar periodos eliminados por soft delete.
+- [x] Mostrar acciones disponibles segun estado y reglas de negocio.
 
 Estado:
-- Frontend lista periodos con nombre, rango, estado, fechas y programas.
+- Frontend lista periodos con nombre, rango, estado y acciones.
+- La pantalla muestra ademas paneles propios para fechas academicas y programas oficiales dentro del flujo de setup.
 - Backend lista por tenant y no deberia mostrar soft deleted.
-- Acciones actuales: activar/desactivar, editar, eliminar si inactivo, agregar/quitar fechas y programas.
+- Acciones actuales: activar/desactivar, editar, eliminar si inactivo, crear/editar/borrar programas y crear/editar/borrar fechas.
 
 ## Crear periodo
 
-- [ ] Permitir cargar `nombre`.
-- [ ] Permitir seleccionar `fecha_inicio`.
-- [ ] Permitir seleccionar `fecha_fin`.
-- [ ] Validar campos obligatorios.
-- [ ] Validar que `fecha_fin >= fecha_inicio`.
-- [ ] Mostrar mensajes especificos, no genericos.
-- [ ] Confirmar si el periodo se crea activo o inactivo por defecto.
+- [x] Permitir cargar `nombre`.
+- [x] Permitir seleccionar `fecha_inicio`.
+- [x] Permitir seleccionar `fecha_fin`.
+- [x] Validar campos obligatorios.
+- [x] Validar que `fecha_fin >= fecha_inicio`.
+- [x] Mostrar mensajes especificos, no genericos.
+- [x] Confirmar si el periodo se crea activo o inactivo por defecto.
 
 Estado:
 - Frontend valida obligatorios y rango de fechas.
 - Backend valida `fecha_fin >= fecha_inicio`.
 - El periodo se crea inactivo por defecto segun modelo actual.
-- Pendiente UX: errores deben mostrarse con `Toast`, no `Alert`.
+- Errores y exitos se muestran con `Toast`.
 
 ## Editar periodo
 
-- [ ] Permitir editar `nombre`.
-- [ ] Permitir editar `fecha_inicio`.
-- [ ] Permitir editar `fecha_fin`.
-- [ ] Validar que `fecha_fin >= fecha_inicio`.
-- [ ] El boton de editar debe ser icono de lapiz con tooltip.
-- [ ] Mostrar toast de exito/error.
+- [x] Permitir editar `nombre`.
+- [x] Permitir editar `fecha_inicio`.
+- [x] Permitir editar `fecha_fin`.
+- [x] Validar que `fecha_fin >= fecha_inicio`.
+- [x] El boton de editar debe ser icono de lapiz con tooltip.
+- [x] Mostrar toast de exito/error.
 
 Estado:
 - Frontend permite editar nombre e intervalo de fechas.
 - Backend permite actualizar nombre, fecha inicio y fecha fin.
 - Accion de tabla usa icono de lapiz con tooltip.
-- Pendiente UX: errores y exitos deben usar `Toast`.
+- Errores y exitos usan `Toast`.
 
 ## Estado: activar/desactivar
 
-- [ ] Un periodo inactivo puede activarse.
-- [ ] Un periodo activo puede desactivarse.
-- [ ] Debe quedar claro si solo puede existir un periodo activo por tenant.
-- [ ] Activar un periodo debe explicar si desactiva otros periodos.
-- [ ] Debe usar modal propio si la accion tiene consecuencia sensible.
-- [ ] Debe auditarse segun RN-23.
+- [x] Un periodo inactivo puede activarse.
+- [x] Un periodo activo puede desactivarse.
+- [x] Debe quedar claro si solo puede existir un periodo activo por tenant.
+- [x] Activar un periodo debe explicar si desactiva otros periodos.
+- [x] Debe usar modal propio si la accion tiene consecuencia sensible.
+- [x] Debe auditarse segun RN-23.
 
 Estado:
-- Backend actual al activar desactiva cualquier otro periodo activo del tenant.
-- Frontend usa `window.confirm`, debe reemplazarse por modal propio.
-- Backend actual no registra auditoria visible para activar/desactivar periodos.
+- Backend al activar desactiva cualquier otro periodo activo del tenant.
+- Frontend usa modal propio para activar, desactivar y eliminar.
+- Backend registra auditoria para activar/desactivar periodos.
 
 ## Fechas academicas
 
-- [ ] Permitir agregar fechas academicas del periodo.
-- [ ] Permitir quitar fechas academicas si la regla lo permite.
-- [ ] Fecha academica debe tener tipo/titulo/fecha claros para el usuario.
-- [ ] Si los documentos piden materia/cohorte, no perder esa asociacion.
-- [ ] Mostrar toast de exito/error.
-- [ ] Quitar fecha debe usar modal propio si se considera accion sensible.
-- [ ] Debe auditarse segun RN-23.
+- [x] Permitir agregar fechas academicas del periodo.
+- [x] Permitir quitar fechas academicas si la regla lo permite.
+- [x] Fecha academica debe tener tipo/titulo/fecha claros para el usuario.
+- [x] Si los documentos piden materia/cohorte, no perder esa asociacion.
+- [x] Mostrar toast de exito/error.
+- [x] Quitar fecha debe usar modal propio si se considera accion sensible.
+- [x] Debe auditarse segun RN-23.
 
 Estado:
-- Implementacion actual permite agregar/quitar `key`, `label`, `fecha`.
-- Implementacion actual no asocia fecha a materia/cohorte, aunque SRS y modelo objetivo lo mencionan.
-- Frontend usa `Alert` para errores y `window.confirm` para quitar.
-- Backend actual no registra auditoria visible para agregar/quitar fechas.
+- Implementacion actual permite crear, editar y quitar fechas academicas oficiales.
+- Las fechas conservan asociacion a materia y cohorte.
+- Frontend usa `Toast` y modal propio.
+- Backend registra auditoria para altas, cambios y bajas.
 
 ## Programas
 
-- [ ] Definir si la seccion de programas de esta pantalla debe usar el modelo objetivo `ProgramaMateria`.
-- [ ] Segun HU-23, programa requiere materia + carrera + cohorte + titulo + archivo PDF.
+- [x] Definir si la seccion de programas de esta pantalla debe usar el modelo objetivo `ProgramaMateria`.
+- [x] Segun HU-23, programa requiere materia + carrera + cohorte + titulo + archivo PDF.
 - [ ] Debe poder listar, descargar y reemplazar programas existentes.
 - [ ] La referencia de archivo debe ser opaca; no path local manipulable.
-- [ ] Mostrar toast de exito/error.
+- [x] Mostrar toast de exito/error.
 - [ ] Quitar/reemplazar programa debe usar modal propio si se considera accion sensible.
-- [ ] Debe auditarse segun RN-23.
+- [x] Debe auditarse segun RN-23.
 
 Estado:
-- La seccion actual de programas en Setup no sube PDF ni titulo; solo asocia materia, carrera texto y año al periodo.
-- Existe `/api/programas`, que representa mejor HU-23, pero la pantalla actual no lo usa.
-- Pendiente de decision: mantener "Programas" dentro de Setup como asignacion simple al periodo, o reemplazarla por flujo real de ProgramaMateria.
+- La seccion de programas en Setup usa `/api/programas` y el modelo oficial.
+- La pantalla lista programas y permite alta, edicion de referencia/titulo y baja.
+- Sigue pendiente un flujo explicito de descarga/archivo real y una validacion mas estricta sobre la opacidad de la referencia.
 
 ## Eliminacion
 
-- [ ] No debe existir hard delete.
-- [ ] Si se expone eliminar, debe ser soft delete.
-- [ ] Eliminar debe permitirse solo si esta inactivo o si la regla lo permite.
+- [x] No debe existir hard delete.
+- [x] Si se expone eliminar, debe ser soft delete.
+- [x] Eliminar debe permitirse solo si esta inactivo o si la regla lo permite.
 - [ ] Debe bloquearse si hay dependencias que obligan a conservar historial.
-- [ ] Debe usar modal propio, no `window.confirm`.
-- [ ] Debe mostrar toast especifico.
-- [ ] Debe auditarse segun RN-23.
+- [x] Debe usar modal propio, no `window.confirm`.
+- [x] Debe mostrar toast especifico.
+- [x] Debe auditarse segun RN-23.
 
 Estado:
 - Backend actual usa soft delete para periodo.
 - Frontend muestra eliminar solo si el periodo esta inactivo.
-- Frontend usa `window.confirm`, debe reemplazarse por modal propio.
-- No se observo bloqueo por dependencias ni auditoria visible de baja.
+- Frontend usa modal propio y `Toast`.
+- No se agrego bloqueo especifico por dependencias de negocio.
 
 ## UX/UI esperada
 
 - [ ] Aplicar `revisiones/criterios-transversales-ux-ui.md`.
-- [ ] No usar `alert`, `confirm` ni prompts nativos.
-- [ ] Usar `Toast` compartido para errores y exitos.
-- [ ] Acciones frecuentes con iconos y tooltips.
-- [ ] Estado activo/inactivo debe verse claramente.
-- [ ] Confirmaciones sensibles con modal propio.
-- [ ] Mensajes especificos y orientados al usuario.
+- [x] No usar `alert`, `confirm` ni prompts nativos.
+- [x] Usar `Toast` compartido para errores y exitos.
+- [x] Acciones frecuentes con iconos y tooltips.
+- [x] Estado activo/inactivo debe verse claramente.
+- [x] Confirmaciones sensibles con modal propio.
+- [x] Mensajes especificos y orientados al usuario.
 - [ ] Mantener consistencia visual con pantallas revisadas.
 
 Estado:
-- Frontend actual usa `Alert` y `window.confirm`.
-- Algunas acciones usan iconos con tooltip.
-- Activar/desactivar son botones de texto; revisar si conviene mantener por claridad o mover a patron de accion consistente.
+- El modulo ya no usa `Alert` ni `window.confirm`.
+- Las acciones secundarias usan iconos con tooltip y las sensibles usan modal propio.
+- Queda abierta una validacion formal completa contra el documento transversal de UX/UI.
 
 ## Reglas de negocio
 
-- [ ] Respetar multi-tenancy.
-- [ ] No hard delete.
-- [ ] Solo un periodo activo por tenant si esa es la regla confirmada.
-- [ ] `fecha_fin` no puede ser anterior a `fecha_inicio`.
-- [ ] Todo cambio significativo debe auditarse segun RN-23.
-- [ ] Fechas academicas deben representar calendario academico util para Moodle.
-- [ ] Programas deben respetar HU-23 si se implementan como programas oficiales.
+- [x] Respetar multi-tenancy.
+- [x] No hard delete.
+- [x] Solo un periodo activo por tenant si esa es la regla confirmada.
+- [x] `fecha_fin` no puede ser anterior a `fecha_inicio`.
+- [x] Todo cambio significativo debe auditarse segun RN-23.
+- [x] Fechas academicas deben representar calendario academico util para Moodle.
+- [x] Programas deben respetar HU-23 si se implementan como programas oficiales.
 
 Estado:
 - Backend valida tenant mediante repositorios scoped.
 - Backend valida rango de fechas.
 - Backend activa un solo periodo y desactiva otros.
-- Pendiente: auditoria de crear/editar/activar/desactivar/eliminar periodo, agregar/quitar fechas y agregar/quitar programas.
+- Backend audita crear/editar/activar/desactivar/eliminar periodo, y altas/cambios/bajas de fechas y programas.
 
 ## Estado actual observado
 
-- [ ] Revisar pantalla actual contra este checklist.
+- [x] Revisar pantalla actual contra este checklist.
 
 ## Pendientes recomendados
 
-- [ ] Resolver permiso esperado: `estructura:gestionar` vs `periodos:gestionar`.
-- [ ] Reemplazar `Alert`/`window.confirm` por `Toast` compartido y modales propios.
-- [ ] Resolver alcance de "Programas" en Setup: asociacion simple al periodo vs HU-23 con PDF/titulo/carrera/cohorte.
-- [ ] Resolver si fechas academicas deben incluir materia/cohorte en esta pantalla.
-- [ ] Agregar auditoria RN-23 para acciones significativas del modulo.
+- [x] Resolver permiso esperado: `estructura:gestionar` vs `periodos:gestionar`.
+- [x] Reemplazar `Alert`/`window.confirm` por `Toast` compartido y modales propios.
+- [x] Resolver alcance de "Programas" en Setup: asociacion simple al periodo vs HU-23 con PDF/titulo/carrera/cohorte.
+- [x] Resolver si fechas academicas deben incluir materia/cohorte en esta pantalla.
+- [x] Agregar auditoria RN-23 para acciones significativas del modulo.

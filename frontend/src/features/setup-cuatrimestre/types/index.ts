@@ -43,3 +43,57 @@ export interface ProgramaPayload {
   carrera: string
   anio: number
 }
+
+export interface ProgramaOficial {
+  id: string
+  materia_id: string
+  carrera_id: string
+  cohorte_id: string
+  titulo: string
+  referencia_archivo: string
+  created_at: string
+}
+
+export interface ProgramaOficialPayload {
+  materia_id: string
+  carrera_id: string
+  cohorte_id: string
+  titulo: string
+  referencia_archivo: string
+}
+
+export interface ProgramaOficialUpdatePayload {
+  titulo?: string
+  referencia_archivo?: string
+}
+
+export type TipoFechaAcademica = 'Parcial' | 'TP' | 'Coloquio' | 'Recuperatorio'
+
+export interface FechaAcademicaOficial {
+  id: string
+  materia_id: string
+  cohorte_id: string
+  tipo: TipoFechaAcademica
+  numero: number
+  periodo: string
+  fecha: string
+  titulo: string
+  created_at: string
+}
+
+export interface FechaAcademicaOficialPayload {
+  materia_id: string
+  cohorte_id: string
+  tipo: TipoFechaAcademica
+  numero: number
+  periodo: string
+  fecha: string
+  titulo: string
+}
+
+export interface FechaAcademicaOficialUpdatePayload {
+  titulo?: string
+  fecha?: string
+  numero?: number
+  periodo?: string
+}

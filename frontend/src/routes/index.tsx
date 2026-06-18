@@ -264,7 +264,7 @@ export const router = createBrowserRouter([
           {
             path: 'coordinacion/setup-cuatrimestre',
             element: (
-              <PermissionGuard requiredPermissions={['periodos:gestionar']}>
+              <PermissionGuard requiredPermissions={['estructura:gestionar']}>
                 <SuspenseWrapper Component={SetupCuatrimestrePage} />
               </PermissionGuard>
             ),

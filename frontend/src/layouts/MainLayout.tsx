@@ -16,7 +16,7 @@ const menuItems: MenuItem[] = [
   { label: 'Carreras', route: '/admin/estructura/carreras', requiredPermission: 'estructura:gestionar', group: 'educativo' },
   { label: 'Cohortes', route: '/admin/estructura/cohortes', requiredPermission: 'estructura:gestionar', group: 'educativo' },
   { label: 'Materias', route: '/admin/estructura/materias', requiredPermission: 'estructura:gestionar', group: 'educativo' },
-  { label: 'Setup cuatrimestre', route: '/coordinacion/setup-cuatrimestre', requiredPermission: 'periodos:gestionar', group: 'educativo' },
+  { label: 'Setup cuatrimestre', route: '/coordinacion/setup-cuatrimestre', requiredPermission: 'estructura:gestionar', group: 'educativo' },
   { label: 'Mis Comisiones', route: '/docente/comisiones', requiredPermission: 'calificaciones:ver', group: 'educativo' },
   { label: 'Entregas sin corregir', route: '/docente/entregas', requiredPermission: 'atrasados:ver', group: 'educativo' },
   { label: 'Comunicaciones', route: '/docente/comunicaciones', requiredPermission: 'comunicacion:enviar', group: 'educativo' },

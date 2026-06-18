@@ -1,4 +1,4 @@
-"""Router para programas de materia."""
+"""Router para programas oficiales de materia."""
 
 from uuid import UUID
 
@@ -6,13 +6,19 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.routers.rbac import CurrentUserDep
-from app.core.dependencies import get_db, require_permission
-from app.models.permisos import ESTRUCTURA_GESTIONAR
+from app.core.dependencies import get_audit_service, get_db, require_permission
+from app.models.permisos import (
+    ESTRUCTURA_GESTIONAR,
+    PROGRAMA_CREAR,
+    PROGRAMA_EDITAR,
+    PROGRAMA_ELIMINAR,
+)
 from app.schemas.programas import (
     ProgramaMateriaCreate,
     ProgramaMateriaResponse,
     ProgramaMateriaUpdate,
 )
+from app.services.audit import AuditService
 from app.services.auth import CurrentUser
 from app.services.programa_service import (
     ProgramaNotFoundError,
@@ -25,6 +31,17 @@ router = APIRouter(prefix="/api/programas", tags=["programas"])
 ProgramasGuard = Depends(require_permission(ESTRUCTURA_GESTIONAR))
 
 
+def programa_audit_detail(programa) -> dict[str, object]:
+    return {
+        "programa_id": str(programa.id),
+        "materia_id": str(programa.materia_id),
+        "carrera_id": str(programa.carrera_id),
+        "cohorte_id": str(programa.cohorte_id),
+        "titulo": programa.titulo,
+        "referencia_archivo": programa.referencia_archivo,
+    }
+
+
 def _service(db: AsyncSession, current_user: CurrentUser) -> ProgramaService:
     return ProgramaService(db, current_user.tenant_id)
 
@@ -35,6 +52,7 @@ async def create_programa(
     _: CurrentUser = ProgramasGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
+    audit: AuditService = Depends(get_audit_service),
 ) -> ProgramaMateriaResponse:
     try:
         programa = await _service(db, current_user).create_programa(
@@ -45,9 +63,21 @@ async def create_programa(
             referencia_archivo=body.referencia_archivo,
         )
     except ProgramaNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
     except ProgramaValidationError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+
+    await audit.log(
+        accion=PROGRAMA_CREAR,
+        detalle=programa_audit_detail(programa),
+        filas_afectadas=1,
+    )
     return ProgramaMateriaResponse.model_validate(programa)
 
 
@@ -61,9 +91,11 @@ async def list_programas(
     cohorte_id: UUID | None = Query(default=None),
 ) -> list[ProgramaMateriaResponse]:
     programas = await _service(db, current_user).list_programas(
-        materia_id=materia_id, carrera_id=carrera_id, cohorte_id=cohorte_id
+        materia_id=materia_id,
+        carrera_id=carrera_id,
+        cohorte_id=cohorte_id,
     )
-    return [ProgramaMateriaResponse.model_validate(p) for p in programas]
+    return [ProgramaMateriaResponse.model_validate(programa) for programa in programas]
 
 
 @router.get("/{programa_id}", response_model=ProgramaMateriaResponse)
@@ -76,7 +108,10 @@ async def get_programa(
     try:
         programa = await _service(db, current_user).get_programa(programa_id)
     except ProgramaNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
     return ProgramaMateriaResponse.model_validate(programa)
 
 
@@ -87,15 +122,41 @@ async def update_programa(
     _: CurrentUser = ProgramasGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
+    audit: AuditService = Depends(get_audit_service),
 ) -> ProgramaMateriaResponse:
+    service = _service(db, current_user)
     try:
-        programa = await _service(db, current_user).update_programa(
+        current = await service.get_programa(programa_id)
+        programa = await service.update_programa(
             programa_id,
             titulo=body.titulo,
             referencia_archivo=body.referencia_archivo,
         )
     except ProgramaNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+    cambios: dict[str, dict[str, object]] = {}
+    if body.titulo is not None and body.titulo != current.titulo:
+        cambios["titulo"] = {"anterior": current.titulo, "nuevo": programa.titulo}
+    if (
+        body.referencia_archivo is not None
+        and body.referencia_archivo != current.referencia_archivo
+    ):
+        cambios["referencia_archivo"] = {
+            "anterior": current.referencia_archivo,
+            "nuevo": programa.referencia_archivo,
+        }
+
+    if cambios:
+        await audit.log(
+            accion=PROGRAMA_EDITAR,
+            detalle={**programa_audit_detail(programa), "cambios": cambios},
+            filas_afectadas=1,
+        )
+
     return ProgramaMateriaResponse.model_validate(programa)
 
 
@@ -105,8 +166,20 @@ async def delete_programa(
     _: CurrentUser = ProgramasGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
+    audit: AuditService = Depends(get_audit_service),
 ) -> None:
+    service = _service(db, current_user)
     try:
-        await _service(db, current_user).delete_programa(programa_id)
+        programa = await service.get_programa(programa_id)
+        await service.delete_programa(programa_id)
     except ProgramaNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+    await audit.log(
+        accion=PROGRAMA_ELIMINAR,
+        detalle=programa_audit_detail(programa),
+        filas_afectadas=1,
+    )
