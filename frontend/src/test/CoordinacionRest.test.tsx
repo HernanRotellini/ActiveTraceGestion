@@ -8,8 +8,14 @@ import SetupCuatrimestrePage from '@/features/setup-cuatrimestre/pages/SetupCuat
 vi.mock('@/features/setup-cuatrimestre/hooks/usePeriodos', () => ({
   usePeriodosList: () => ({ data: { items: [] }, isLoading: false }),
   useCrearPeriodo: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useActualizarPeriodoMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useActivarPeriodo: () => ({ mutate: vi.fn() }),
   useDesactivarPeriodo: () => ({ mutate: vi.fn() }),
+  useEliminarPeriodo: () => ({ mutate: vi.fn(), isPending: false }),
+  useAgregarFechaMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useQuitarFechaMutation: () => ({ mutate: vi.fn(), isPending: false }),
+  useAgregarProgramaMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useQuitarProgramaMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 
 describe('Encuentros', () => {

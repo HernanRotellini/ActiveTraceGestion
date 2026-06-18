@@ -1,11 +1,15 @@
 import api from '@/shared/services/api'
 import type {
   Carrera,
+  CarreraFilters,
   CarreraPayload,
+  CarreraUpdatePayload,
   Cohorte,
   CohortePayload,
+  CohorteUpdatePayload,
   Materia,
   MateriaPayload,
+  MateriaUpdatePayload,
   UsuarioAdmin,
   UsuarioAdminPayload,
   UsuarioAdminFilters,
@@ -14,8 +18,8 @@ import type {
   AuditoriaFilters,
 } from '@/features/admin/types'
 
-export async function listarCarreras() {
-  const { data } = await api.get<{ items: Carrera[]; total: number }>('/admin/carreras')
+export async function listarCarreras(filters?: CarreraFilters) {
+  const { data } = await api.get<{ items: Carrera[]; total: number }>('/admin/carreras', { params: filters })
   return data
 }
 
@@ -29,7 +33,7 @@ export async function crearCarrera(payload: CarreraPayload) {
   return data
 }
 
-export async function actualizarCarrera(id: string, payload: Partial<CarreraPayload>) {
+export async function actualizarCarrera(id: string, payload: CarreraUpdatePayload) {
   const { data } = await api.patch<Carrera>(`/admin/carreras/${id}`, payload)
   return data
 }
@@ -50,9 +54,13 @@ export async function crearCohorte(payload: CohortePayload) {
   return data
 }
 
-export async function actualizarCohorte(id: string, payload: Partial<CohortePayload>) {
+export async function actualizarCohorte(id: string, payload: CohorteUpdatePayload) {
   const { data } = await api.patch<Cohorte>(`/admin/cohortes/${id}`, payload)
   return data
+}
+
+export async function eliminarCohorte(id: string) {
+  await api.delete(`/admin/cohortes/${id}`)
 }
 
 export async function listarMaterias(carreraId?: string, cohorteId?: string) {
@@ -67,9 +75,13 @@ export async function crearMateria(payload: MateriaPayload) {
   return data
 }
 
-export async function actualizarMateria(id: string, payload: Partial<MateriaPayload>) {
+export async function actualizarMateria(id: string, payload: MateriaUpdatePayload) {
   const { data } = await api.patch<Materia>(`/admin/materias/${id}`, payload)
   return data
+}
+
+export async function eliminarMateria(id: string) {
+  await api.delete(`/admin/materias/${id}`)
 }
 
 export async function listarUsuarios(filters?: UsuarioAdminFilters) {
