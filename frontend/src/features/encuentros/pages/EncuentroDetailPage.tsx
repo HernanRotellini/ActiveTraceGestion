@@ -1,19 +1,47 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Spinner } from '@/shared/components/Spinner'
-import { useEncuentro } from '@/features/encuentros/hooks/useEncuentros'
+import { Button } from '@/shared/components/Button'
+import { Toast } from '@/shared/components/Toast'
+import { useAdminInstancias, useActualizarInstancia } from '@/features/encuentros/hooks/useEncuentros'
+import type { EstadoInstancia, InstanciaEncuentroUpdate } from '@/features/encuentros/types'
+
+const ESTADOS: EstadoInstancia[] = ['Programado', 'Realizado', 'Cancelado']
+
+const ESTADO_CLASSES: Record<EstadoInstancia, string> = {
+  Programado: 'bg-blue-100 text-blue-700',
+  Realizado: 'bg-green-100 text-green-700',
+  Cancelado: 'bg-gray-100 text-gray-600',
+}
 
 export default function EncuentroDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { data: encuentro, isLoading } = useEncuentro(id!)
+  const { data: instancias, isLoading } = useAdminInstancias()
+  const actualizar = useActualizarInstancia()
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
+
+  const instancia = (instancias ?? []).find((i) => i.id === id)
+
+  const [form, setForm] = useState<InstanciaEncuentroUpdate>({})
+
+  const handleSave = async () => {
+    if (!id) return
+    try {
+      await actualizar.mutateAsync({ id, update: form })
+      setToast({ message: 'Encuentro actualizado.', variant: 'success' })
+    } catch {
+      setToast({ message: 'Error al actualizar el encuentro.', variant: 'error' })
+    }
+  }
 
   if (isLoading) {
     return <div className="flex justify-center py-12"><Spinner /></div>
   }
 
-  if (!encuentro) {
+  if (!instancia) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">Encuentro no encontrado</h1>
         <Link to="/coordinacion/encuentros" className="text-primary-600 hover:text-primary-800">Volver</Link>
       </div>
@@ -21,101 +49,96 @@ export default function EncuentroDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
+      {toast && <Toast message={toast.message} variant={toast.variant} onClose={() => setToast(null)} />}
+
       <div>
         <Link to="/coordinacion/encuentros" className="text-sm text-primary-600 hover:text-primary-800">&larr; Volver</Link>
-        <h1 className="text-2xl font-bold text-gray-900 mt-1">{encuentro.comision_nombre}</h1>
-        <p className="text-sm text-gray-500">{encuentro.materia_nombre} - {new Date(encuentro.fecha).toLocaleDateString()}</p>
+        <h1 className="mt-1 text-2xl font-bold text-gray-900">{instancia.titulo}</h1>
       </div>
 
-      <Card className="p-4">
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div><span className="text-gray-500">Aula:</span><span className="ml-2 text-gray-900">{encuentro.aula}</span></div>
-          <div><span className="text-gray-500">Duración:</span><span className="ml-2 text-gray-900">{encuentro.duracion_minutos} min</span></div>
-          <div><span className="text-gray-500">Tema:</span><span className="ml-2 text-gray-900">{encuentro.tema ?? '-'}</span></div>
+      <Card className="p-6">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-gray-500">Estado:</span>
+            <span className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${ESTADO_CLASSES[instancia.estado] ?? 'bg-gray-100 text-gray-600'}`}>
+              {instancia.estado}
+            </span>
+          </div>
+          <div>
+            <span className="text-gray-500">Fecha:</span>
+            <span className="ml-2 text-gray-900">{new Date(instancia.fecha).toLocaleDateString()}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Hora:</span>
+            <span className="ml-2 text-gray-900">{instancia.hora}</span>
+          </div>
+          {instancia.meet_url && (
+            <div>
+              <span className="text-gray-500">Meet:</span>
+              <a href={instancia.meet_url} target="_blank" rel="noreferrer" className="ml-2 text-primary-600 hover:text-primary-800">Enlace</a>
+            </div>
+          )}
+          {instancia.video_url && (
+            <div>
+              <span className="text-gray-500">Grabación:</span>
+              <a href={instancia.video_url} target="_blank" rel="noreferrer" className="ml-2 text-primary-600 hover:text-primary-800">Ver grabación</a>
+            </div>
+          )}
+          {instancia.comentario && (
+            <div className="col-span-2">
+              <span className="text-gray-500">Comentario:</span>
+              <p className="mt-1 text-gray-800">{instancia.comentario}</p>
+            </div>
+          )}
         </div>
       </Card>
 
-      <h2 className="text-lg font-semibold text-gray-900">Slots Horarios</h2>
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-gray-50 text-xs uppercase text-gray-600">
-              <tr>
-                <th className="px-4 py-3">Inicio</th>
-                <th className="px-4 py-3">Fin</th>
-                <th className="px-4 py-3">Docente</th>
-                <th className="px-4 py-3">Tema</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {encuentro.slots?.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900">{s.hora_inicio}</td>
-                  <td className="px-4 py-3 text-gray-900">{s.hora_fin}</td>
-                  <td className="px-4 py-3 text-gray-600">{s.docente_nombre ?? 'Sin asignar'}</td>
-                  <td className="px-4 py-3 text-gray-600">{s.tema ?? '-'}</td>
-                </tr>
-              ))}
-              {(!encuentro.slots || encuentro.slots.length === 0) && (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">Sin slots registrados.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <h2 className="text-lg font-semibold text-gray-900">Instancias de Dictado</h2>
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-gray-50 text-xs uppercase text-gray-600">
-              <tr>
-                <th className="px-4 py-3">Materia</th>
-                <th className="px-4 py-3">Comisión</th>
-                <th className="px-4 py-3">Docente</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {encuentro.instancias?.map((inst) => (
-                <tr key={inst.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900">{inst.materia_nombre}</td>
-                  <td className="px-4 py-3 text-gray-600">{inst.comision_nombre}</td>
-                  <td className="px-4 py-3 text-gray-600">{inst.docente_nombre}</td>
-                </tr>
-              ))}
-              {(!encuentro.instancias || encuentro.instancias.length === 0) && (
-                <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-500">Sin instancias registradas.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <h2 className="text-lg font-semibold text-gray-900">Guardias</h2>
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-gray-50 text-xs uppercase text-gray-600">
-              <tr>
-                <th className="px-4 py-3">Docente</th>
-                <th className="px-4 py-3">Inicio</th>
-                <th className="px-4 py-3">Fin</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {encuentro.guardias?.map((g) => (
-                <tr key={g.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900">{g.docente_nombre}</td>
-                  <td className="px-4 py-3 text-gray-600">{g.hora_inicio}</td>
-                  <td className="px-4 py-3 text-gray-600">{g.hora_fin}</td>
-                </tr>
-              ))}
-              {(!encuentro.guardias || encuentro.guardias.length === 0) && (
-                <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-500">Sin guardias registradas.</td></tr>
-              )}
-            </tbody>
-          </table>
+      <h2 className="text-lg font-semibold text-gray-900">Editar</h2>
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Estado</label>
+            <select
+              value={form.estado ?? instancia.estado}
+              onChange={(e) => setForm({ ...form, estado: e.target.value as EstadoInstancia })}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              {ESTADOS.map((est) => <option key={est} value={est}>{est}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Link Meet</label>
+            <input
+              type="url"
+              value={form.meet_url ?? instancia.meet_url ?? ''}
+              onChange={(e) => setForm({ ...form, meet_url: e.target.value || undefined })}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="https://..."
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Link Grabación</label>
+            <input
+              type="url"
+              value={form.video_url ?? instancia.video_url ?? ''}
+              onChange={(e) => setForm({ ...form, video_url: e.target.value || undefined })}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="https://..."
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Comentario interno</label>
+            <textarea
+              value={form.comentario ?? instancia.comentario ?? ''}
+              onChange={(e) => setForm({ ...form, comentario: e.target.value || undefined })}
+              rows={3}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={handleSave} loading={actualizar.isPending}>Guardar cambios</Button>
+          </div>
         </div>
       </Card>
     </div>

@@ -1,61 +1,68 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/features/encuentros/services/api'
-import type { EncuentroPayload, EncuentrosFilters } from '@/features/encuentros/types'
+import type {
+  SlotEncuentroPayload,
+  InstanciaEncuentroPayload,
+  InstanciaEncuentroUpdate,
+  EncuentrosFilters,
+  AdminInstanciasFilters,
+} from '@/features/encuentros/types'
 
-export function useEncuentrosList(filters?: EncuentrosFilters) {
+export function useSlotsList(filters?: EncuentrosFilters) {
   return useQuery({
-    queryKey: ['encuentros', filters],
-    queryFn: () => api.listarEncuentros(filters),
+    queryKey: ['encuentros-slots', filters],
+    queryFn: () => api.listarSlots(filters),
     staleTime: 30_000,
   })
 }
 
-export function useEncuentro(id: string) {
+export function useInstanciasList(filters?: EncuentrosFilters) {
   return useQuery({
-    queryKey: ['encuentro', id],
-    queryFn: () => api.obtenerEncuentro(id),
-    enabled: !!id,
+    queryKey: ['encuentros-instancias', filters],
+    queryFn: () => api.listarInstancias(filters),
     staleTime: 30_000,
   })
 }
 
-export function useCrearEncuentro() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: EncuentroPayload) => api.crearEncuentro(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['encuentros'] }),
+export function useAdminInstancias(filters?: AdminInstanciasFilters) {
+  return useQuery({
+    queryKey: ['encuentros-admin', filters],
+    queryFn: () => api.adminListarInstancias(filters),
+    staleTime: 30_000,
   })
 }
 
-export function useActualizarEncuentro(id: string) {
+export function useCrearSlot() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: Partial<EncuentroPayload>) => api.actualizarEncuentro(id, payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['encuentros'] }); qc.invalidateQueries({ queryKey: ['encuentro', id] }) },
+    mutationFn: (payload: SlotEncuentroPayload) => api.crearSlot(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['encuentros-slots'] })
+      qc.invalidateQueries({ queryKey: ['encuentros-instancias'] })
+      qc.invalidateQueries({ queryKey: ['encuentros-admin'] })
+    },
   })
 }
 
-export function useEliminarEncuentro() {
+export function useCrearInstancia() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.eliminarEncuentro(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['encuentros'] }),
+    mutationFn: (payload: InstanciaEncuentroPayload) => api.crearInstancia(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['encuentros-instancias'] })
+      qc.invalidateQueries({ queryKey: ['encuentros-admin'] })
+    },
   })
 }
 
-export function useAgregarGuardia() {
+export function useActualizarInstancia() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ encuentroId, payload }: { encuentroId: string; payload: { docente_id: string; hora_inicio: string; hora_fin: string } }) =>
-      api.agregarGuardia(encuentroId, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['encuentros'] }),
-  })
-}
-
-export function useQuitarGuardia() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ encuentroId, guardiaId }: { encuentroId: string; guardiaId: string }) => api.quitarGuardia(encuentroId, guardiaId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['encuentros'] }),
+    mutationFn: ({ id, update }: { id: string; update: InstanciaEncuentroUpdate }) =>
+      api.actualizarInstancia(id, update),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['encuentros-instancias'] })
+      qc.invalidateQueries({ queryKey: ['encuentros-admin'] })
+    },
   })
 }

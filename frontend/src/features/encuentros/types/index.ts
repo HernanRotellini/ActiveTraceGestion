@@ -1,61 +1,74 @@
-export interface Encuentro {
-  id: string
-  comision_id: string
-  comision_nombre: string
-  materia_nombre: string
-  fecha: string
-  duracion_minutos: number
-  aula: string
-  tema?: string
-  slots: SlotHorario[]
-  instancias: InstanciaDictado[]
-  guardias: Guardia[]
-  creado_en: string
-}
+export type EstadoInstancia = 'Programado' | 'Realizado' | 'Cancelado'
 
-export interface SlotHorario {
-  id: string
-  encuentro_id: string
-  hora_inicio: string
-  hora_fin: string
-  docente_id?: string
-  docente_nombre?: string
-  tema?: string
-}
+export type DiaSemana = 'Lunes' | 'Martes' | 'Miercoles' | 'Jueves' | 'Viernes' | 'Sabado'
 
-export interface InstanciaDictado {
+export interface SlotEncuentroResponse {
   id: string
-  encuentro_id: string
+  asignacion_id: string
   materia_id: string
-  materia_nombre: string
-  comision_id: string
-  comision_nombre: string
-  docente_id: string
-  docente_nombre: string
+  titulo: string
+  dia_semana: DiaSemana
+  hora: string
+  fecha_inicio: string
+  cant_semanas: number
+  fecha_unica: string | null
+  meet_url: string | null
+  vig_desde: string
+  vig_hasta: string | null
+  created_at: string
+  updated_at: string
 }
 
-export interface Guardia {
+export interface SlotEncuentroPayload {
+  asignacion_id: string
+  materia_id: string
+  titulo: string
+  dia_semana: DiaSemana
+  hora: string
+  fecha_inicio: string
+  cant_semanas?: number
+  meet_url?: string
+  vig_desde: string
+  vig_hasta?: string
+}
+
+export interface InstanciaEncuentroResponse {
   id: string
-  encuentro_id: string
-  docente_id: string
-  docente_nombre: string
-  hora_inicio: string
-  hora_fin: string
+  slot_id: string | null
+  materia_id: string
+  fecha: string
+  hora: string
+  titulo: string
+  estado: EstadoInstancia
+  meet_url: string | null
+  video_url: string | null
+  comentario: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InstanciaEncuentroPayload {
+  materia_id: string
+  fecha: string
+  hora: string
+  titulo: string
+  meet_url?: string
+}
+
+export interface InstanciaEncuentroUpdate {
+  estado?: EstadoInstancia
+  meet_url?: string
+  video_url?: string
+  comentario?: string
 }
 
 export interface EncuentrosFilters {
-  fecha_desde?: string
-  fecha_hasta?: string
   materia_id?: string
-  comision_id?: string
-  page?: number
-  limit?: number
 }
 
-export interface EncuentroPayload {
-  comision_id: string
-  fecha: string
-  duracion_minutos: number
-  aula: string
-  tema?: string
+export interface AdminInstanciasFilters {
+  materia_id?: string
+  fecha_desde?: string
+  fecha_hasta?: string
+  estado?: EstadoInstancia
 }
