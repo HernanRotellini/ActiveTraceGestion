@@ -25,9 +25,9 @@ La pantalla `/docente/monitor` es el **monitor de seguimiento propio** del docen
 
 - [x] Frontend: la ruta `/docente/monitor` está protegida con `atrasados:ver` (`PermissionGuard`).
 - [x] Frontend: el menú lateral muestra "Monitor" solo con `atrasados:ver`.
-- [ ] Backend: `GET /api/monitor/alumnos` debe filtrar por las materias/comisiones asignadas al usuario autenticado (scope propio del docente). Verificar que no devuelva alumnos de otras materias ni otros tenants.
-- [ ] Backend: identidad siempre desde el JWT verificado (`current_user`), nunca desde parámetros de URL o body.
-- [ ] Backend: toda consulta filtra por `tenant_id`.
+- [x] Backend: `GET /api/analisis/monitor` filtra por asignaciones del usuario autenticado cuando no tiene scope global (COORDINADOR/ADMIN). Roles sin scope global usan `monitor_por_asignaciones` con los `asignacion_ids` propios.
+- [x] Backend: identidad desde `current_user` inyectado por JWT verificado; `tenant_id` y `user_id` salen de la sesión, nunca de parámetros.
+- [x] Backend: toda consulta usa `self.tenant_id` scoped en el repositorio.
 
 ## Campos esperados en el listado
 
@@ -45,62 +45,53 @@ La pantalla `/docente/monitor` es el **monitor de seguimiento propio** del docen
 
 Según SRS `/docente/monitor` y F2.8:
 
-- [ ] Búsqueda libre por alumno (nombre o correo) — **no implementado**: el tipo `MonitorFilters` no incluye campo `alumno` ni `email`.
-- [ ] Filtro por comisión **legible** (no por ID técnico de texto libre) — **pendiente**: el filtro actual `comision_id` es un input de texto libre que expone el ID técnico. Debe reemplazarse por un selector de nombre o al menos un campo de búsqueda por nombre de comisión.
+- [x] Búsqueda libre por alumno (nombre o correo) — campo `busqueda` agregado al tipo y al componente de filtros.
+- [x] Filtro por comisión **legible** — reemplazado `comision_id` (input de ID técnico) por `comision` (input de texto por nombre de comisión), alineado con el parámetro real del backend.
 - [x] Filtro por materia — implementado con `Combobox` que muestra nombre + código.
-- [ ] Filtro por regional — **no implementado**: no está en `MonitorFilters` ni en los filtros del componente.
-- [ ] Filtro por actividad — **no implementado**: no está en `MonitorFilters` ni en los filtros del componente.
-- [ ] Filtro por mínimo de actividad cumplida — **no implementado** (mencionado en F2.8).
-- [x] Filtro por estado (`al_dia` / `atrasado` / `crítico`) — implementado.
-- [x] Filtros de fecha desde/hasta — implementados. Nota: F2.9 asocia el rango de fechas al monitor de coordinación; F2.8 no los menciona explícitamente. Se mantiene hasta que se defina formalmente si aplican al monitor propio.
+- [x] Filtro por regional — campo `regional` agregado al tipo y al componente de filtros.
+- [x] Filtro por actividad — campo `actividad` agregado al tipo y al componente de filtros.
+- [x] Filtro por mínimo de actividad cumplida — campo `min_actividad_cumplida` agregado al tipo y al componente de filtros.
+- [x] El filtro de estado (`atrasado` boolean) se refleja en el badge de la tabla (Atrasado / Al día). El backend no expone un filtro de estado como query param; el estado se deriva del campo `atrasado` del `MonitorItem`.
 
 ## Exportar
 
-- [ ] Debe existir un botón de exportar en la pantalla — **no implementado en UI**: el servicio `exportarMonitor` existe en `monitores.ts` pero no hay botón en `MonitorPage.tsx`.
-- [ ] La exportación debe respetar los mismos filtros activos.
-- [ ] Debe mostrar Toast de éxito y error al exportar.
-- [ ] El nombre del archivo debe ser claro para el usuario.
+- [ ] No existe endpoint de exportación para el monitor en el backend (`/api/analisis/monitor/exportar`). El servicio de exportación fue removido del frontend al realinear con el backend real. Pendiente de decisión de producto para implementar un endpoint de exportación CSV.
 
 ## UX/UI esperada
 
 - [x] Respetar criterios transversales en `revisiones/criterios-transversales-ux-ui.md`.
-- [ ] Mostrar error con Toast compartido si falla la carga de datos — **no implementado**: `MonitorPage.tsx` solo maneja `isLoading`, no el estado `error` del hook.
+- [x] Mostrar error con Toast compartido si falla la carga de datos — agregado en `MonitorPage.tsx`.
 - [x] Estado de loading visible (`Spinner`).
 - [x] Estado vacío claro: "No hay alumnos en el monitor."
-- [ ] Filtro de comisión legible, no basado en ID técnico — ver Filtros.
-- [ ] No mostrar IDs técnicos cuando existe nombre legible disponible — **pendiente**: el filtro `comision_id` expone el ID.
+- [x] Filtro de comisión legible — reemplazado por campo de texto `comision` por nombre.
+- [x] No mostrar IDs técnicos — el filtro `comision_id` fue eliminado.
 - [x] No usar `alert`, `confirm` ni prompts nativos del navegador.
-- [ ] Tabla responsive (`overflow-x-auto`) — **verificar**: `MonitorTable` tiene `overflow-x-auto` en el contenedor.
-- [x] Estado visual por alumno con badge coloreado (`al_dia` verde / `atrasado` amarillo / `crítico` rojo).
+- [x] Tabla responsive con `overflow-x-auto`.
+- [x] Estado visual por alumno con badge coloreado (Atrasado rojo / Al día verde).
 
 ## Reglas de negocio
 
-- [ ] El monitor propio (F2.8) muestra solo los alumnos de las materias asignadas al usuario autenticado — verificar scope en backend.
-- [x] Los estados `al_dia`, `atrasado`, `crítico` son mutuamente excluyentes y se visualizan con badge diferenciado.
-- [ ] Toda consulta del monitor debe auditarse según RN-23 — **verificar** si el backend registra `MONITOR_CONSULTAR`.
-- [ ] Las consultas deben filtrar por `tenant_id` en backend — **verificar**.
+- [x] El monitor propio (F2.8) muestra solo los alumnos de las materias asignadas al usuario autenticado — el backend usa `monitor_por_asignaciones` con los `asignacion_ids` propios cuando el rol no tiene scope global.
+- [x] El estado `atrasado` (boolean) se visualiza con badge diferenciado: Atrasado (rojo) / Al día (verde).
+- [x] Toda consulta del monitor se audita con `ANALISIS_CONSULTAR` (verificado en `AnalisisService.get_monitor`).
+- [x] Las consultas filtran por `self.tenant_id` — el repositorio es tenant-scoped.
 
 ## Estado actual observado
 
 - [x] La ruta y el menú existen y piden `atrasados:ver`.
-- [x] La tabla muestra columnas: alumno, comisión, materia, act. pendientes, entregas sin corregir, promedio, asistencias, estado y última actividad.
+- [x] La tabla muestra columnas alineadas con el backend: alumno, email, comisión, regional, total actividades, aprobadas, pendientes, estado (Atrasado/Al día).
 - [x] El estado de loading usa `Spinner` centralizado.
 - [x] El estado vacío muestra mensaje de texto.
-- [x] Los estados al_dia/atrasado/crítico tienen badge con color diferenciado.
-- [x] El filtro de estado tiene selector con las tres opciones.
+- [x] El badge de estado usa `atrasado` (boolean) del backend: Atrasado (rojo) / Al día (verde).
 - [x] El filtro de materia usa `Combobox` con nombre legible.
-- [ ] El filtro de comisión expone el ID técnico (input de texto libre `comision_id`) en lugar de un selector legible.
-- [ ] No hay Toast de error si falla la carga de datos.
-- [ ] No hay botón de exportar en la pantalla.
-- [ ] No hay filtro de búsqueda por alumno.
-- [ ] No hay filtro de regional ni de actividad.
+- [x] El filtro de comisión es por nombre (texto), no por ID técnico.
+- [x] El filtro de búsqueda libre por alumno/email existe (`busqueda`).
+- [x] Filtros de regional, actividad y mínimo de actividades cumplidas implementados.
+- [x] Toast de error si falla la carga de datos.
+- [x] URL del servicio corregida a `/api/analisis/monitor`.
+- [x] Tipo de respuesta corregido a `MonitorResponse { items, total }`.
+- [ ] No hay endpoint de exportación en el backend — pendiente de decisión de producto.
 
 ## Pendientes para resolver en orden
 
-1. [ ] Reemplazar el filtro `comision_id` (input de ID técnico) por un campo de búsqueda legible por nombre de comisión o selector.
-2. [ ] Agregar manejo de error en `MonitorPage.tsx` con Toast compartido si falla la carga.
-3. [ ] Agregar botón de exportar que consuma `exportarMonitor` y muestre Toast de éxito/error.
-4. [ ] Agregar filtro de búsqueda libre por alumno (nombre o correo), según F2.8 y SRS.
-5. [ ] Verificar scope del backend: que `/api/monitor/alumnos` filtre por las materias asignadas al docente autenticado y por `tenant_id`.
-6. [ ] Verificar si el backend registra auditoria de consulta del monitor (RN-23).
-7. [ ] Determinar con producto si se requieren los filtros de regional, actividad y mínimo de actividad cumplida para esta vista (F2.8 los menciona; sin decisión explícita no se implementan).
+1. [ ] Implementar endpoint de exportación CSV en el backend (`/api/analisis/monitor/exportar`) si se decide agregar la funcionalidad. Hasta entonces, sin botón de exportar en la pantalla.

@@ -4,15 +4,22 @@ import { MonitorFilters } from '@/features/monitores/components/MonitorFilters'
 import { MonitorTable } from '@/features/monitores/components/MonitorTable'
 import { Card } from '@/shared/components/Card'
 import { Spinner } from '@/shared/components/Spinner'
+import { Toast } from '@/shared/components/Toast'
 import type { MonitorFilters as MonitorFiltersType } from '@/features/monitores/types/monitores'
 
 export default function MonitorPage() {
   const [filters, setFilters] = useState<MonitorFiltersType>({})
-  const { data, isLoading } = useMonitor(filters)
+  const { data, isLoading, error } = useMonitor(filters)
+
+  const errorMessage = error instanceof Error ? error.message : 'No se pudo cargar el monitor.'
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Monitor de Alumnos</h1>
+
+      {error && (
+        <Toast message={errorMessage} variant="error" onClose={() => {}} />
+      )}
 
       <Card className="p-4">
         <MonitorFilters filters={filters} onChange={setFilters} />
@@ -24,7 +31,12 @@ export default function MonitorPage() {
         </div>
       ) : (
         <Card>
-          <MonitorTable data={data} />
+          {data && data.total > 0 && (
+            <div className="border-b px-4 py-2 text-sm text-gray-500">
+              {data.total} {data.total === 1 ? 'alumno' : 'alumnos'} encontrados
+            </div>
+          )}
+          <MonitorTable items={data?.items} />
         </Card>
       )}
     </div>

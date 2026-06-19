@@ -14,61 +14,76 @@ export function MonitorFilters({ filters, onChange }: MonitorFiltersProps) {
     label: `${m.nombre} (${m.codigo})${m.carrera_nombre ? ` - ${m.carrera_nombre}` : ''}`,
   }))
 
+  const update = <K extends keyof MonitorFiltersType>(key: K, value: MonitorFiltersType[K] | '') => {
+    onChange({ ...filters, [key]: value || undefined })
+  }
+
   return (
     <div className="flex flex-wrap gap-4">
       <div className="space-y-1">
-        <label className="block text-xs font-medium text-gray-600">Comisión</label>
+        <label className="block text-xs font-medium text-gray-600">Búsqueda (alumno o email)</label>
         <input
           type="text"
-          value={filters.comision_id ?? ''}
-          onChange={(e) => onChange({ ...filters, comision_id: e.target.value || undefined })}
-          placeholder="ID de comisión"
-          className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          value={filters.busqueda ?? ''}
+          onChange={(e) => update('busqueda', e.target.value)}
+          placeholder="Nombre o email..."
+          className="block w-52 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
-      <div className="w-48">
+      <div className="w-52">
         <Combobox
           label="Materia"
           items={materiaItems}
           value={filters.materia_id ?? ''}
-          onChange={(val) => onChange({ ...filters, materia_id: val || undefined })}
+          onChange={(val) => update('materia_id', val || undefined)}
           placeholder="Buscar materia..."
           isLoading={loadingMaterias}
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-medium text-gray-600">Estado</label>
-        <select
-          value={filters.estado ?? ''}
-          onChange={(e) => onChange({ ...filters, estado: e.target.value || undefined })}
-          className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          <option value="">Todos</option>
-          <option value="al_dia">Al día</option>
-          <option value="atrasado">Atrasado</option>
-          <option value="critico">Crítico</option>
-        </select>
-      </div>
-
-      <div className="space-y-1">
-        <label className="block text-xs font-medium text-gray-600">Desde</label>
+        <label className="block text-xs font-medium text-gray-600">Comisión</label>
         <input
-          type="date"
-          value={filters.fecha_desde ?? ''}
-          onChange={(e) => onChange({ ...filters, fecha_desde: e.target.value || undefined })}
+          type="text"
+          value={filters.comision ?? ''}
+          onChange={(e) => update('comision', e.target.value)}
+          placeholder="Ej: A, Turno noche..."
           className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs font-medium text-gray-600">Hasta</label>
+        <label className="block text-xs font-medium text-gray-600">Regional</label>
         <input
-          type="date"
-          value={filters.fecha_hasta ?? ''}
-          onChange={(e) => onChange({ ...filters, fecha_hasta: e.target.value || undefined })}
-          className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          type="text"
+          value={filters.regional ?? ''}
+          onChange={(e) => update('regional', e.target.value)}
+          placeholder="Regional..."
+          className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="block text-xs font-medium text-gray-600">Actividad</label>
+        <input
+          type="text"
+          value={filters.actividad ?? ''}
+          onChange={(e) => update('actividad', e.target.value)}
+          placeholder="Nombre de actividad..."
+          className="block w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="block text-xs font-medium text-gray-600">Mín. actividades cumplidas</label>
+        <input
+          type="number"
+          min={0}
+          value={filters.min_actividad_cumplida ?? ''}
+          onChange={(e) => update('min_actividad_cumplida', e.target.value ? Number(e.target.value) : undefined)}
+          placeholder="0"
+          className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
     </div>
