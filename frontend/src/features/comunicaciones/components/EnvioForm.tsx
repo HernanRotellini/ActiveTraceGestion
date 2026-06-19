@@ -6,26 +6,26 @@ import { Button } from '@/shared/components/Button'
 import { Input } from '@/shared/components/Input'
 import { Combobox } from '@/shared/components/Combobox'
 import { fetchMaterias } from '@/features/comunicaciones/services/comunicaciones'
+import { VARIABLES_SOPORTADAS } from '@/features/comunicaciones/types/comunicaciones'
 import type { MateriaOption } from '@/features/comunicaciones/types/comunicaciones'
 
 const envioSchema = z.object({
   materiaId: z.string().min(1, 'La materia es requerida'),
-  tipo: z.string().min(1, 'El tipo es requerido'),
   asunto: z.string().min(1, 'El asunto es requerido'),
   cuerpo: z.string().min(1, 'El cuerpo es requerido'),
-  destinatarios: z.string().min(1, 'Los destinatarios son requeridos'),
 })
 
-type EnvioFormValues = z.infer<typeof envioSchema>
+export type EnvioFormValues = z.infer<typeof envioSchema>
 
 interface EnvioFormProps {
   onPreview: (values: EnvioFormValues) => void
   onSend: (values: EnvioFormValues) => void
   isLoadingPreview: boolean
   isLoadingSend: boolean
+  canSend: boolean
 }
 
-export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend }: EnvioFormProps) {
+export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend, canSend }: EnvioFormProps) {
   const {
     register,
     handleSubmit,
@@ -34,9 +34,6 @@ export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend }
     formState: { errors },
   } = useForm<EnvioFormValues>({
     resolver: zodResolver(envioSchema),
-    defaultValues: {
-      tipo: 'email',
-    },
   })
 
   const materiaId = watch('materiaId')
@@ -47,14 +44,19 @@ export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend }
     staleTime: 60_000,
   })
 
-  const materiaItems: { value: string; label: string }[] = materias.map((m: MateriaOption) => ({
+  const materiaItems = materias.map((m: MateriaOption) => ({
     value: m.id,
     label: `${m.codigo ? `[${m.codigo}] ` : ''}${m.nombre}`,
   }))
 
   return (
     <form className="space-y-4">
-      <h2 className="text-lg font-semibold">Nueva Comunicación</h2>
+      <div>
+        <h2 className="text-lg font-semibold">Nueva comunicación</h2>
+        <p className="text-sm text-gray-600">
+          El mensaje se encola para los <span className="font-medium">alumnos atrasados</span> de la materia seleccionada.
+        </p>
+      </div>
 
       <Combobox
         label="Materia"
@@ -66,21 +68,6 @@ export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend }
         isLoading={loadingMaterias}
       />
 
-      <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Tipo</label>
-        <select
-          className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-          {...register('tipo')}
-        >
-          <option value="email">Email</option>
-          <option value="sms">SMS</option>
-          <option value="whatsapp">WhatsApp</option>
-        </select>
-        {errors.tipo && (
-          <p className="text-sm text-red-600" role="alert">{errors.tipo.message}</p>
-        )}
-      </div>
-
       <Input
         label="Asunto"
         placeholder="Asunto del mensaje"
@@ -91,7 +78,7 @@ export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend }
       <div className="space-y-1">
         <label className="block text-sm font-medium text-gray-700">Cuerpo</label>
         <textarea
-          rows={4}
+          rows={5}
           className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Contenido del mensaje"
           {...register('cuerpo')}
@@ -99,22 +86,26 @@ export function EnvioForm({ onPreview, onSend, isLoadingPreview, isLoadingSend }
         {errors.cuerpo && (
           <p className="text-sm text-red-600" role="alert">{errors.cuerpo.message}</p>
         )}
+        <p className="text-xs text-gray-500">
+          Variables disponibles:{' '}
+          {VARIABLES_SOPORTADAS.map((v) => (
+            <code key={v} className="mr-1 rounded bg-gray-100 px-1 py-0.5 text-gray-700">{`{{${v}}}`}</code>
+          ))}
+        </p>
       </div>
 
-      <Input
-        label="Destinatarios (separados por coma)"
-        placeholder="email1@test.com, email2@test.com"
-        error={errors.destinatarios?.message}
-        {...register('destinatarios')}
-      />
-
-      <div className="flex gap-3">
-        <Button type="button" variant="secondary" onClick={handleSubmit(onPreview)} loading={isLoadingPreview}>
-          Previsualizar
-        </Button>
-        <Button type="button" onClick={handleSubmit(onSend)} loading={isLoadingSend}>
-          Enviar
-        </Button>
+      <div className="space-y-2">
+        <div className="flex gap-3">
+          <Button type="button" variant="secondary" onClick={handleSubmit(onPreview)} loading={isLoadingPreview}>
+            Previsualizar
+          </Button>
+          <Button type="button" onClick={handleSubmit(onSend)} loading={isLoadingSend} disabled={!canSend}>
+            Encolar envío
+          </Button>
+        </div>
+        {!canSend && (
+          <p className="text-xs text-gray-500">Previsualizá el mensaje antes de encolar el envío (RN-16).</p>
+        )}
       </div>
     </form>
   )

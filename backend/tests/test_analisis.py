@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base
 from app.core.security import hash_password
+from app.models.audit_log import AuditLog  # noqa: F401  (registra la tabla en Base.metadata)
 from app.models.auth import AuthUser
 from app.models.tenant import Tenant
 
@@ -903,3 +904,68 @@ class TestMonitorConFechas:
         assert "data" in resultado
         # No calificaciones in 2020 → empty but valid
         assert resultado["total"] == 0
+
+
+# ═══════════════════════════════════════════════════════════════
+# 2.9 — Auditoría de entregas sin corregir (RN-23)
+# ═══════════════════════════════════════════════════════════════
+
+class TestAuditoriaEntregasPendientes:
+    """RED: AnalisisService no persistía auditoría (import roto + columnas inexistentes).
+
+    Verifica que consultar y exportar entregas sin corregir registre una
+    entrada append-only en audit_log con actor/tenant de la sesión.
+    """
+
+    async def test_get_entregas_pendientes_registra_auditoria(
+        self, analisis_schema, db_session: AsyncSession,
+        seed_tenant_admin: dict[str, Any],
+        seed_estructura: dict[str, Any],
+        seed_padron_activo: dict[str, Any],
+        seed_calificaciones: dict[str, Any],
+    ) -> None:
+        """RED 2.9: la consulta de entregas pendientes audita ANALISIS_CONSULTAR."""
+        from app.models.permisos import ANALISIS_CONSULTAR
+        from app.repositories.audit_log import AuditLogRepository
+        from app.services.analisis import AnalisisService
+
+        tid = seed_tenant_admin["tenant_id"]
+        uid = seed_tenant_admin["user_id"]
+        service = AnalisisService(db_session, tid, uid)
+
+        await service.get_entregas_pendientes()
+        await db_session.flush()
+
+        audit_repo = AuditLogRepository(db_session, tid)
+        entries = await audit_repo.list(actor_id=uid, accion=ANALISIS_CONSULTAR)
+
+        consulta = [e for e in entries if (e.detalle or {}).get("tipo") == "entregas_pendientes"]
+        assert len(consulta) >= 1, "Consultar entregas pendientes debe registrar auditoría"
+        assert consulta[0].tenant_id == tid
+        assert consulta[0].actor_id == uid
+
+    async def test_exportar_entregas_registra_auditoria(
+        self, analisis_schema, db_session: AsyncSession,
+        seed_tenant_admin: dict[str, Any],
+        seed_estructura: dict[str, Any],
+        seed_padron_activo: dict[str, Any],
+        seed_calificaciones: dict[str, Any],
+    ) -> None:
+        """TRIANGULATE 2.9: exportar entregas audita ANALISIS_EXPORTAR con cantidad."""
+        from app.models.permisos import ANALISIS_EXPORTAR
+        from app.repositories.audit_log import AuditLogRepository
+        from app.services.analisis import AnalisisService
+
+        tid = seed_tenant_admin["tenant_id"]
+        uid = seed_tenant_admin["user_id"]
+        service = AnalisisService(db_session, tid, uid)
+
+        await service.exportar_entregas_csv()
+        await db_session.flush()
+
+        audit_repo = AuditLogRepository(db_session, tid)
+        entries = await audit_repo.list(actor_id=uid, accion=ANALISIS_EXPORTAR)
+
+        export = [e for e in entries if (e.detalle or {}).get("tipo") == "exportar_entregas_csv"]
+        assert len(export) >= 1, "Exportar entregas debe registrar auditoría"
+        assert "cantidad" in (export[0].detalle or {})

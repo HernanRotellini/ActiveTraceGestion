@@ -1,12 +1,15 @@
 import api from '@/shared/services/api'
-import type { EntregaPendiente } from '@/features/entregas-sin-corregir/types/entregas'
+import type {
+  CompletionReportResponse,
+  EntregasPendientesResponse,
+} from '@/features/entregas-sin-corregir/types/entregas'
 
 export async function detectarEntregas(
   comision?: string,
-): Promise<EntregaPendiente[]> {
+): Promise<EntregasPendientesResponse> {
   const params = comision ? { comision } : undefined
-  const response = await api.get<{ items: EntregaPendiente[]; total: number }>('/entregas/pendientes', { params })
-  return response.data.items
+  const response = await api.get<EntregasPendientesResponse>('/entregas/pendientes', { params })
+  return response.data
 }
 
 export async function exportarEntregas(comision?: string): Promise<Blob> {
@@ -15,5 +18,23 @@ export async function exportarEntregas(comision?: string): Promise<Blob> {
     params,
     responseType: 'blob',
   })
+  return response.data
+}
+
+export async function importarReporteLms(
+  materiaId: string,
+  cohorteId: string,
+  file: File,
+): Promise<CompletionReportResponse> {
+  const formData = new FormData()
+  formData.append('archivo', file)
+  const response = await api.post<CompletionReportResponse>(
+    '/calificaciones/completion-report',
+    formData,
+    {
+      params: { materia_id: materiaId, cohorte_id: cohorteId },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    },
+  )
   return response.data
 }

@@ -7,6 +7,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.audit_log import AuditLog
 from app.models.permisos import ANALISIS_CONSULTAR, ANALISIS_EXPORTAR
 from app.repositories.analisis import AnalisisRepository
 from app.repositories.asignaciones import AsignacionRepository
@@ -142,17 +143,18 @@ class AnalisisService:
         return output.getvalue()
 
     def _registrar_auditoria(self, accion: str, materia_id: UUID | None, detalle: dict | None = None) -> None:
-        try:
-            from app.models.audit import AuditLog  # noqa: PLC0415
+        """Registra una entrada append-only en el audit-log (RN-23).
 
-            entry = AuditLog(
-                tenant_id=self.tenant_id,
-                actor_id=self.usuario_id,
-                accion=accion,
-                recurso_id=str(materia_id) if materia_id else None,
-                recurso_tipo="materia",
-                detalle=detalle or {},
-            )
-            self.session.add(entry)
-        except (ImportError, Exception):
-            pass
+        La identidad (tenant + actor) sale de la sesión, nunca de la petición.
+        La entrada queda en la unit-of-work y se persiste con el commit del
+        request (ver `get_db`). No se silencian errores: un fallo de auditoría
+        debe ser visible, no tragarse.
+        """
+        entry = AuditLog(
+            tenant_id=self.tenant_id,
+            actor_id=self.usuario_id,
+            materia_id=materia_id,
+            accion=accion,
+            detalle=detalle or {},
+        )
+        self.session.add(entry)

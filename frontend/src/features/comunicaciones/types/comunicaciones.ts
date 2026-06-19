@@ -1,16 +1,20 @@
-export type EstadoComunicacion = 'pendiente' | 'enviado' | 'fallido' | 'cancelado'
+// Estados reales del backend (app/models/comunicacion.py · EstadoComunicacion).
+export type EstadoComunicacion =
+  | 'Pendiente'
+  | 'Enviando'
+  | 'Enviado'
+  | 'Error'
+  | 'Cancelado'
 
 export interface PreviewRequest {
-  tipo: string
-  destinatarios: string[]
-  template: string
+  asunto: string
+  cuerpo: string
   variables?: Record<string, string>
 }
 
 export interface PreviewResponse {
-  asunto: string
-  cuerpo: string
-  destinatarios_count: number
+  asunto_renderizado: string
+  cuerpo_renderizado: string
 }
 
 export interface MateriaOption {
@@ -19,32 +23,56 @@ export interface MateriaOption {
   codigo?: string
 }
 
-export interface EnvioRequest {
+export interface EnvioMasivoRequest {
   materia_id: string
-  tipo: string
   asunto: string
   cuerpo: string
-  destinatarios: string[]
-  programar_para?: string
 }
 
-export interface EnvioResponse {
-  envio_id: string
-  estado: EstadoComunicacion
-  total_destinatarios: number
+export interface EnvioMasivoResponse {
+  lote_id: string
+  mensajes_creados: number
 }
 
-export interface TrackingComunicacion {
-  envio_id: string
-  asunto: string
-  estado: EstadoComunicacion
-  enviados: number
+export interface LoteResumen {
+  lote_id: string
+  materia_id: string
   total: number
-  fecha_envio: string
-  destinatarios: Array<{
-    email: string
-    nombre: string
-    estado: EstadoComunicacion
-    error?: string
-  }>
+  pendientes: number
+  enviados: number
+  errores: number
+  cancelados: number
+  created_at: string
 }
+
+export interface LotesListResponse {
+  items: LoteResumen[]
+  total: number
+}
+
+export interface ComunicacionDetail {
+  id: string
+  materia_id: string
+  destinatario: string
+  asunto: string
+  cuerpo: string
+  estado: EstadoComunicacion
+  lote_id: string
+  enviado_at?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface LoteDetalleResponse {
+  lote_id: string
+  materia_id: string
+  comunicaciones: ComunicacionDetail[]
+}
+
+export interface AccionResponse {
+  mensaje: string
+  afectados: number
+}
+
+// Variables que el backend sustituye por alumno (comunicacion_service.VARIABLES_SOPORTADAS).
+export const VARIABLES_SOPORTADAS = ['nombre', 'apellido', 'materia', 'comision'] as const

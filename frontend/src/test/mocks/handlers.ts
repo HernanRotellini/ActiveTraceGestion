@@ -173,40 +173,93 @@ export const handlers = [
 
   // Entregas
   http.get('/api/entregas/pendientes', () => {
-    return HttpResponse.json([
-      { entrega_id: 'e-1', alumno_id: 'a-1', alumno_nombre: 'Juan Perez', actividad: 'TP 1', materia: 'Matemática', fecha_entrega: '2026-05-10', dias_pendiente: 5 },
-      { entrega_id: 'e-2', alumno_id: 'a-2', alumno_nombre: 'Maria Gomez', actividad: 'TP 2', materia: 'Lengua', fecha_entrega: '2026-05-08', dias_pendiente: 7 },
-    ])
+    const items = [
+      { entrega_id: 'e-1', alumno_id: 'a-1', alumno_nombre: 'Juan Perez', actividad: 'TP 1', materia: 'Matemática', comision: 'A', fecha_entrega: '2026-05-10', dias_pendiente: 5 },
+      { entrega_id: 'e-2', alumno_id: 'a-2', alumno_nombre: 'Maria Gomez', actividad: 'TP 2', materia: 'Lengua', comision: 'B', fecha_entrega: '2026-05-08', dias_pendiente: 7 },
+    ]
+    return HttpResponse.json({ items, total: items.length })
   }),
 
   http.get('/api/entregas/pendientes/exportar', () => {
     return HttpResponse.arrayBuffer(new ArrayBuffer(0), {
-      headers: { 'Content-Type': 'application/octet-stream' },
+      headers: { 'Content-Type': 'text/csv' },
+    })
+  }),
+
+  http.post('/api/calificaciones/completion-report', () => {
+    return HttpResponse.json({
+      materia_id: '00000000-0000-0000-0000-000000000001',
+      cohorte_id: '00000000-0000-0000-0000-000000000002',
+      posibles_entregas_sin_corregir: [
+        { alumno_nombre: 'Juan', alumno_apellidos: 'Perez', actividad: 'Trabajo Final' },
+      ],
     })
   }),
 
   // Comunicaciones
   http.post('/api/comunicaciones/preview', () => {
-    return HttpResponse.json({ asunto: 'Aviso importante', cuerpo: 'Estimado alumno, le informamos...', destinatarios_count: 25 })
+    return HttpResponse.json({
+      asunto_renderizado: 'Aviso importante',
+      cuerpo_renderizado: 'Estimado alumno, le informamos...',
+    })
   }),
 
   http.post('/api/comunicaciones/enviar', () => {
-    return HttpResponse.json({ envio_id: 'envio-123', estado: 'pendiente', total_destinatarios: 25 })
+    return HttpResponse.json(
+      { lote_id: '00000000-0000-0000-0000-0000000000aa', mensajes_creados: 2 },
+      { status: 201 },
+    )
   }),
 
-  http.get('/api/comunicaciones/:envioId/tracking', () => {
+  http.get('/api/comunicaciones/lotes', () => {
     return HttpResponse.json({
-      envio_id: 'envio-123',
-      asunto: 'Aviso importante',
-      estado: 'enviado',
-      enviados: 25,
-      total: 25,
-      fecha_envio: '2026-05-15T10:00:00Z',
-      destinatarios: [
-        { email: 'juan@test.com', nombre: 'Juan Perez', estado: 'enviado' },
-        { email: 'maria@test.com', nombre: 'Maria Gomez', estado: 'enviado' },
+      items: [
+        {
+          lote_id: '00000000-0000-0000-0000-0000000000aa',
+          materia_id: '00000000-0000-0000-0000-000000000001',
+          total: 2,
+          pendientes: 2,
+          enviados: 0,
+          errores: 0,
+          cancelados: 0,
+          created_at: '2026-05-15T10:00:00Z',
+        },
+      ],
+      total: 1,
+    })
+  }),
+
+  http.get('/api/comunicaciones/lotes/:loteId', ({ params }) => {
+    return HttpResponse.json({
+      lote_id: params.loteId,
+      materia_id: '00000000-0000-0000-0000-000000000001',
+      comunicaciones: [
+        {
+          id: '00000000-0000-0000-0000-0000000000b1',
+          materia_id: '00000000-0000-0000-0000-000000000001',
+          destinatario: 'juan@test.com',
+          asunto: 'Aviso importante',
+          cuerpo: 'Estimado alumno...',
+          estado: 'Pendiente',
+          lote_id: params.loteId,
+          enviado_at: null,
+          created_at: '2026-05-15T10:00:00Z',
+          updated_at: '2026-05-15T10:00:00Z',
+        },
       ],
     })
+  }),
+
+  http.post('/api/comunicaciones/lotes/:loteId/aprobar', () => {
+    return HttpResponse.json({ mensaje: 'Lote aprobado', afectados: 2 })
+  }),
+
+  http.post('/api/comunicaciones/lotes/:loteId/cancelar', () => {
+    return HttpResponse.json({ mensaje: 'Lote cancelado', afectados: 2 })
+  }),
+
+  http.post('/api/comunicaciones/:comunicacionId/cancelar', () => {
+    return HttpResponse.json({ mensaje: 'Comunicación cancelada', afectados: 1 })
   }),
 
   // Monitor

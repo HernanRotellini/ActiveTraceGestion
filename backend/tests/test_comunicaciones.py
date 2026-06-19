@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base
 from app.core.security import hash_password
+from app.models.audit_log import AuditLog  # noqa: F401  (registra la tabla en Base.metadata)
 from app.models.auth import AuthUser
 from app.models.tenant import Tenant
 
@@ -119,6 +120,20 @@ async def seed_padron_activo(
         email="admin.docente@test.com",
     )
     db_session.add(docente)
+    await db_session.flush()
+
+    # El que opera comunicaciones es a la vez Usuario (enviado_por_id → usuarios)
+    # y AuthUser (actor de auditoría → auth_users). En tests compartimos el UUID
+    # para satisfacer ambas FKs sin mocks.
+    docente_auth = AuthUser(
+        id=docente.id,
+        tenant_id=seed_tenant_admin["tenant_id"],
+        email="admin.docente.auth@test.com",
+        password_hash=hash_password("password"),
+        roles=["PROFESOR"],
+        is_active=True,
+    )
+    db_session.add(docente_auth)
     await db_session.flush()
 
     version = VersionPadron(
@@ -937,3 +952,110 @@ class TestTenantIsolation:
         assert len(lotes) == 2
         for l in lotes:
             assert l["lote_id"] in (lote_a, lote_b)
+
+
+# ═══════════════════════════════════════════════════════════════
+# 9.10 — Auditoría de comunicaciones (RN-23)
+# ═══════════════════════════════════════════════════════════════
+
+class TestAuditoriaComunicaciones:
+    """9.10 — Envío, aprobación y cancelación deben auditarse (RN-23, SRS §Comunicaciones).
+
+    RED: ComunicacionService._registrar_auditoria no persistía (import roto +
+    columnas inexistentes + except: pass).
+    """
+
+    async def test_enviar_masivo_audita(
+        self, comunicacion_schema, db_session: AsyncSession,
+        seed_tenant_admin: dict[str, Any],
+        seed_estructura: dict[str, Any],
+        seed_padron_activo: dict[str, Any],
+        seed_calificaciones: dict[str, Any],
+    ) -> None:
+        """RED 9.10: enviar_masivo registra COMUNICACION_ENVIAR."""
+        from app.repositories.audit_log import AuditLogRepository
+        from app.services.comunicacion_service import ComunicacionService
+
+        tid = seed_tenant_admin["tenant_id"]
+        actor = seed_padron_activo["docente_id"]
+        svc = ComunicacionService(db_session, tid, actor)
+
+        await svc.enviar_masivo(
+            materia_id=seed_estructura["materia_id"],
+            asunto="Aviso {{nombre}}",
+            cuerpo="Regularizá {{materia}}.",
+        )
+        await db_session.flush()
+
+        entries = await AuditLogRepository(db_session, tid).list(
+            actor_id=actor, accion="COMUNICACION_ENVIAR",
+        )
+        assert len(entries) >= 1
+        assert entries[0].materia_id == seed_estructura["materia_id"]
+
+    async def test_aprobar_lote_audita(
+        self, comunicacion_schema, db_session: AsyncSession,
+        seed_tenant_admin: dict[str, Any],
+        seed_estructura: dict[str, Any],
+        seed_padron_activo: dict[str, Any],
+    ) -> None:
+        """TRIANGULATE 9.10: aprobar_lote registra COMUNICACION_APROBAR."""
+        from app.models.comunicacion import Comunicacion, EstadoComunicacion
+        from app.repositories.audit_log import AuditLogRepository
+        from app.services.comunicacion_service import ComunicacionService
+
+        tid = seed_tenant_admin["tenant_id"]
+        actor = seed_padron_activo["docente_id"]
+        lote_id = UUID("00000000-0000-0000-0000-0000000000a1")
+
+        db_session.add(Comunicacion(
+            tenant_id=tid, enviado_por_id=actor,
+            materia_id=seed_estructura["materia_id"],
+            destinatario="a@a.com", asunto="A", cuerpo="B",
+            estado=EstadoComunicacion.PENDIENTE, lote_id=lote_id,
+        ))
+        await db_session.flush()
+        await db_session.commit()
+
+        svc = ComunicacionService(db_session, tid, actor)
+        await svc.aprobar_lote(lote_id)
+        await db_session.flush()
+
+        entries = await AuditLogRepository(db_session, tid).list(
+            actor_id=actor, accion="COMUNICACION_APROBAR",
+        )
+        assert len(entries) >= 1
+        assert (entries[0].detalle or {}).get("lote_id") == str(lote_id)
+
+    async def test_cancelar_lote_audita(
+        self, comunicacion_schema, db_session: AsyncSession,
+        seed_tenant_admin: dict[str, Any],
+        seed_estructura: dict[str, Any],
+        seed_padron_activo: dict[str, Any],
+    ) -> None:
+        """TRIANGULATE 9.10: cancelar_lote registra COMUNICACION_CANCELAR."""
+        from app.models.comunicacion import Comunicacion, EstadoComunicacion
+        from app.repositories.audit_log import AuditLogRepository
+        from app.services.comunicacion_service import ComunicacionService
+
+        tid = seed_tenant_admin["tenant_id"]
+        actor = seed_padron_activo["docente_id"]
+        lote_id = UUID("00000000-0000-0000-0000-0000000000a2")
+
+        db_session.add(Comunicacion(
+            tenant_id=tid, enviado_por_id=actor,
+            materia_id=seed_estructura["materia_id"],
+            destinatario="a@a.com", asunto="A", cuerpo="B",
+            estado=EstadoComunicacion.PENDIENTE, lote_id=lote_id,
+        ))
+        await db_session.flush()
+        await db_session.commit()
+
+        svc = ComunicacionService(db_session, tid, actor)
+        await svc.cancelar_lote(lote_id)
+        await db_session.flush()
+
+        entries = await AuditLogRepository(db_session, tid).list(
+            actor_id=actor, accion="COMUNICACION_CANCELAR",
+        )
+        assert len(entries) >= 1

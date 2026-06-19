@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.encryption import decrypt_sensitive_value, encrypt_sensitive_value
+from app.models.audit_log import AuditLog
 from app.models.comunicacion import Comunicacion, EstadoComunicacion
 from app.models.tenant import Tenant
 from app.repositories.analisis import AnalisisRepository
@@ -236,17 +237,30 @@ class ComunicacionService:
         recurso_tipo: str = "comunicacion",
         detalle: dict | None = None,
     ) -> None:
-        try:
-            from app.models.audit import AuditLog  # noqa: PLC0415
+        """Registra una entrada append-only en el audit-log (RN-23).
 
-            entry = AuditLog(
-                tenant_id=self.tenant_id,
-                actor_id=self.usuario_id,
-                accion=accion,
-                recurso_id=recurso_id,
-                recurso_tipo=recurso_tipo,
-                detalle=detalle or {},
-            )
-            self.session.add(entry)
-        except (ImportError, Exception):
-            pass
+        La identidad (tenant + actor) sale de la sesión. El recurso afectado
+        (materia/lote/comunicación) se preserva en `detalle`; sólo se mapea a la
+        columna tipada `materia_id` cuando el recurso es una materia. No se
+        silencian errores: un fallo de auditoría debe ser visible.
+        """
+        detalle_final: dict = dict(detalle or {})
+        if recurso_id is not None:
+            detalle_final.setdefault("recurso_id", recurso_id)
+            detalle_final.setdefault("recurso_tipo", recurso_tipo)
+
+        materia_id: UUID | None = None
+        if recurso_tipo == "materia" and recurso_id is not None:
+            try:
+                materia_id = UUID(str(recurso_id))
+            except (ValueError, TypeError):
+                materia_id = None
+
+        entry = AuditLog(
+            tenant_id=self.tenant_id,
+            actor_id=self.usuario_id,
+            materia_id=materia_id,
+            accion=accion,
+            detalle=detalle_final,
+        )
+        self.session.add(entry)

@@ -1,7 +1,7 @@
 interface ComunicacionPreviewProps {
   asunto: string
   cuerpo: string
-  destinatariosCount: number
+  destinatariosCount?: number
 }
 
 export function ComunicacionPreview({ asunto, cuerpo, destinatariosCount }: ComunicacionPreviewProps) {
@@ -19,9 +19,11 @@ export function ComunicacionPreview({ asunto, cuerpo, destinatariosCount }: Comu
         <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{cuerpo}</p>
       </div>
 
-      <p className="text-sm text-gray-500">
-        Se enviará a <span className="font-medium">{destinatariosCount}</span> destinatarios.
-      </p>
+      {typeof destinatariosCount === 'number' && (
+        <p className="text-sm text-gray-500">
+          Se enviará a <span className="font-medium">{destinatariosCount}</span> destinatarios.
+        </p>
+      )}
     </div>
   )
 }
