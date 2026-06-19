@@ -10,26 +10,24 @@ describe('EquiposDocentes', () => {
   it('EquiposListPage renders title and new button', () => {
     render(<EquiposListPage />)
     expect(screen.getByText('Equipos Docentes')).toBeInTheDocument()
-    expect(screen.getByText('Nuevo Equipo')).toBeInTheDocument()
-    expect(screen.getByText('Exportar CSV')).toBeInTheDocument()
+    expect(screen.getByText('Nueva asignación')).toBeInTheDocument()
   })
 
   it('EquipoFormPage renders creation form', () => {
     render(<EquipoFormPage />)
-    expect(screen.getByText('Nuevo Equipo')).toBeInTheDocument()
-    expect(screen.getByText('Crear equipo')).toBeInTheDocument()
+    expect(screen.getByText('Nueva asignación de equipo')).toBeInTheDocument()
+    expect(screen.getByText('Crear asignación')).toBeInTheDocument()
     expect(screen.getByText('Cancelar')).toBeInTheDocument()
   })
 
   it('AsignacionMasivaModal renders form fields', () => {
-    render(<AsignacionMasivaModal equipoId="test-id" onClose={() => {}} />)
+    render(<AsignacionMasivaModal onClose={() => {}} />)
     expect(screen.getByText('Asignación Masiva')).toBeInTheDocument()
     expect(screen.getByText('Asignar')).toBeInTheDocument()
-    expect(screen.getByText('+ Agregar usuario')).toBeInTheDocument()
   })
 
   it('ClonarModal renders clone form', () => {
-    render(<ClonarModal origenEquipoId="test-id" onClose={() => {}} />)
+    render(<ClonarModal onClose={() => {}} />)
     expect(screen.getByText('Clonar Equipo')).toBeInTheDocument()
     expect(screen.getByText('Clonar')).toBeInTheDocument()
   })

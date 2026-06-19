@@ -1,15 +1,19 @@
+import { useState } from 'react'
 import { Button } from '@/shared/components/Button'
+import { Toast } from '@/shared/components/Toast'
 import { exportarEquiposCSV } from '@/features/equipos-docentes/services/api'
-import type { EquiposFilters } from '@/features/equipos-docentes/types'
+import type { ExportarEquiposParams } from '@/features/equipos-docentes/types'
 
 interface ExportCsvButtonProps {
-  filters?: EquiposFilters
+  params: ExportarEquiposParams
 }
 
-export function ExportCsvButton({ filters }: ExportCsvButtonProps) {
+export function ExportCsvButton({ params }: ExportCsvButtonProps) {
+  const [error, setError] = useState<string | null>(null)
+
   const handleExport = async () => {
     try {
-      const blob = await exportarEquiposCSV(filters)
+      const blob = await exportarEquiposCSV(params)
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -17,13 +21,16 @@ export function ExportCsvButton({ filters }: ExportCsvButtonProps) {
       a.click()
       window.URL.revokeObjectURL(url)
     } catch {
-      // Error al exportar
+      setError('No se pudo exportar el CSV.')
     }
   }
 
   return (
-    <Button variant="secondary" onClick={handleExport}>
-      Exportar CSV
-    </Button>
+    <>
+      {error && <Toast message={error} variant="error" onClose={() => setError(null)} />}
+      <Button variant="secondary" onClick={handleExport}>
+        Exportar CSV
+      </Button>
+    </>
   )
 }
