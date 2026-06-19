@@ -15,14 +15,14 @@ describe('EquiposDocentes', () => {
 
   it('EquipoFormPage renders creation form', () => {
     render(<EquipoFormPage />)
-    expect(screen.getByText('Nueva asignación de equipo')).toBeInTheDocument()
-    expect(screen.getByText('Crear asignación')).toBeInTheDocument()
+    expect(screen.getByText('Nueva asignacion de equipo')).toBeInTheDocument()
+    expect(screen.getByText('Crear asignacion')).toBeInTheDocument()
     expect(screen.getByText('Cancelar')).toBeInTheDocument()
   })
 
   it('AsignacionMasivaModal renders form fields', () => {
     render(<AsignacionMasivaModal onClose={() => {}} />)
-    expect(screen.getByText('Asignación Masiva')).toBeInTheDocument()
+    expect(screen.getByText('Asignacion masiva')).toBeInTheDocument()
     expect(screen.getByText('Asignar')).toBeInTheDocument()
   })
 

@@ -5,6 +5,12 @@ export interface ComboboxItem {
   label: string
 }
 
+export interface ComboboxAction {
+  id: string
+  label: string
+  onSelect: (search: string) => void
+}
+
 interface ComboboxProps {
   label: string
   items: ComboboxItem[]
@@ -16,6 +22,7 @@ interface ComboboxProps {
   disabled?: boolean
   searchPlaceholder?: string
   noResultsText?: string
+  actions?: ComboboxAction[]
 }
 
 export function Combobox({
@@ -29,6 +36,7 @@ export function Combobox({
   disabled = false,
   searchPlaceholder = 'Buscar...',
   noResultsText = 'Sin resultados',
+  actions = [],
 }: ComboboxProps) {
   const id = useId()
   const [open, setOpen] = useState(false)
@@ -59,6 +67,13 @@ export function Combobox({
 
   function handleSelect(item: ComboboxItem) {
     onChange(item.value)
+    setOpen(false)
+    setSearch('')
+    inputRef.current?.blur()
+  }
+
+  function handleActionSelect(action: ComboboxAction) {
+    action.onSelect(search)
     setOpen(false)
     setSearch('')
     inputRef.current?.blur()
@@ -119,6 +134,23 @@ export function Combobox({
 
       {open && (
         <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+          {actions.length > 0 && (
+            <ul className="border-b border-gray-100 py-1" role="listbox">
+              {actions.map((action) => (
+                <li
+                  key={action.id}
+                  role="option"
+                  onClick={() => handleActionSelect(action)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleActionSelect(action) }}
+                  tabIndex={0}
+                  className="cursor-pointer px-3 py-2 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-50 focus:bg-primary-50 focus:outline-none"
+                >
+                  + {action.label}
+                </li>
+              ))}
+            </ul>
+          )}
+
           {isLoading ? (
             <div className="px-3 py-4 text-center text-sm text-gray-500">Cargando...</div>
           ) : filteredItems.length === 0 ? (
