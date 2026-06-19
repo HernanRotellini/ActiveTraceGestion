@@ -3,42 +3,43 @@ import { Button } from '@/shared/components/Button'
 import { Alert } from '@/shared/components/Alert'
 import { Combobox } from '@/shared/components/Combobox'
 import { useUsuarios } from '@/features/admin/hooks/useAdmin'
-import type { Factura, FacturaPayload } from '@/features/liquidaciones/types'
+import type { FacturaCreate } from '@/features/liquidaciones/types'
 
 interface FacturaFormProps {
-  factura?: Factura
-  onSave: (payload: FacturaPayload) => Promise<void>
+  onSave: (payload: FacturaCreate) => Promise<void>
   onCancel: () => void
 }
 
-export function FacturaForm({ factura, onSave, onCancel }: FacturaFormProps) {
-  const [docenteId, setDocenteId] = useState(factura?.docente_id ?? '')
-  const [periodo, setPeriodo] = useState(factura?.periodo ?? '')
-  const [importe, setImporte] = useState(factura?.importe.toString() ?? '')
-  const [observaciones, setObservaciones] = useState(factura?.observaciones ?? '')
+export function FacturaForm({ onSave, onCancel }: FacturaFormProps) {
+  const [usuarioId, setUsuarioId] = useState('')
+  const [periodo, setPeriodo] = useState('')
+  const [detalle, setDetalle] = useState('')
+  const [referenciaArchivo, setReferenciaArchivo] = useState('')
+  const [archivoSizeBytes, setArchivoSizeBytes] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   const { data: usuariosResp, isLoading: loadingUsuarios } = useUsuarios()
   const usuarioItems = (usuariosResp?.items ?? []).map((u) => ({
     value: u.id,
-    label: `${u.nombre} (${u.email})`,
+    label: `${u.nombre} ${u.apellidos} (${u.email})`,
   }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!docenteId.trim() || !periodo.trim() || !importe) {
-      setError('Docente, período e importe son obligatorios.')
+    if (!usuarioId || !periodo.trim() || !detalle.trim() || !referenciaArchivo.trim() || !archivoSizeBytes) {
+      setError('Todos los campos son obligatorios.')
       return
     }
     setSaving(true)
     try {
       await onSave({
-        docente_id: docenteId.trim(),
+        usuario_id: usuarioId,
         periodo: periodo.trim(),
-        importe: Number(importe),
-        observaciones: observaciones.trim() || undefined,
+        detalle: detalle.trim(),
+        referencia_archivo: referenciaArchivo.trim(),
+        archivo_size_bytes: Number(archivoSizeBytes),
       })
     } catch {
       setError('Error al guardar la factura.')
@@ -52,15 +53,15 @@ export function FacturaForm({ factura, onSave, onCancel }: FacturaFormProps) {
       {error && <Alert variant="error">{error}</Alert>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Combobox
-          label="Docente *"
+          label="Usuario *"
           items={usuarioItems}
-          value={docenteId}
-          onChange={setDocenteId}
-          placeholder="Buscar docente..."
+          value={usuarioId}
+          onChange={setUsuarioId}
+          placeholder="Buscar usuario..."
           isLoading={loadingUsuarios}
         />
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Período *</label>
+          <label className="block text-sm font-medium text-gray-700">Período * (YYYY-MM)</label>
           <input
             type="text"
             value={periodo}
@@ -70,31 +71,41 @@ export function FacturaForm({ factura, onSave, onCancel }: FacturaFormProps) {
             required
           />
         </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Importe *</label>
+        <div className="space-y-1 sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700">Detalle *</label>
           <input
-            type="number"
-            value={importe}
-            onChange={(e) => setImporte(e.target.value)}
+            type="text"
+            value={detalle}
+            onChange={(e) => setDetalle(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
-            min={0}
-            step="0.01"
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Observaciones</label>
+          <label className="block text-sm font-medium text-gray-700">Referencia de archivo *</label>
           <input
             type="text"
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
+            value={referenciaArchivo}
+            onChange={(e) => setReferenciaArchivo(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            required
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">Tamaño del archivo (bytes) *</label>
+          <input
+            type="number"
+            value={archivoSizeBytes}
+            onChange={(e) => setArchivoSizeBytes(e.target.value)}
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            required
+            min={1}
           />
         </div>
       </div>
       <div className="flex justify-end gap-3">
         <Button variant="secondary" onClick={onCancel} type="button">Cancelar</Button>
-        <Button type="submit" loading={saving}>Crear factura</Button>
+        <Button type="submit" loading={saving}>Registrar factura</Button>
       </div>
     </form>
   )

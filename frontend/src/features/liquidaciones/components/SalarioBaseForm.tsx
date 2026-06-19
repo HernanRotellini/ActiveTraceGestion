@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/Button'
 import { Alert } from '@/shared/components/Alert'
-import type { SalarioBase, SalarioBasePayload } from '@/features/liquidaciones/types'
+import type { SalarioBaseResponse, SalarioBaseCreate, RolLiquidacion } from '@/features/liquidaciones/types'
+
+const ROLES: RolLiquidacion[] = ['PROFESOR', 'TUTOR', 'NEXO', 'COORDINADOR']
 
 interface SalarioBaseFormProps {
-  salario?: SalarioBase
-  onSave: (payload: SalarioBasePayload) => Promise<void>
+  salario?: SalarioBaseResponse
+  onSave: (payload: SalarioBaseCreate) => Promise<void>
   onCancel: () => void
 }
 
 export function SalarioBaseForm({ salario, onSave, onCancel }: SalarioBaseFormProps) {
-  const [rol, setRol] = useState(salario?.rol ?? '')
-  const [monto, setMonto] = useState(salario?.monto.toString() ?? '')
+  const [rol, setRol] = useState<RolLiquidacion>(salario?.rol ?? 'PROFESOR')
+  const [monto, setMonto] = useState(salario?.monto ?? '')
   const [desde, setDesde] = useState(salario?.desde ?? '')
   const [hasta, setHasta] = useState(salario?.hasta ?? '')
   const [error, setError] = useState('')
@@ -20,18 +22,13 @@ export function SalarioBaseForm({ salario, onSave, onCancel }: SalarioBaseFormPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!rol.trim() || !monto || !desde) {
-      setError('Rol, monto y desde son obligatorios.')
+    if (!monto || !desde) {
+      setError('Monto y desde son obligatorios.')
       return
     }
     setSaving(true)
     try {
-      await onSave({
-        rol: rol.trim(),
-        monto: Number(monto),
-        desde,
-        hasta: hasta || undefined,
-      })
+      await onSave({ rol, monto, desde, hasta: hasta || undefined })
     } catch {
       setError('Error al guardar el salario base.')
     } finally {
@@ -45,13 +42,13 @@ export function SalarioBaseForm({ salario, onSave, onCancel }: SalarioBaseFormPr
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Rol *</label>
-          <input
-            type="text"
+          <select
             value={rol}
-            onChange={(e) => setRol(e.target.value)}
+            onChange={(e) => setRol(e.target.value as RolLiquidacion)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            required
-          />
+          >
+            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
         </div>
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Monto *</label>
@@ -79,7 +76,7 @@ export function SalarioBaseForm({ salario, onSave, onCancel }: SalarioBaseFormPr
           <label className="block text-sm font-medium text-gray-700">Hasta</label>
           <input
             type="date"
-            value={hasta}
+            value={hasta ?? ''}
             onChange={(e) => setHasta(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />

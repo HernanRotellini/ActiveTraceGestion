@@ -1,41 +1,35 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/Button'
 import { Alert } from '@/shared/components/Alert'
-import type { Plus, PlusPayload } from '@/features/liquidaciones/types'
+import type { SalarioPlusCreate, RolLiquidacion } from '@/features/liquidaciones/types'
+
+const ROLES: RolLiquidacion[] = ['PROFESOR', 'TUTOR', 'NEXO', 'COORDINADOR']
 
 interface PlusFormProps {
-  plus?: Plus
-  onSave: (payload: PlusPayload) => Promise<void>
+  onSave: (payload: SalarioPlusCreate) => Promise<void>
   onCancel: () => void
 }
 
-export function PlusForm({ plus, onSave, onCancel }: PlusFormProps) {
-  const [grupo, setGrupo] = useState(plus?.grupo ?? '')
-  const [rol, setRol] = useState(plus?.rol ?? '')
-  const [descripcion, setDescripcion] = useState(plus?.descripcion ?? '')
-  const [monto, setMonto] = useState(plus?.monto.toString() ?? '')
-  const [desde, setDesde] = useState(plus?.desde ?? '')
-  const [hasta, setHasta] = useState(plus?.hasta ?? '')
+export function PlusForm({ onSave, onCancel }: PlusFormProps) {
+  const [rol, setRol] = useState<RolLiquidacion>('PROFESOR')
+  const [grupo, setGrupo] = useState('')
+  const [descripcion, setDescripcion] = useState('')
+  const [monto, setMonto] = useState('')
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!grupo.trim() || !rol.trim() || !descripcion.trim() || !monto || !desde) {
-      setError('Grupo, rol, descripción, monto y desde son obligatorios.')
+    if (!grupo.trim() || !descripcion.trim() || !monto || !desde) {
+      setError('Grupo, descripción, monto y desde son obligatorios.')
       return
     }
     setSaving(true)
     try {
-      await onSave({
-        grupo: grupo.trim(),
-        rol: rol.trim(),
-        descripcion: descripcion.trim(),
-        monto: Number(monto),
-        desde,
-        hasta: hasta || undefined,
-      })
+      await onSave({ rol, grupo: grupo.trim(), descripcion: descripcion.trim(), monto, desde, hasta: hasta || undefined })
     } catch {
       setError('Error al guardar el plus.')
     } finally {
@@ -48,21 +42,21 @@ export function PlusForm({ plus, onSave, onCancel }: PlusFormProps) {
       {error && <Alert variant="error">{error}</Alert>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">Rol *</label>
+          <select
+            value={rol}
+            onChange={(e) => setRol(e.target.value as RolLiquidacion)}
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Grupo *</label>
           <input
             type="text"
             value={grupo}
             onChange={(e) => setGrupo(e.target.value)}
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            required
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Rol *</label>
-          <input
-            type="text"
-            value={rol}
-            onChange={(e) => setRol(e.target.value)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           />
@@ -111,7 +105,7 @@ export function PlusForm({ plus, onSave, onCancel }: PlusFormProps) {
       </div>
       <div className="flex justify-end gap-3">
         <Button variant="secondary" onClick={onCancel} type="button">Cancelar</Button>
-        <Button type="submit" loading={saving}>{plus ? 'Actualizar' : 'Crear'}</Button>
+        <Button type="submit" loading={saving}>Crear plus</Button>
       </div>
     </form>
   )

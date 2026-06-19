@@ -6,50 +6,40 @@ import { LiquidacionKPIs } from '@/features/liquidaciones/components/Liquidacion
 import { SalarioBaseForm } from '@/features/liquidaciones/components/SalarioBaseForm'
 import { PlusForm } from '@/features/liquidaciones/components/PlusForm'
 import { FacturaTable } from '@/features/liquidaciones/components/FacturaTable'
-import type { LiquidacionItem, Factura } from '@/features/liquidaciones/types'
+import type { LiquidacionResponse, FacturaResponse } from '@/features/liquidaciones/types'
 
 describe('LiquidacionTable', () => {
-  const items: LiquidacionItem[] = [
+  const items: LiquidacionResponse[] = [
     {
-      id: '1', liquidacion_id: 'l-1', docente_id: 'd-1', docente_nombre: 'Juan Perez',
-      materia: 'Matemática', comision: 'COM-001', rol: 'PROFESOR', horas: 40, valor_hora: 500, subtotal: 20000, segmento: 'general',
+      id: '1', cohorte_id: 'c-1', usuario_id: 'd-1', periodo: '2026-06',
+      rol: 'PROFESOR', estado: 'Cerrada', monto_base: '40000', monto_plus: '5000', monto_total: '45000',
+      comisiones: ['COM-001'], es_nexo: false, excluido_por_factura: false, created_at: '2026-06-01T00:00:00Z',
     },
     {
-      id: '2', liquidacion_id: 'l-1', docente_id: 'd-2', docente_nombre: 'Maria Gomez',
-      materia: 'Lengua', comision: 'COM-002', rol: 'TUTOR', horas: 20, valor_hora: 300, subtotal: 6000, segmento: 'nexo',
+      id: '2', cohorte_id: 'c-1', usuario_id: 'd-2', periodo: '2026-06',
+      rol: 'TUTOR', estado: 'Cerrada', monto_base: '20000', monto_plus: '2000', monto_total: '22000',
+      comisiones: ['COM-002'], es_nexo: true, excluido_por_factura: false, created_at: '2026-06-01T00:00:00Z',
     },
   ]
 
-  it('renders segment title and subtotal', () => {
-    render(<LiquidacionTable items={items} segmento="general" titulo="General" subtotal={20000} />)
-    expect(screen.getByText('General')).toBeInTheDocument()
-    expect(screen.getByText('Subtotal General')).toBeInTheDocument()
+  it('renders liquidaciones table', () => {
+    render(<LiquidacionTable items={items} />)
+    expect(screen.getByText('2026-06')).toBeInTheDocument()
   })
 
-  it('renders docentes in segment', () => {
-    render(<LiquidacionTable items={items} segmento="general" titulo="General" subtotal={20000} />)
-    expect(screen.getByText('Juan Perez')).toBeInTheDocument()
-    expect(screen.queryByText('Maria Gomez')).not.toBeInTheDocument()
-  })
-
-  it('returns null when no items match segment', () => {
-    const { container } = render(<LiquidacionTable items={items} segmento="factura" titulo="Factura" subtotal={0} />)
-    expect(container.firstChild).toBeNull()
+  it('renders empty state', () => {
+    render(<LiquidacionTable items={[]} />)
+    expect(screen.getByText('No hay liquidaciones registradas.')).toBeInTheDocument()
   })
 })
 
 describe('LiquidacionKPIs', () => {
   it('renders all KPI cards', () => {
-    render(<LiquidacionKPIs totalGeneral={50000} totalNexo={15000} totalFactura={3000} estado="abierta" />)
-    expect(screen.getByText('Total General')).toBeInTheDocument()
-    expect(screen.getByText('Total NEXO')).toBeInTheDocument()
-    expect(screen.getByText('Total Factura')).toBeInTheDocument()
-    expect(screen.getByText('Abierta')).toBeInTheDocument()
-  })
-
-  it('shows cerrada state', () => {
-    render(<LiquidacionKPIs totalGeneral={0} totalNexo={0} totalFactura={0} estado="cerrada" />)
-    expect(screen.getByText('Cerrada')).toBeInTheDocument()
+    render(<LiquidacionKPIs totalPagable="50000" segmentoNexo="15000" segmentoFacturantes="3000" totalItems={5} />)
+    expect(screen.getByText('Total pagable')).toBeInTheDocument()
+    expect(screen.getByText('Segmento NEXO')).toBeInTheDocument()
+    expect(screen.getByText('Segmento facturantes')).toBeInTheDocument()
+    expect(screen.getByText('Docentes en preview')).toBeInTheDocument()
   })
 })
 
@@ -65,7 +55,7 @@ describe('SalarioBaseForm', () => {
   it('renders edit mode with values', () => {
     render(
       <SalarioBaseForm
-        salario={{ id: '1', rol: 'PROFESOR', monto: 50000, desde: '2026-01-01', hasta: undefined, activo: true }}
+        salario={{ id: '1', rol: 'PROFESOR', monto: '50000', desde: '2026-01-01', hasta: null, created_at: '2026-01-01T00:00:00Z' }}
         onSave={async () => {}}
         onCancel={() => {}}
       />,
@@ -83,30 +73,31 @@ describe('PlusForm', () => {
 })
 
 describe('FacturaTable', () => {
-  const facturas: Factura[] = [
+  const facturas: FacturaResponse[] = [
     {
-      id: 'f-1', docente_id: 'd-1', docente_nombre: 'Juan Perez', periodo: '2026-06',
-      importe: 25000, estado: 'pendiente', creada_en: '2026-06-01T00:00:00Z',
+      id: 'f-1', usuario_id: 'd-1', periodo: '2026-06',
+      detalle: 'Honorarios junio', referencia_archivo: 'factura-001.pdf', archivo_size_bytes: 102400,
+      estado: 'Pendiente', abonada_at: null, created_at: '2026-06-01T00:00:00Z',
     },
     {
-      id: 'f-2', docente_id: 'd-2', docente_nombre: 'Maria Gomez', periodo: '2026-06',
-      importe: 18000, estado: 'abonada', creada_en: '2026-06-01T00:00:00Z', abonada_en: '2026-06-05T00:00:00Z',
+      id: 'f-2', usuario_id: 'd-2', periodo: '2026-06',
+      detalle: 'Honorarios junio', referencia_archivo: 'factura-002.pdf', archivo_size_bytes: 204800,
+      estado: 'Abonada', abonada_at: '2026-06-05T00:00:00Z', created_at: '2026-06-01T00:00:00Z',
     },
   ]
 
   it('renders all facturas', () => {
-    render(<FacturaTable facturas={facturas} onCambiarEstado={() => {}} />)
-    expect(screen.getByText('Juan Perez')).toBeInTheDocument()
-    expect(screen.getByText('Maria Gomez')).toBeInTheDocument()
+    render(<FacturaTable facturas={facturas} onMarcarAbonada={() => {}} onEliminar={() => {}} />)
+    expect(screen.getByText('Honorarios junio')).toBeInTheDocument()
   })
 
-  it('shows boton marcar abonada for pending', () => {
-    render(<FacturaTable facturas={facturas} onCambiarEstado={() => {}} />)
-    expect(screen.getByText('Marcar abonada')).toBeInTheDocument()
+  it('shows boton abonar for pending', () => {
+    render(<FacturaTable facturas={facturas} onMarcarAbonada={() => {}} onEliminar={() => {}} />)
+    expect(screen.getByText('Abonar')).toBeInTheDocument()
   })
 
   it('renders empty state', () => {
-    render(<FacturaTable facturas={[]} onCambiarEstado={() => {}} />)
+    render(<FacturaTable facturas={[]} onMarcarAbonada={() => {}} onEliminar={() => {}} />)
     expect(screen.getByText('No hay facturas registradas.')).toBeInTheDocument()
   })
 })
