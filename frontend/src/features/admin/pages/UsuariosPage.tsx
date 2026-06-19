@@ -11,15 +11,15 @@ const ROLES_DISPONIBLES = ['ALUMNO', 'TUTOR', 'PROFESOR', 'COORDINADOR', 'NEXO',
 
 export default function UsuariosPage() {
   const { hasPermission } = useSession()
-  const [filters, setFilters] = useState<UsuarioAdminFilters>({ page: 1, limit: 20 })
+  const [filters, setFilters] = useState<UsuarioAdminFilters>({})
   const { data, isLoading } = useUsuarios(filters)
   const crear = useCrearUsuario()
   const actualizar = useActualizarUsuario()
+
   const [editId, setEditId] = useState<string | null>(null)
   const [nombre, setNombre] = useState('')
   const [apellidos, setApellidos] = useState('')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [dni, setDni] = useState('')
   const [cuil, setCuil] = useState('')
   const [cbu, setCbu] = useState('')
@@ -39,7 +39,6 @@ export default function UsuariosPage() {
     setNombre('')
     setApellidos('')
     setEmail('')
-    setPassword('')
     setDni('')
     setCuil('')
     setCbu('')
@@ -67,8 +66,7 @@ export default function UsuariosPage() {
     setLegajo(u.legajo ?? '')
     setBanco(u.banco ?? '')
     setFacturador(u.facturador ?? false)
-    setRoles(u.roles)
-    setPassword('')
+    setRoles(u.roles ?? [])
     setShowForm(true)
   }
 
@@ -122,7 +120,7 @@ export default function UsuariosPage() {
             <input
               type="text"
               value={filters.nombre ?? ''}
-              onChange={(e) => setFilters({ ...filters, nombre: e.target.value || undefined, page: 1 })}
+              onChange={(e) => setFilters({ ...filters, nombre: e.target.value || undefined })}
               placeholder="Buscar nombre"
               className="block w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
@@ -132,23 +130,10 @@ export default function UsuariosPage() {
             <input
               type="text"
               value={filters.email ?? ''}
-              onChange={(e) => setFilters({ ...filters, email: e.target.value || undefined, page: 1 })}
+              onChange={(e) => setFilters({ ...filters, email: e.target.value || undefined })}
               placeholder="Buscar email"
               className="block w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Rol</label>
-            <select
-              value={filters.rol ?? ''}
-              onChange={(e) => setFilters({ ...filters, rol: e.target.value || undefined, page: 1 })}
-              className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">Todos</option>
-              {ROLES_DISPONIBLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
           </div>
           {puedeVerPII && (
             <div className="flex items-end">
@@ -202,106 +187,50 @@ export default function UsuariosPage() {
                   required
                 />
               </div>
-              {!editId && (
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-              )}
               {showPII && (
                 <>
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">DNI</label>
-                    <input
-                      type="text"
-                      value={dni}
-                      onChange={(e) => setDni(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
+                    <input type="text" value={dni} onChange={(e) => setDni(e.target.value)} className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">CUIL</label>
-                    <input
-                      type="text"
-                      value={cuil}
-                      onChange={(e) => setCuil(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
+                    <input type="text" value={cuil} onChange={(e) => setCuil(e.target.value)} className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">CBU</label>
-                    <input
-                      type="text"
-                      value={cbu}
-                      onChange={(e) => setCbu(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
+                    <input type="text" value={cbu} onChange={(e) => setCbu(e.target.value)} className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-                    <input
-                      type="text"
-                      value={telefono}
-                      onChange={(e) => setTelefono(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
+                    <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div className="space-y-1 sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">Dirección</label>
-                    <input
-                      type="text"
-                      value={direccion}
-                      onChange={(e) => setDireccion(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
+                    <input type="text" value={direccion} onChange={(e) => setDireccion(e.target.value)} className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">Legajo</label>
-                    <input
-                      type="text"
-                      value={legajo}
-                      onChange={(e) => setLegajo(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
+                    <input type="text" value={legajo} onChange={(e) => setLegajo(e.target.value)} className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">Banco</label>
-                    <input
-                      type="text"
-                      value={banco}
-                      onChange={(e) => setBanco(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
+                    <input type="text" value={banco} onChange={(e) => setBanco(e.target.value)} className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div className="space-y-1">
                     <label className="flex items-center gap-2 pt-6 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={facturador}
-                        onChange={(e) => setFacturador(e.target.checked)}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
+                      <input type="checkbox" checked={facturador} onChange={(e) => setFacturador(e.target.checked)} className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                       Facturador
                     </label>
                   </div>
                 </>
               )}
               <div className="space-y-1 sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Roles *</label>
+                <label className="block text-sm font-medium text-gray-700">Roles</label>
                 <div className="flex flex-wrap gap-2">
                   {ROLES_DISPONIBLES.map((rol) => (
                     <label key={rol} className="flex items-center gap-1.5 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={roles.includes(rol)}
-                        onChange={() => toggleRol(rol)}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
+                      <input type="checkbox" checked={roles.includes(rol)} onChange={() => toggleRol(rol)} className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                       {rol}
                     </label>
                   ))}
@@ -341,10 +270,8 @@ export default function UsuariosPage() {
                   {showPII && <td className="px-4 py-3 text-gray-600">{u.cbu ?? '••••'}</td>}
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
-                      {u.roles.map((r) => (
-                        <span key={r} className="inline-flex rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">
-                          {r}
-                        </span>
+                      {(u.roles ?? []).map((r) => (
+                        <span key={r} className="inline-flex rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">{r}</span>
                       ))}
                     </div>
                   </td>
@@ -364,30 +291,6 @@ export default function UsuariosPage() {
             </tbody>
           </table>
         </Card>
-      )}
-
-      {data && data.total > (filters.limit ?? 20) && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">
-            {((filters.page ?? 1) - 1) * (filters.limit ?? 20) + 1}-{Math.min((filters.page ?? 1) * (filters.limit ?? 20), data.total)} de {data.total}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}
-              disabled={(filters.page ?? 1) <= 1}
-              className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50"
-            >
-              Anterior
-            </button>
-            <button
-              onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}
-              disabled={(filters.page ?? 1) * (filters.limit ?? 20) >= data.total}
-              className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50"
-            >
-              Siguiente
-            </button>
-          </div>
-        </div>
       )}
     </div>
   )

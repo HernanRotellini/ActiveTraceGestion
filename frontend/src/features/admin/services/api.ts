@@ -85,17 +85,17 @@ export async function eliminarMateria(id: string) {
 }
 
 export async function listarUsuarios(filters?: UsuarioAdminFilters) {
-  const { data } = await api.get<{ items: UsuarioAdmin[]; total: number }>('/admin/usuarios', { params: filters })
+  const { data } = await api.get<UsuarioAdmin[]>('/api/admin/usuarios', { params: filters })
   return data
 }
 
 export async function crearUsuario(payload: UsuarioAdminPayload) {
-  const { data } = await api.post<UsuarioAdmin>('/admin/usuarios', payload)
+  const { data } = await api.post<UsuarioAdmin>('/api/admin/usuarios', payload)
   return data
 }
 
 export async function actualizarUsuario(id: string, payload: Partial<UsuarioAdminPayload>) {
-  const { data } = await api.patch<UsuarioAdmin>(`/admin/usuarios/${id}`, payload)
+  const { data } = await api.patch<UsuarioAdmin>(`/api/admin/usuarios/${id}`, payload)
   return data
 }
 

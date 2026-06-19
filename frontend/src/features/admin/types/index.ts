@@ -88,9 +88,9 @@ export interface UsuarioAdmin {
   legajo?: string
   banco?: string
   facturador: boolean
-  roles: string[]
-  creado_en: string
-  actualizado_en?: string
+  roles?: string[]
+  created_at: string
+  updated_at?: string
 }
 
 export interface UsuarioAdminPayload {
@@ -100,6 +100,7 @@ export interface UsuarioAdminPayload {
   dni?: string
   cuil?: string
   cbu?: string
+  alias_cbu?: string
   telefono?: string
   direccion?: string
   legajo?: string
@@ -110,9 +111,6 @@ export interface UsuarioAdminPayload {
 export interface UsuarioAdminFilters {
   nombre?: string
   email?: string
-  rol?: string
-  page?: number
-  limit?: number
 }
 
 export interface ActionByDay {

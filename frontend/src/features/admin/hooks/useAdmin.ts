@@ -124,7 +124,10 @@ export function useEliminarMateria() {
 export function useUsuarios(filters?: UsuarioAdminFilters) {
   return useQuery({
     queryKey: ['usuarios-admin', filters],
-    queryFn: () => api.listarUsuarios(filters),
+    queryFn: async () => {
+      const items = await api.listarUsuarios(filters)
+      return { items, total: items.length }
+    },
     staleTime: 30_000,
   })
 }
