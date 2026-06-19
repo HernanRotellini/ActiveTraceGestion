@@ -1,16 +1,32 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Spinner } from '@/shared/components/Spinner'
 import { Button } from '@/shared/components/Button'
-import { Alert } from '@/shared/components/Alert'
-import { useAviso, usePublicarAviso, useArchivarAviso } from '@/features/avisos/hooks/useAvisos'
+import { Toast } from '@/shared/components/Toast'
+import { useAviso, useActualizarAviso, useDesactivarAviso, useAvisoStats } from '@/features/avisos/hooks/useAvisos'
 import { AckProgressBar } from '@/features/avisos/components/AckProgressBar'
+
+const SEVERIDAD_BADGES: Record<string, string> = {
+  Info: 'bg-blue-100 text-blue-700',
+  Advertencia: 'bg-yellow-100 text-yellow-700',
+  Critico: 'bg-red-100 text-red-700',
+}
+
+const ALCANCE_LABELS: Record<string, string> = {
+  Global: 'Global',
+  PorMateria: 'Por materia',
+  PorCohorte: 'Por cohorte',
+  PorRol: 'Por rol',
+}
 
 export default function AvisoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: aviso, isLoading } = useAviso(id!)
-  const publicar = usePublicarAviso()
-  const archivar = useArchivarAviso()
+  const { data: stats } = useAvisoStats(id!)
+  const actualizar = useActualizarAviso(id!)
+  const desactivar = useDesactivarAviso()
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
 
   if (isLoading) {
     return <div className="flex justify-center py-12"><Spinner /></div>
@@ -25,83 +41,84 @@ export default function AvisoDetailPage() {
     )
   }
 
+  const handleActivar = async () => {
+    try {
+      await actualizar.mutateAsync({ activo: true })
+      setToast({ message: 'Aviso activado.', variant: 'success' })
+    } catch {
+      setToast({ message: 'No se pudo activar el aviso.', variant: 'error' })
+    }
+  }
+
+  const handleDesactivar = async () => {
+    try {
+      await desactivar.mutateAsync(aviso.id)
+      setToast({ message: 'Aviso desactivado.', variant: 'success' })
+    } catch {
+      setToast({ message: 'No se pudo desactivar el aviso.', variant: 'error' })
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      {toast && <Toast message={toast.message} variant={toast.variant} onClose={() => setToast(null)} />}
+
       <div className="flex items-center justify-between">
         <div>
           <Link to="/coordinacion/avisos" className="text-sm text-primary-600 hover:text-primary-800">
             &larr; Volver
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">{aviso.titulo}</h1>
+          <h1 className="mt-1 text-2xl font-bold text-gray-900">{aviso.titulo}</h1>
         </div>
         <div className="flex items-center gap-3">
           <Link to={`/coordinacion/avisos/${id}/editar`}>
             <Button variant="secondary">Editar</Button>
           </Link>
-          {aviso.estado === 'borrador' && (
-            <Button onClick={() => publicar.mutate(aviso.id)} loading={publicar.isPending}>
-              Publicar
+          {!aviso.activo && (
+            <Button onClick={handleActivar} loading={actualizar.isPending}>
+              Activar
             </Button>
           )}
-          {aviso.estado === 'publicado' && (
-            <Button variant="secondary" onClick={() => archivar.mutate(aviso.id)} loading={archivar.isPending}>
-              Archivar
+          {aviso.activo && (
+            <Button variant="danger" onClick={handleDesactivar} loading={desactivar.isPending}>
+              Desactivar
             </Button>
           )}
         </div>
       </div>
 
-      <Card className="p-6">
-        <div className="mb-4 flex items-center gap-3">
-          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-            aviso.estado === 'publicado' ? 'bg-green-100 text-green-700'
-            : aviso.estado === 'borrador' ? 'bg-yellow-100 text-yellow-700'
-            : 'bg-gray-100 text-gray-600'
-          }`}>{aviso.estado}</span>
-          <span className="text-sm text-gray-500">Alcance: {aviso.scope}{aviso.scope_valor ? ` (${aviso.scope_valor})` : ''}</span>
-          <span className="text-sm text-gray-500">Autor: {aviso.autor_nombre}</span>
-          {aviso.publicado_en && <span className="text-sm text-gray-500">Publicado: {new Date(aviso.publicado_en).toLocaleDateString()}</span>}
+      <Card className="p-6 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${aviso.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+            {aviso.activo ? 'Activo' : 'Inactivo'}
+          </span>
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${SEVERIDAD_BADGES[aviso.severidad] ?? 'bg-gray-100 text-gray-600'}`}>
+            {aviso.severidad}
+          </span>
+          <span className="text-sm text-gray-500">Alcance: {ALCANCE_LABELS[aviso.alcance] ?? aviso.alcance}</span>
+          {aviso.rol_destino && <span className="text-sm text-gray-500">Rol: {aviso.rol_destino}</span>}
+          {aviso.requiere_ack && <span className="text-sm font-medium text-amber-600">Requiere confirmación</span>}
         </div>
 
-        <div className="whitespace-pre-wrap text-gray-800">{aviso.contenido}</div>
+        <div className="flex gap-6 text-xs text-gray-400">
+          <span>Inicio: {new Date(aviso.inicio_en).toLocaleDateString()}</span>
+          {aviso.fin_en && <span>Vence: {new Date(aviso.fin_en).toLocaleDateString()}</span>}
+          <span>Creado: {new Date(aviso.created_at).toLocaleDateString()}</span>
+        </div>
+
+        <div className="whitespace-pre-wrap text-gray-800">{aviso.cuerpo}</div>
       </Card>
 
-      {aviso.estado === 'publicado' && (
+      {aviso.requiere_ack && stats && (
         <>
           <h2 className="text-lg font-semibold text-gray-900">Seguimiento de lectura</h2>
           <Card className="p-4">
-            <AckProgressBar acks={aviso.acks ?? []} />
-
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b bg-gray-50 text-xs uppercase text-gray-600">
-                  <tr>
-                    <th className="px-4 py-3">Usuario</th>
-                    <th className="px-4 py-3">Estado</th>
-                    <th className="px-4 py-3">Leído</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {(aviso.acks ?? []).map((ack) => (
-                    <tr key={ack.usuario_id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-900">{ack.usuario_nombre}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          ack.leido ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                        }`}>{ack.leido ? 'Leído' : 'Pendiente'}</span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">{ack.leido_en ? new Date(ack.leido_en).toLocaleString() : '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AckProgressBar
+              total_acks={stats.total_acks}
+              sin_confirmar={stats.usuarios_sin_confirmar?.length ?? 0}
+            />
           </Card>
         </>
-      )}
-
-      {aviso.estado === 'publicado' && publicar.isError && (
-        <Alert variant="error">Error al publicar el aviso.</Alert>
       )}
     </div>
   )

@@ -19,11 +19,20 @@ export function useAviso(id: string) {
   })
 }
 
+export function useAvisoStats(id: string) {
+  return useQuery({
+    queryKey: ['aviso-stats', id],
+    queryFn: () => api.obtenerStatsAviso(id),
+    enabled: !!id,
+    staleTime: 30_000,
+  })
+}
+
 export function useCrearAviso() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: AvisoPayload) => api.crearAviso(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['avisos'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['avisos-admin'] }),
   })
 }
 
@@ -31,22 +40,17 @@ export function useActualizarAviso(id: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: Partial<AvisoPayload>) => api.actualizarAviso(id, payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['avisos'] }); qc.invalidateQueries({ queryKey: ['aviso', id] }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['avisos-admin'] })
+      qc.invalidateQueries({ queryKey: ['aviso', id] })
+    },
   })
 }
 
-export function usePublicarAviso() {
+export function useDesactivarAviso() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.publicarAviso(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['avisos'] }),
-  })
-}
-
-export function useArchivarAviso() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => api.archivarAviso(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['avisos'] }),
+    mutationFn: (id: string) => api.desactivarAviso(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['avisos-admin'] }),
   })
 }
