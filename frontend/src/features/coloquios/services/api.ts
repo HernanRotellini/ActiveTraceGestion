@@ -1,48 +1,69 @@
 import api from '@/shared/services/api'
-import type { EvaluacionColoquio, ColoquioPayload, ColoquiosFilters, ResultadoColoquio } from '@/features/coloquios/types'
+import type {
+  EvaluacionCreate,
+  EvaluacionListResponse,
+  EvaluacionResponse,
+  ReservaResponse,
+  ResultadoCreate,
+  ResultadoResponse,
+  MetricasColoquiosResponse,
+  AgendaReservaResponse,
+  ColoquiosFilters,
+} from '@/features/coloquios/types'
 
-export async function listarColoquios(filters?: ColoquiosFilters) {
-  const { data } = await api.get<EvaluacionColoquio[] | { items?: EvaluacionColoquio[]; total?: number }>(
-    '/coloquios',
-    { params: filters },
-  )
+const BASE = '/api/coloquios'
 
-  if (Array.isArray(data)) {
-    return { items: data, total: data.length }
-  }
-
-  return {
-    items: data.items ?? [],
-    total: data.total ?? data.items?.length ?? 0,
-  }
-}
-
-export async function obtenerColoquio(id: string) {
-  const { data } = await api.get<EvaluacionColoquio>(`/coloquios/${id}`)
+export async function panelMetricas() {
+  const { data } = await api.get<MetricasColoquiosResponse>(`${BASE}/metricas`)
   return data
 }
 
-export async function crearColoquio(payload: ColoquioPayload) {
-  const { data } = await api.post<EvaluacionColoquio>('/coloquios', payload)
+export async function listarConvocatorias(filters?: ColoquiosFilters) {
+  const { data } = await api.get<EvaluacionListResponse[]>(BASE, { params: filters })
   return data
 }
 
-export async function actualizarColoquio(id: string, payload: Partial<ColoquioPayload>) {
-  const { data } = await api.patch<EvaluacionColoquio>(`/coloquios/${id}`, payload)
+export async function obtenerConvocatoria(id: string) {
+  const { data } = await api.get<EvaluacionResponse>(`${BASE}/${id}`)
   return data
 }
 
-export async function confirmarReserva(coloquioId: string, reservaId: string) {
-  const { data } = await api.post(`/coloquios/${coloquioId}/reservas/${reservaId}/confirmar`)
+export async function crearConvocatoria(payload: EvaluacionCreate) {
+  const { data } = await api.post<EvaluacionResponse>(BASE, payload)
   return data
 }
 
-export async function cancelarReserva(coloquioId: string, reservaId: string) {
-  const { data } = await api.post(`/coloquios/${coloquioId}/reservas/${reservaId}/cancelar`)
+export async function cerrarConvocatoria(id: string) {
+  const { data } = await api.delete<{ mensaje: string }>(`${BASE}/${id}`)
   return data
 }
 
-export async function registrarResultado(coloquioId: string, reservaId: string, resultado: ResultadoColoquio, nota?: number) {
-  const { data } = await api.post(`/coloquios/${coloquioId}/reservas/${reservaId}/resultado`, { resultado, nota })
+export async function importarAlumnos(id: string, alumno_ids: string[]) {
+  const { data } = await api.post<{ importados: number }>(`${BASE}/${id}/importar-alumnos`, { alumno_ids })
+  return data
+}
+
+export async function listarTurnos(id: string) {
+  const { data } = await api.get<ReservaResponse[]>(`${BASE}/${id}/turnos`)
+  return data
+}
+
+export async function listarReservas(id: string) {
+  const { data } = await api.get<ReservaResponse[]>(`${BASE}/${id}/reservas`)
+  return data
+}
+
+export async function registrarResultado(id: string, payload: ResultadoCreate) {
+  const { data } = await api.post<ResultadoResponse>(`${BASE}/${id}/resultados`, payload)
+  return data
+}
+
+export async function listarResultados(id: string) {
+  const { data } = await api.get<ResultadoResponse[]>(`${BASE}/${id}/resultados`)
+  return data
+}
+
+export async function agendaGlobal() {
+  const { data } = await api.get<{ items: AgendaReservaResponse[]; total: number }>(`${BASE}/admin/agenda`)
   return data
 }

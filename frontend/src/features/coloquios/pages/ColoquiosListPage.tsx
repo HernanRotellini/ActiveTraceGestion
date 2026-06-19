@@ -2,61 +2,65 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Spinner } from '@/shared/components/Spinner'
+import { Toast } from '@/shared/components/Toast'
 import { Combobox } from '@/shared/components/Combobox'
-import { useColoquiosList } from '@/features/coloquios/hooks/useColoquios'
+import { useColoquiosList, useMetricasColoquios } from '@/features/coloquios/hooks/useColoquios'
 import { useMaterias } from '@/features/admin/hooks/useAdmin'
 import type { ColoquiosFilters } from '@/features/coloquios/types'
 
 export default function ColoquiosListPage() {
-  const [filters, setFilters] = useState<ColoquiosFilters>({ page: 1, limit: 20 })
-  const { data, isLoading } = useColoquiosList(filters)
-  const items = data?.items ?? []
-  const total = data?.total ?? items.length
+  const [filters, setFilters] = useState<ColoquiosFilters>({})
+  const { data, isLoading, error } = useColoquiosList(filters)
+  const { data: metricas } = useMetricasColoquios()
 
   const { data: materiasResp, isLoading: loadingMaterias } = useMaterias()
   const materiaItems = (materiasResp?.items ?? []).map((m) => ({
     value: m.id,
-    label: `${m.nombre} (${m.codigo})${m.carrera_nombre ? ` - ${m.carrera_nombre}` : ''}`,
+    label: `${m.nombre} (${m.codigo})`,
   }))
+
+  const errorMessage = error instanceof Error ? error.message : 'No se pudieron cargar los coloquios.'
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Coloquios</h1>
+      {error && <Toast message={errorMessage} variant="error" onClose={() => {}} />}
+
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Coloquios</h1>
+        <Link
+          to="/coordinacion/coloquios/nuevo"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+        >
+          Nueva Convocatoria
+        </Link>
+      </div>
+
+      {metricas && (
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: 'Convocatorias activas', value: metricas.convocatorias_activas },
+            { label: 'Alumnos convocados', value: metricas.alumnos_convocados },
+            { label: 'Reservas activas', value: metricas.reservas_activas },
+            { label: 'Notas registradas', value: metricas.notas_registradas },
+          ].map((stat) => (
+            <Card key={stat.label} className="p-4 text-center">
+              <p className="text-2xl font-bold text-primary-600">{stat.value}</p>
+              <p className="mt-1 text-sm text-gray-500">{stat.label}</p>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Card className="p-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="w-48">
-            <Combobox
-              label="Materia"
-              items={materiaItems}
-              value={filters.materia_id ?? ''}
-              onChange={(val) => setFilters({ ...filters, materia_id: val || undefined, page: 1 })}
-              placeholder="Buscar materia..."
-              isLoading={loadingMaterias}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Estado</label>
-            <select
-              value={filters.estado ?? ''}
-              onChange={(e) => setFilters({ ...filters, estado: e.target.value || undefined, page: 1 })}
-              className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">Todos</option>
-              <option value="programado">Programado</option>
-              <option value="en_curso">En curso</option>
-              <option value="finalizado">Finalizado</option>
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Fecha desde</label>
-            <input
-              type="date"
-              value={filters.fecha_desde ?? ''}
-              onChange={(e) => setFilters({ ...filters, fecha_desde: e.target.value || undefined, page: 1 })}
-              className="block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
+        <div className="w-48">
+          <Combobox
+            label="Materia"
+            items={materiaItems}
+            value={filters.materia_id ?? ''}
+            onChange={(val) => setFilters({ ...filters, materia_id: val || undefined })}
+            placeholder="Buscar materia..."
+            isLoading={loadingMaterias}
+          />
         </div>
       </Card>
 
@@ -68,50 +72,46 @@ export default function ColoquiosListPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b bg-gray-50 text-xs uppercase text-gray-600">
                 <tr>
-                  <th className="px-4 py-3">Materia</th>
-                  <th className="px-4 py-3">Comisión</th>
-                  <th className="px-4 py-3">Fecha</th>
+                  <th className="px-4 py-3">Tipo</th>
+                  <th className="px-4 py-3">Instancia</th>
                   <th className="px-4 py-3">Estado</th>
+                  <th className="px-4 py-3">Turnos</th>
+                  <th className="px-4 py-3">Alumnos</th>
                   <th className="px-4 py-3">Reservas</th>
-                  <th className="px-4 py-3">Acciones</th>
+                  <th className="px-4 py-3">Cupos libres</th>
+                  <th className="px-4 py-3">Creada</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {items.map((col) => (
+                {(data ?? []).map((col) => (
                   <tr key={col.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{col.materia_nombre}</td>
-                    <td className="px-4 py-3 text-gray-600">{col.comision_nombre}</td>
-                    <td className="px-4 py-3 text-gray-600">{new Date(col.fecha).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-gray-900">{col.tipo}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{col.instancia}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        col.estado === 'finalizado' ? 'bg-green-100 text-green-700'
-                        : col.estado === 'en_curso' ? 'bg-blue-100 text-blue-700'
-                        : 'bg-yellow-100 text-yellow-700'
+                        col.estado === 'cerrado' ? 'bg-gray-100 text-gray-600'
+                        : 'bg-green-100 text-green-700'
                       }`}>{col.estado}</span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{col.reservas?.length ?? 0}</td>
+                    <td className="px-4 py-3 text-center text-gray-600">{col.total_turnos}</td>
+                    <td className="px-4 py-3 text-center text-gray-600">{col.alumnos_convocados}</td>
+                    <td className="px-4 py-3 text-center text-gray-600">{col.reservas_activas}</td>
+                    <td className="px-4 py-3 text-center text-gray-600">{col.cupos_libres}</td>
+                    <td className="px-4 py-3 text-gray-600">{new Date(col.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
-                      <Link to={`/coordinacion/coloquios/${col.id}`} className="text-primary-600 hover:text-primary-800 font-medium">Ver</Link>
+                      <Link to={`/coordinacion/coloquios/${col.id}`} className="font-medium text-primary-600 hover:text-primary-800">Ver</Link>
                     </td>
                   </tr>
                 ))}
-                {items.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No hay coloquios registrados.</td></tr>
+                {(!data || data.length === 0) && (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">No hay convocatorias registradas.</td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
-          {total > (filters.limit ?? 20) && (
-            <div className="flex items-center justify-between border-t px-4 py-3">
-              <span className="text-sm text-gray-600">
-                 {((filters.page ?? 1) - 1) * (filters.limit ?? 20) + 1}-{Math.min((filters.page ?? 1) * (filters.limit ?? 20), total)} de {total}
-              </span>
-              <div className="flex gap-2">
-                <button onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })} disabled={(filters.page ?? 1) <= 1} className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50">Anterior</button>
-                <button onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })} disabled={(filters.page ?? 1) * (filters.limit ?? 20) >= total} className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50">Siguiente</button>
-              </div>
-            </div>
-          )}
         </Card>
       )}
     </div>
