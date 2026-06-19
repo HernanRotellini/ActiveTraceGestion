@@ -27,27 +27,25 @@ export function useCrearTarea() {
   })
 }
 
-export function useActualizarTarea(id: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: Partial<TareaPayload>) => api.actualizarTarea(id, payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tareas-internas'] }); qc.invalidateQueries({ queryKey: ['tarea', id] }) },
-  })
-}
-
 export function useCambiarEstadoTarea() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, estado }: { id: string; estado: TareaEstado }) => api.cambiarEstadoTarea(id, estado),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tareas-internas'] }),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['tareas-internas'] })
+      qc.invalidateQueries({ queryKey: ['tarea', id] })
+    },
   })
 }
 
-export function useComentarios(tareaId: string) {
-  return useQuery({
-    queryKey: ['comentarios', tareaId],
-    queryFn: () => api.listarComentarios(tareaId),
-    enabled: !!tareaId,
+export function useDelegarTarea() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, asignado_a }: { id: string; asignado_a: string }) => api.delegarTarea(id, asignado_a),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['tareas-internas'] })
+      qc.invalidateQueries({ queryKey: ['tarea', id] })
+    },
   })
 }
 
@@ -55,6 +53,6 @@ export function useCrearComentario(tareaId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: ComentarioPayload) => api.crearComentario(tareaId, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['comentarios', tareaId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tarea', tareaId] }),
   })
 }

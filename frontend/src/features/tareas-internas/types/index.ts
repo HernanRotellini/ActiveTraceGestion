@@ -1,31 +1,28 @@
-export type TareaEstado = 'pendiente' | 'en_progreso' | 'completada' | 'cancelada'
+export type TareaEstado = 'Pendiente' | 'En progreso' | 'Resuelta' | 'Cancelada'
 
-export type Prioridad = 'baja' | 'media' | 'alta' | 'critica'
+export interface ComentarioResponse {
+  id: string
+  tarea_id: string
+  autor_id: string
+  texto: string
+  created_at: string
+}
 
-export interface Tarea {
+export interface TareaResponse {
   id: string
   titulo: string
   descripcion: string
   estado: TareaEstado
-  prioridad: Prioridad
-  asignado_id?: string
-  asignado_nombre?: string
-  creador_id: string
-  creador_nombre: string
-  fecha_limite?: string
-  creado_en: string
-  actualizado_en: string
-  comentarios: Comentario[]
+  asignado_a: string
+  asignado_por: string
+  materia_id: string | null
+  contexto_id: string | null
+  created_at: string
+  updated_at: string
 }
 
-export interface Comentario {
-  id: string
-  tarea_id: string
-  autor_id: string
-  autor_nombre: string
-  contenido: string
-  creado_en: string
-  padre_id?: string
+export interface TareaDetailResponse extends TareaResponse {
+  comentarios: ComentarioResponse[]
 }
 
 export interface TareaPayload {
@@ -37,16 +34,15 @@ export interface TareaPayload {
 }
 
 export interface ComentarioPayload {
-  contenido: string
-  padre_id?: string
+  texto: string
 }
 
 export interface TareasFilters {
-  estado?: string
-  asignado_id?: string
-  prioridad?: string
-  fecha_desde?: string
-  fecha_hasta?: string
-  page?: number
+  asignado_a?: string
+  asignado_por?: string
+  materia_id?: string
+  estado?: TareaEstado
+  search?: string
   limit?: number
+  offset?: number
 }

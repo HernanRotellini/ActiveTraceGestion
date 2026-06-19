@@ -1,40 +1,37 @@
 import api from '@/shared/services/api'
-import type { Tarea, TareaPayload, TareaEstado, ComentarioPayload, TareasFilters } from '@/features/tareas-internas/types'
+import type { TareaPayload, TareaEstado, ComentarioPayload, TareasFilters, TareaResponse, TareaDetailResponse, ComentarioResponse } from '@/features/tareas-internas/types'
 
 export async function listarTareas(filters?: TareasFilters) {
-  const { data } = await api.get<Tarea[] | { items: Tarea[]; total: number }>('/tareas', { params: filters })
-  if (Array.isArray(data)) {
-    return { items: data, total: data.length }
-  }
-  return { items: data.items ?? [], total: data.total ?? data.items?.length ?? 0 }
+  const { data } = await api.get<TareaResponse[]>('/api/tareas', { params: filters })
+  return data
+}
+
+export async function listarMisTareas(limit = 100, offset = 0) {
+  const { data } = await api.get<TareaResponse[]>('/api/tareas/mis', { params: { limit, offset } })
+  return data
 }
 
 export async function obtenerTarea(id: string) {
-  const { data } = await api.get<Tarea>(`/tareas/${id}`)
+  const { data } = await api.get<TareaDetailResponse>(`/api/tareas/${id}`)
   return data
 }
 
 export async function crearTarea(payload: TareaPayload) {
-  const { data } = await api.post<Tarea>('/tareas', payload)
-  return data
-}
-
-export async function actualizarTarea(id: string, payload: Partial<TareaPayload>) {
-  const { data } = await api.patch<Tarea>(`/tareas/${id}`, payload)
+  const { data } = await api.post<TareaResponse>('/api/tareas', payload)
   return data
 }
 
 export async function cambiarEstadoTarea(id: string, estado: TareaEstado) {
-  const { data } = await api.post<Tarea>(`/tareas/${id}/estado`, { estado })
+  const { data } = await api.patch<TareaResponse>(`/api/tareas/${id}/estado`, { estado })
   return data
 }
 
-export async function listarComentarios(tareaId: string) {
-  const { data } = await api.get<{ items: Tarea['comentarios'] }>(`/tareas/${tareaId}/comentarios`)
+export async function delegarTarea(id: string, asignado_a: string) {
+  const { data } = await api.post<TareaResponse>(`/api/tareas/${id}/delegar`, { asignado_a })
   return data
 }
 
 export async function crearComentario(tareaId: string, payload: ComentarioPayload) {
-  const { data } = await api.post(`/tareas/${tareaId}/comentarios`, payload)
+  const { data } = await api.post<ComentarioResponse>(`/api/tareas/${tareaId}/comentarios`, payload)
   return data
 }

@@ -1,60 +1,58 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Button } from '@/shared/components/Button'
-import { Alert } from '@/shared/components/Alert'
+import { Toast } from '@/shared/components/Toast'
 import { Combobox } from '@/shared/components/Combobox'
 import { useCrearTarea } from '@/features/tareas-internas/hooks/useTareas'
 import { useUsuarios } from '@/features/admin/hooks/useAdmin'
 
 export default function TareaFormPage() {
+  const navigate = useNavigate()
   const crear = useCrearTarea()
 
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [asignadoId, setAsignadoId] = useState('')
-  const [error, setError] = useState('')
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
 
   const { data: usuariosResp, isLoading: loadingUsuarios } = useUsuarios()
   const usuarioItems = (usuariosResp?.items ?? []).map((u) => ({
     value: u.id,
-    label: `${u.nombre} (${u.email})`,
+    label: `${u.nombre} ${u.apellidos} (${u.email})`,
   }))
-
-  // Removed useEffect for fetching edit data since edit is not supported
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
     if (!titulo.trim()) {
-      setError('El título es obligatorio.')
+      setToast({ message: 'El título es obligatorio.', variant: 'error' })
       return
     }
     if (!asignadoId) {
-      setError('Debe seleccionar un usuario asignado.')
+      setToast({ message: 'Debe seleccionar un usuario asignado.', variant: 'error' })
       return
     }
     try {
-      const base = {
+      await crear.mutateAsync({
         titulo: titulo.trim(),
         descripcion: descripcion.trim(),
         asignado_a: asignadoId,
-      }
-      await crear.mutateAsync(base)
-      navigate('/coordinacion/tareas')
+      })
+      setToast({ message: 'Tarea creada correctamente.', variant: 'success' })
+      window.setTimeout(() => navigate('/coordinacion/tareas'), 800)
     } catch {
-      setError('Error al crear la tarea.')
+      setToast({ message: 'Error al crear la tarea.', variant: 'error' })
     }
   }
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
+      {toast && <Toast message={toast.message} variant={toast.variant} onClose={() => setToast(null)} />}
+
       <h1 className="text-2xl font-bold text-gray-900">Nueva Tarea</h1>
 
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <Alert variant="error">{error}</Alert>}
-
           <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">Título *</label>
             <input
@@ -84,8 +82,9 @@ export default function TareaFormPage() {
             placeholder="Buscar usuario..."
             isLoading={loadingUsuarios}
           />
+
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" onClick={() => navigate('/coordinacion/tareas')}>Cancelar</Button>
+            <Button type="button" variant="secondary" onClick={() => navigate('/coordinacion/tareas')}>Cancelar</Button>
             <Button type="submit" loading={crear.isPending}>
               Crear tarea
             </Button>
