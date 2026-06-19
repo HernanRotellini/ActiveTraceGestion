@@ -17,6 +17,7 @@ class FechaAcademicaRepository(TenantScopedRepository[FechaAcademica]):
     async def create(
         self,
         *,
+        periodo_id: UUID | None = None,
         materia_id: UUID,
         cohorte_id: UUID,
         tipo: TipoFechaAcademica,
@@ -27,6 +28,7 @@ class FechaAcademicaRepository(TenantScopedRepository[FechaAcademica]):
     ) -> FechaAcademica:
         record = FechaAcademica(
             tenant_id=self.tenant_id,
+            periodo_id=periodo_id,
             materia_id=materia_id,
             cohorte_id=cohorte_id,
             tipo=tipo,
@@ -79,9 +81,20 @@ class FechaAcademicaRepository(TenantScopedRepository[FechaAcademica]):
         )
         return list(result.scalars().all())
 
+    async def list_by_periodo_id(self, periodo_id: UUID) -> list[FechaAcademica]:
+        result = await self.session.execute(
+            select(FechaAcademica).where(
+                FechaAcademica.tenant_id == self.tenant_id,
+                FechaAcademica.deleted_at.is_(None),
+                FechaAcademica.periodo_id == periodo_id,
+            )
+        )
+        return list(result.scalars().all())
+
     async def list_filtered(
         self,
         *,
+        periodo_id: UUID | None = None,
         materia_id: UUID | None = None,
         cohorte_id: UUID | None = None,
         tipo: TipoFechaAcademica | None = None,
@@ -93,6 +106,8 @@ class FechaAcademicaRepository(TenantScopedRepository[FechaAcademica]):
         ]
         if materia_id is not None:
             where.append(FechaAcademica.materia_id == materia_id)
+        if periodo_id is not None:
+            where.append(FechaAcademica.periodo_id == periodo_id)
         if cohorte_id is not None:
             where.append(FechaAcademica.cohorte_id == cohorte_id)
         if tipo is not None:
@@ -133,6 +148,7 @@ class FechaAcademicaRepository(TenantScopedRepository[FechaAcademica]):
         titulo: str | None = None,
         fecha: date | None = None,
         numero: int | None = None,
+        periodo_id: UUID | None = None,
         periodo: str | None = None,
     ) -> FechaAcademica | None:
         record = await self.get(fecha_id)
@@ -144,6 +160,8 @@ class FechaAcademicaRepository(TenantScopedRepository[FechaAcademica]):
             record.fecha = fecha
         if numero is not None:
             record.numero = numero
+        if periodo_id is not None:
+            record.periodo_id = periodo_id
         if periodo is not None:
             record.periodo = periodo
         return record
@@ -151,6 +169,7 @@ class FechaAcademicaRepository(TenantScopedRepository[FechaAcademica]):
     async def exists_active_duplicate(
         self,
         *,
+        periodo_id: UUID | None = None,
         materia_id: UUID,
         cohorte_id: UUID,
         tipo: TipoFechaAcademica,
@@ -168,4 +187,18 @@ class FechaAcademicaRepository(TenantScopedRepository[FechaAcademica]):
                 FechaAcademica.periodo == periodo,
             )
         )
+        if periodo_id is not None:
+            result = await self.session.execute(
+                select(FechaAcademica).where(
+                    FechaAcademica.tenant_id == self.tenant_id,
+                    FechaAcademica.deleted_at.is_(None),
+                    FechaAcademica.periodo_id == periodo_id,
+                    FechaAcademica.materia_id == materia_id,
+                    FechaAcademica.cohorte_id == cohorte_id,
+                    FechaAcademica.tipo == tipo,
+                    FechaAcademica.numero == numero,
+                    FechaAcademica.periodo == periodo,
+                )
+            )
+            return result.scalar_one_or_none() is not None
         return result.scalar_one_or_none() is not None

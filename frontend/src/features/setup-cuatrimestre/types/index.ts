@@ -71,6 +71,7 @@ export type TipoFechaAcademica = 'Parcial' | 'TP' | 'Coloquio' | 'Recuperatorio'
 
 export interface FechaAcademicaOficial {
   id: string
+  periodo_id?: string | null
   materia_id: string
   cohorte_id: string
   tipo: TipoFechaAcademica
@@ -82,6 +83,7 @@ export interface FechaAcademicaOficial {
 }
 
 export interface FechaAcademicaOficialPayload {
+  periodo_id: string
   materia_id: string
   cohorte_id: string
   tipo: TipoFechaAcademica
@@ -92,6 +94,7 @@ export interface FechaAcademicaOficialPayload {
 }
 
 export interface FechaAcademicaOficialUpdatePayload {
+  periodo_id?: string
   titulo?: string
   fecha?: string
   numero?: number

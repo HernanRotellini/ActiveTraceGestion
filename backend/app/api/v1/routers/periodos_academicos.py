@@ -34,6 +34,7 @@ from app.schemas.periodos_academicos import (
 from app.services.audit import AuditService
 from app.services.auth import CurrentUser
 from app.services.periodos_academicos import (
+    DeleteBlockedError,
     InvalidPeriodoDatesError,
     NotFoundError,
     PeriodoAcademicoService,
@@ -282,7 +283,13 @@ async def delete_periodo(
 ) -> None:
     service = PeriodoAcademicoService(db, current_user.tenant_id)
     periodo = await service.get(periodo_id)
-    deleted = await service.delete(periodo_id)
+    try:
+        deleted = await service.delete(periodo_id)
+    except DeleteBlockedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

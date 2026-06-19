@@ -1,17 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { importarCalificaciones, confirmarImportacion } from '@/features/comisiones/services/calificaciones'
 
-export function useImportar(comisionId: string) {
+export function useImportar(materiaId: string, cohorteId: string) {
   const queryClient = useQueryClient()
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => importarCalificaciones(comisionId, file),
+    mutationFn: (file: File) => importarCalificaciones(materiaId, cohorteId, file),
   })
 
   const confirmMutation = useMutation({
-    mutationFn: (actividadIds: string[]) => confirmarImportacion(comisionId, actividadIds),
+    mutationFn: ({ previewToken, actividadIds }: { previewToken: string; actividadIds: string[] }) =>
+      confirmarImportacion(previewToken, actividadIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calificaciones', comisionId] })
+      queryClient.invalidateQueries({ queryKey: ['calificaciones', materiaId] })
     },
   })
 

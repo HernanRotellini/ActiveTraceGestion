@@ -1,65 +1,83 @@
 import api from '@/shared/services/api'
 import type {
-  Calificacion,
-  ActividadDetectada,
+  CalificacionesResponse,
+  ImportConfirmResponse,
+  ImportPreviewResponse,
+  RankingResponse,
+  ReportesRapidosResponse,
+  NotasFinalesResponse,
   UmbralConfig,
-  AtrasadosResponse,
-  RankingItem,
-  NotasFinalesItem,
+  AtrasadoItem,
 } from '@/features/comisiones/types/calificaciones'
 
 export async function importarCalificaciones(
-  comisionId: string,
+  materiaId: string,
+  cohorteId: string,
   file: File,
-): Promise<{ actividades: ActividadDetectada[] }> {
+): Promise<ImportPreviewResponse> {
   const formData = new FormData()
-  formData.append('file', file)
-  const response = await api.post(`/calificaciones/${comisionId}/importar`, formData, {
+  formData.append('archivo', file)
+  const response = await api.post('/calificaciones/import/preview', formData, {
+    params: { materia_id: materiaId, cohorte_id: cohorteId },
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return response.data
 }
 
 export async function confirmarImportacion(
-  comisionId: string,
+  previewToken: string,
   actividadIds: string[],
-): Promise<{ count: number }> {
-  const response = await api.post(`/calificaciones/${comisionId}/confirmar`, { actividad_ids: actividadIds })
+): Promise<ImportConfirmResponse> {
+  const response = await api.post('/calificaciones/import/confirm', {
+    preview_token: previewToken,
+    actividad_ids: actividadIds,
+  })
   return response.data
 }
 
-export async function listarCalificaciones(
-  comisionId: string,
-  params?: { materia?: string; alumno?: string },
-): Promise<Calificacion[]> {
-  const response = await api.get(`/calificaciones/${comisionId}`, { params })
+export async function listarCalificaciones(materiaId: string) {
+  const response = await api.get<CalificacionesResponse>('/calificaciones', {
+    params: { materia_id: materiaId },
+  })
   return response.data
 }
 
 export async function configurarUmbral(
-  comisionId: string,
-  data: Partial<UmbralConfig>,
+  materiaId: string,
+  asignacionId: string,
+  data: { umbral_pct: number; valores_aprobatorios: string[] },
 ): Promise<UmbralConfig> {
-  const response = await api.put(`/calificaciones/${comisionId}/umbral`, data)
+  const response = await api.put('/calificaciones/umbral', data, {
+    params: { materia_id: materiaId, asignacion_id: asignacionId },
+  })
   return response.data
 }
 
-export async function obtenerUmbral(comisionId: string): Promise<UmbralConfig> {
-  const response = await api.get(`/calificaciones/${comisionId}/umbral`)
+export async function obtenerUmbral(materiaId: string, asignacionId: string): Promise<UmbralConfig> {
+  const response = await api.get('/calificaciones/umbral', {
+    params: { materia_id: materiaId, asignacion_id: asignacionId },
+  })
   return response.data
 }
 
-export async function obtenerAtrasados(comisionId: string): Promise<AtrasadosResponse> {
-  const response = await api.get(`/calificaciones/${comisionId}/atrasados`)
+export async function obtenerAtrasados(materiaId: string): Promise<AtrasadoItem[]> {
+  const response = await api.get(`/analisis/atrasados/${materiaId}`)
   return response.data
 }
 
-export async function obtenerRanking(comisionId: string): Promise<RankingItem[]> {
-  const response = await api.get(`/calificaciones/${comisionId}/ranking`)
+export async function obtenerRanking(materiaId: string): Promise<RankingResponse> {
+  const response = await api.get(`/analisis/ranking/${materiaId}`)
   return response.data
 }
 
-export async function obtenerNotasFinales(comisionId: string): Promise<NotasFinalesItem[]> {
-  const response = await api.get(`/calificaciones/${comisionId}/notas-finales`)
+export async function obtenerNotasFinales(materiaId: string, actividades: string[]): Promise<NotasFinalesResponse> {
+  const response = await api.get(`/analisis/notas-finales/${materiaId}`, {
+    params: { actividades: actividades.join(',') },
+  })
+  return response.data
+}
+
+export async function obtenerReportesRapidos(materiaId: string): Promise<ReportesRapidosResponse> {
+  const response = await api.get(`/analisis/reportes/${materiaId}`)
   return response.data
 }

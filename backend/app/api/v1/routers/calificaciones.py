@@ -152,7 +152,7 @@ async def get_umbral(
     current_user: CurrentUser = CurrentUserDep,
 ) -> UmbralMateriaResponse:
     """Obtiene umbral configurado o default."""
-    service = UmbralMateriaService(db, current_user.tenant_id)
+    service = UmbralMateriaService(db, current_user.tenant_id, current_user.user_id)
     umbral = await service.obtener(asignacion_id, materia_id)
     # Si no hay umbral configurado, los defaults no tienen id real
     # ni timestamps — se reemplazan con placeholders
@@ -181,7 +181,7 @@ async def set_umbral(
     current_user: CurrentUser = CurrentUserDep,
 ) -> UmbralMateriaResponse:
     """Configura o actualiza el umbral de una materia."""
-    service = UmbralMateriaService(db, current_user.tenant_id)
+    service = UmbralMateriaService(db, current_user.tenant_id, current_user.user_id)
     try:
         umbral = await service.configurar(
             asignacion_id=asignacion_id,

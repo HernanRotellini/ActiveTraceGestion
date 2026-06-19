@@ -11,6 +11,7 @@ from app.models.estructura_academica import (
     PeriodoFecha,
     PeriodoPrograma,
 )
+from app.models.programas import FechaAcademica
 from app.repositories.base import TenantScopedRepository
 
 
@@ -47,6 +48,36 @@ class PeriodoAcademicoRepository(TenantScopedRepository[PeriodoAcademico]):
             return None
         record.activo = activo
         return record
+
+    async def has_dependencias(self, record_id: UUID) -> bool:
+        fecha_result = await self.session.execute(
+            select(PeriodoFecha.id).where(
+                PeriodoFecha.periodo_id == record_id,
+                PeriodoFecha.tenant_id == self.tenant_id,
+                PeriodoFecha.deleted_at.is_(None),
+            ).limit(1)
+        )
+        if fecha_result.scalar_one_or_none() is not None:
+            return True
+
+        fecha_oficial_result = await self.session.execute(
+            select(FechaAcademica.id).where(
+                FechaAcademica.periodo_id == record_id,
+                FechaAcademica.tenant_id == self.tenant_id,
+                FechaAcademica.deleted_at.is_(None),
+            ).limit(1)
+        )
+        if fecha_oficial_result.scalar_one_or_none() is not None:
+            return True
+
+        programa_result = await self.session.execute(
+            select(PeriodoPrograma.id).where(
+                PeriodoPrograma.periodo_id == record_id,
+                PeriodoPrograma.tenant_id == self.tenant_id,
+                PeriodoPrograma.deleted_at.is_(None),
+            ).limit(1)
+        )
+        return programa_result.scalar_one_or_none() is not None
 
 
 class PeriodoFechaRepository:

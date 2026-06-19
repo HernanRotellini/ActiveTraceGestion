@@ -1,11 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/features/equipos-docentes/services/api'
-import type { EquiposFilters, AsignacionMasivaPayload, ClonePayload, VigenciaPayload } from '@/features/equipos-docentes/types'
+import type {
+  CrearAsignacionesEquipoPayload,
+  AsignacionListFilters,
+  EquiposFilters,
+  AsignacionMasivaPayload,
+  ClonePayload,
+  VigenciaPayload,
+} from '@/features/equipos-docentes/types'
 
 export function useEquiposList(filters?: EquiposFilters) {
   return useQuery({
     queryKey: ['equipos-docentes', filters],
     queryFn: () => api.listarEquipos(filters),
+    staleTime: 30_000,
+  })
+}
+
+export function useAsignacionesList(filters?: AsignacionListFilters) {
+  return useQuery({
+    queryKey: ['asignaciones-equipo', filters],
+    queryFn: () => api.listarAsignaciones(filters),
     staleTime: 30_000,
   })
 }
@@ -24,6 +39,17 @@ export function useCrearEquipo() {
   return useMutation({
     mutationFn: (payload: { materia_id: string; carrera: string }) => api.crearEquipo(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['equipos-docentes'] }),
+  })
+}
+
+export function useCrearAsignacionesEquipo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CrearAsignacionesEquipoPayload) => api.crearAsignacionesEquipo(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['equipos-docentes'] })
+      qc.invalidateQueries({ queryKey: ['mis-comisiones'] })
+    },
   })
 }
 

@@ -9,7 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.config import Settings
 from app.core.dependencies import get_db, require_permission
-from app.models.permisos import EQUIPOS_ASIGNAR, EQUIPOS_GESTIONAR, EQUIPOS_VER
+from app.models.permisos import (
+    CALIFICACIONES_VER,
+    EQUIPOS_ASIGNAR,
+    EQUIPOS_GESTIONAR,
+    EQUIPOS_VER,
+)
 from app.schemas.asignaciones import AsignacionResponse
 from app.schemas.equipos import (
     AsignacionMasivaRequest,
@@ -25,6 +30,7 @@ router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 EquiposGuard = Depends(require_permission(EQUIPOS_ASIGNAR))
 EquiposVerGuard = Depends(require_permission(EQUIPOS_VER))
 EquiposGestionarGuard = Depends(require_permission(EQUIPOS_GESTIONAR))
+MisEquiposGuard = Depends(require_permission(CALIFICACIONES_VER))
 
 settings = Settings()
 
@@ -36,12 +42,16 @@ async def list_mis_equipos(
     rol: str | None = Query(default=None),
     carrera_id: UUID | None = Query(default=None),
     cohorte_id: UUID | None = Query(default=None),
+    _: CurrentUser = MisEquiposGuard,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = CurrentUserDep,
 ) -> list[AsignacionResponse]:
     service = EquipoService(db, current_user.tenant_id, settings.ENCRYPTION_KEY)
+    usuario_id = await service.get_usuario_id_by_email(current_user.email)
+    if usuario_id is None:
+        return []
     return await service.list_mis_equipos(
-        usuario_id=current_user.user_id,
+        usuario_id=usuario_id,
         estado=estado,
         materia_id=materia_id,
         rol=rol,
@@ -65,6 +75,7 @@ async def asignacion_masiva(
             carrera_id=body.carrera_id,
             cohorte_id=body.cohorte_id,
             rol=body.rol,
+            comisiones=body.comisiones,
             desde=body.desde,
             hasta=body.hasta,
         )

@@ -1,7 +1,10 @@
 import api from '@/shared/services/api'
 import type {
   EquipoDocente,
+  AsignacionListFilters,
   AsignacionMasivaPayload,
+  AsignacionEquipoResponse,
+  CrearAsignacionesEquipoPayload,
   ClonePayload,
   VigenciaPayload,
   EquiposFilters,
@@ -9,6 +12,11 @@ import type {
 
 export async function listarEquipos(filters?: EquiposFilters) {
   const { data } = await api.get<{ items: EquipoDocente[]; total: number }>('/equipos-docentes', { params: filters })
+  return data
+}
+
+export async function listarAsignaciones(filters?: AsignacionListFilters) {
+  const { data } = await api.get<AsignacionEquipoResponse[]>('/asignaciones', { params: filters })
   return data
 }
 
@@ -33,6 +41,11 @@ export async function eliminarEquipo(id: string) {
 
 export async function asignacionMasiva(payload: AsignacionMasivaPayload) {
   const { data } = await api.post('/equipos-docentes/asignacion-masiva', payload)
+  return data
+}
+
+export async function crearAsignacionesEquipo(payload: CrearAsignacionesEquipoPayload) {
+  const { data } = await api.post<AsignacionEquipoResponse[]>('/equipos/asignacion-masiva', payload)
   return data
 }
 

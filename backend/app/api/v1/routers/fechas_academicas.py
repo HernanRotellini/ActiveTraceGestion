@@ -38,6 +38,7 @@ FechasGuard = Depends(require_permission(ESTRUCTURA_GESTIONAR))
 def fecha_audit_detail(fecha) -> dict[str, object]:
     return {
         "fecha_id": str(fecha.id),
+        "periodo_id": str(fecha.periodo_id) if fecha.periodo_id else None,
         "materia_id": str(fecha.materia_id),
         "cohorte_id": str(fecha.cohorte_id),
         "tipo": fecha.tipo.value,
@@ -62,6 +63,7 @@ async def create_fecha(
 ) -> FechaAcademicaResponse:
     try:
         fecha = await _service(db, current_user).create_fecha(
+            periodo_id=body.periodo_id,
             materia_id=body.materia_id,
             cohorte_id=body.cohorte_id,
             tipo=body.tipo,
@@ -97,9 +99,11 @@ async def list_fechas(
     materia_id: UUID | None = Query(default=None),
     cohorte_id: UUID | None = Query(default=None),
     tipo: TipoFechaAcademica | None = Query(default=None),
+    periodo_id: UUID | None = Query(default=None),
     periodo: str | None = Query(default=None),
 ) -> list[FechaAcademicaResponse]:
     fechas = await _service(db, current_user).list_fechas(
+        periodo_id=periodo_id,
         materia_id=materia_id,
         cohorte_id=cohorte_id,
         tipo=tipo,
@@ -169,6 +173,7 @@ async def update_fecha(
             titulo=body.titulo,
             fecha=body.fecha,
             numero=body.numero,
+            periodo_id=body.periodo_id,
             periodo=body.periodo,
         )
     except FechaNotFoundError as exc:
@@ -187,6 +192,11 @@ async def update_fecha(
         }
     if body.numero is not None and body.numero != current.numero:
         cambios["numero"] = {"anterior": current.numero, "nuevo": fecha.numero}
+    if body.periodo_id is not None and body.periodo_id != current.periodo_id:
+        cambios["periodo_id"] = {
+            "anterior": str(current.periodo_id) if current.periodo_id else None,
+            "nuevo": str(fecha.periodo_id) if fecha.periodo_id else None,
+        }
     if body.periodo is not None and body.periodo != current.periodo:
         cambios["periodo"] = {"anterior": current.periodo, "nuevo": fecha.periodo}
 

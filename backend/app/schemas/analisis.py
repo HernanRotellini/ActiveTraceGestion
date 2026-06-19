@@ -118,6 +118,7 @@ class EntregaPendienteResponse(BaseModel):
     alumno_nombre: str
     actividad: str
     materia: str
+    comision: str
     fecha_entrega: datetime
     dias_pendiente: int
 

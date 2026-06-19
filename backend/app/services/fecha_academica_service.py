@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.estructura_academica import Cohorte, Materia
+from app.models.estructura_academica import Cohorte, Materia, PeriodoAcademico
 from app.models.programas import FechaAcademica, TipoFechaAcademica
 from app.repositories.fecha_academica_repository import FechaAcademicaRepository
 
@@ -27,7 +27,22 @@ class FechaAcademicaService:
         self.tenant_id = tenant_id
         self._repo = FechaAcademicaRepository(session, tenant_id)
 
-    async def _validate_context(self, *, materia_id: UUID, cohorte_id: UUID) -> None:
+    async def _validate_context(
+        self, *, periodo_id: UUID | None, materia_id: UUID, cohorte_id: UUID
+    ) -> PeriodoAcademico | None:
+        periodo = None
+        if periodo_id is not None:
+            result = await self.session.execute(
+                select(PeriodoAcademico).where(
+                    PeriodoAcademico.id == periodo_id,
+                    PeriodoAcademico.tenant_id == self.tenant_id,
+                    PeriodoAcademico.deleted_at.is_(None),
+                )
+            )
+            periodo = result.scalar_one_or_none()
+            if periodo is None:
+                raise FechaNotFoundError(f"Periodo {periodo_id} no encontrado en el tenant")
+
         result = await self.session.execute(
             select(Materia).where(
                 Materia.id == materia_id,
@@ -45,10 +60,12 @@ class FechaAcademicaService:
         )
         if result.scalar_one_or_none() is None:
             raise FechaNotFoundError(f"Cohorte {cohorte_id} no encontrada en el tenant")
+        return periodo
 
     async def create_fecha(
         self,
         *,
+        periodo_id: UUID | None = None,
         materia_id: UUID,
         cohorte_id: UUID,
         tipo: TipoFechaAcademica,
@@ -57,8 +74,13 @@ class FechaAcademicaService:
         fecha: date,
         titulo: str,
     ) -> FechaAcademica:
-        await self._validate_context(materia_id=materia_id, cohorte_id=cohorte_id)
+        periodo_record = await self._validate_context(
+            periodo_id=periodo_id,
+            materia_id=materia_id,
+            cohorte_id=cohorte_id,
+        )
         if await self._repo.exists_active_duplicate(
+            periodo_id=periodo_id,
             materia_id=materia_id,
             cohorte_id=cohorte_id,
             tipo=tipo,
@@ -69,11 +91,12 @@ class FechaAcademicaService:
                 "Ya existe una fecha académica activa con el mismo contexto, tipo, número y período"
             )
         return await self._repo.create(
+            periodo_id=periodo_id,
             materia_id=materia_id,
             cohorte_id=cohorte_id,
             tipo=tipo,
             numero=numero,
-            periodo=periodo,
+            periodo=periodo_record.nombre if periodo_record is not None else periodo,
             fecha=fecha,
             titulo=titulo,
         )
@@ -81,12 +104,14 @@ class FechaAcademicaService:
     async def list_fechas(
         self,
         *,
+        periodo_id: UUID | None = None,
         materia_id: UUID | None = None,
         cohorte_id: UUID | None = None,
         tipo: TipoFechaAcademica | None = None,
         periodo: str | None = None,
     ) -> list[FechaAcademica]:
         return await self._repo.list_filtered(
+            periodo_id=periodo_id,
             materia_id=materia_id,
             cohorte_id=cohorte_id,
             tipo=tipo,
@@ -111,10 +136,29 @@ class FechaAcademicaService:
         titulo: str | None = None,
         fecha: date | None = None,
         numero: int | None = None,
+        periodo_id: UUID | None = None,
         periodo: str | None = None,
     ) -> FechaAcademica:
+        next_periodo = periodo
+        if periodo_id is not None:
+            result = await self.session.execute(
+                select(PeriodoAcademico).where(
+                    PeriodoAcademico.id == periodo_id,
+                    PeriodoAcademico.tenant_id == self.tenant_id,
+                    PeriodoAcademico.deleted_at.is_(None),
+                )
+            )
+            periodo_record = result.scalar_one_or_none()
+            if periodo_record is None:
+                raise FechaNotFoundError(f"Periodo {periodo_id} no encontrado en el tenant")
+            next_periodo = periodo or periodo_record.nombre
         fecha = await self._repo.update(
-            fecha_id, titulo=titulo, fecha=fecha, numero=numero, periodo=periodo
+            fecha_id,
+            titulo=titulo,
+            fecha=fecha,
+            numero=numero,
+            periodo_id=periodo_id,
+            periodo=next_periodo,
         )
         if fecha is None:
             raise FechaNotFoundError(f"Fecha académica {fecha_id} no encontrada")

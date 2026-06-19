@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.calificaciones import Calificacion, OrigenCalificacion
+from app.models.permisos import UMBRAL_CONFIGURAR
 from app.models.padron import EntradaPadron, VersionPadron
 from app.repositories.calificaciones import (
     DEFAULT_UMBRAL_PCT,
@@ -525,9 +526,10 @@ def _match_entrada(
 class UmbralMateriaService:
     """Servicio de configuración de umbral de aprobación."""
 
-    def __init__(self, session: AsyncSession, tenant_id: UUID) -> None:
+    def __init__(self, session: AsyncSession, tenant_id: UUID, usuario_id: UUID | None = None) -> None:
         self.session = session
         self.tenant_id = tenant_id
+        self.usuario_id = usuario_id
         self.umbral_repo = UmbralMateriaRepository(session, tenant_id)
 
     async def obtener(
@@ -597,6 +599,12 @@ class UmbralMateriaService:
                 "valores_aprobatorios": valores_aprobatorios,
             },
         )
+        self._registrar_auditoria_configuracion(
+            asignacion_id=asignacion_id,
+            materia_id=materia_id,
+            umbral_pct=umbral_pct,
+            valores_aprobatorios=valores_aprobatorios or [],
+        )
         return {
             "id": str(umbral.id),
             "tenant_id": umbral.tenant_id,
@@ -608,3 +616,34 @@ class UmbralMateriaService:
             "updated_at": umbral.updated_at,
             "deleted_at": umbral.deleted_at,
         }
+
+    def _registrar_auditoria_configuracion(
+        self,
+        *,
+        asignacion_id: UUID,
+        materia_id: UUID,
+        umbral_pct: int,
+        valores_aprobatorios: list[str],
+    ) -> None:
+        if self.usuario_id is None:
+            return
+        try:
+            from app.models.audit import AuditLog  # noqa: PLC0415
+
+            self.session.add(
+                AuditLog(
+                    tenant_id=self.tenant_id,
+                    actor_id=self.usuario_id,
+                    accion=UMBRAL_CONFIGURAR,
+                    recurso_id=str(materia_id),
+                    recurso_tipo="materia",
+                    detalle={
+                        "asignacion_id": str(asignacion_id),
+                        "materia_id": str(materia_id),
+                        "umbral_pct": umbral_pct,
+                        "valores_aprobatorios": valores_aprobatorios,
+                    },
+                )
+            )
+        except (ImportError, Exception):
+            pass

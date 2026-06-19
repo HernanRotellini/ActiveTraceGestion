@@ -60,6 +60,7 @@ Estado:
   - `fecha_fin`.
   - `activo`.
 - [x] Fecha academica:
+  - `periodo_id`.
   - Tipo o clave de fecha.
   - Titulo/etiqueta.
   - Fecha.
@@ -74,7 +75,7 @@ Estado:
 
 Estado:
 - Periodos usan `nombre`, `fecha_inicio`, `fecha_fin` y `activo`.
-- Fechas academicas usan `tipo`, `titulo`, `fecha`, `periodo`, `materia_id` y `cohorte_id`.
+- Fechas academicas usan `periodo_id`, `tipo`, `titulo`, `fecha`, `periodo`, `materia_id` y `cohorte_id`.
 - Programas oficiales usan `materia_id`, `carrera_id`, `cohorte_id`, `titulo` y `referencia_archivo`.
 
 ## Listado
@@ -150,6 +151,7 @@ Estado:
 
 Estado:
 - Implementacion actual permite crear, editar y quitar fechas academicas oficiales.
+- Las fechas quedan relacionadas al periodo real mediante `periodo_id`.
 - Las fechas conservan asociacion a materia y cohorte.
 - Frontend usa `Toast` y modal propio.
 - Backend registra auditoria para altas, cambios y bajas.
@@ -161,7 +163,7 @@ Estado:
 - [ ] Debe poder listar, descargar y reemplazar programas existentes.
 - [ ] La referencia de archivo debe ser opaca; no path local manipulable.
 - [x] Mostrar toast de exito/error.
-- [ ] Quitar/reemplazar programa debe usar modal propio si se considera accion sensible.
+- [x] Quitar/reemplazar programa debe usar modal propio si se considera accion sensible.
 - [x] Debe auditarse segun RN-23.
 
 Estado:
@@ -174,7 +176,7 @@ Estado:
 - [x] No debe existir hard delete.
 - [x] Si se expone eliminar, debe ser soft delete.
 - [x] Eliminar debe permitirse solo si esta inactivo o si la regla lo permite.
-- [ ] Debe bloquearse si hay dependencias que obligan a conservar historial.
+- [x] Debe bloquearse si hay dependencias que obligan a conservar historial.
 - [x] Debe usar modal propio, no `window.confirm`.
 - [x] Debe mostrar toast especifico.
 - [x] Debe auditarse segun RN-23.
@@ -183,23 +185,27 @@ Estado:
 - Backend actual usa soft delete para periodo.
 - Frontend muestra eliminar solo si el periodo esta inactivo.
 - Frontend usa modal propio y `Toast`.
-- No se agrego bloqueo especifico por dependencias de negocio.
+- Backend bloquea la eliminacion si el periodo tiene fechas academicas o programas asociados.
+- El bloqueo contempla fechas oficiales de `fecha_academica` vinculadas por `periodo_id`.
+- Frontend muestra mensaje especifico si el backend bloquea la eliminacion por dependencias.
 
 ## UX/UI esperada
 
-- [ ] Aplicar `revisiones/criterios-transversales-ux-ui.md`.
+- [x] Aplicar `revisiones/criterios-transversales-ux-ui.md`.
 - [x] No usar `alert`, `confirm` ni prompts nativos.
 - [x] Usar `Toast` compartido para errores y exitos.
 - [x] Acciones frecuentes con iconos y tooltips.
 - [x] Estado activo/inactivo debe verse claramente.
 - [x] Confirmaciones sensibles con modal propio.
 - [x] Mensajes especificos y orientados al usuario.
-- [ ] Mantener consistencia visual con pantallas revisadas.
+- [x] Mantener consistencia visual con pantallas revisadas.
 
 Estado:
 - El modulo ya no usa `Alert` ni `window.confirm`.
 - Las acciones secundarias usan iconos con tooltip y las sensibles usan modal propio.
-- Queda abierta una validacion formal completa contra el documento transversal de UX/UI.
+- El modal propio declara `role="dialog"`, `aria-modal`, `aria-labelledby` y `aria-describedby`.
+- Periodos, programas y fechas usan `Toast` compartido para errores y exitos.
+- La pantalla queda alineada al patron transversal ya usado en Carreras, Cohortes y Materias.
 
 ## Reglas de negocio
 

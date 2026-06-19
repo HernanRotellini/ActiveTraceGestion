@@ -4,6 +4,7 @@ export interface EntregaPendiente {
   alumno_nombre: string
   actividad: string
   materia: string
+  comision: string
   fecha_entrega: string
   dias_pendiente: number
 }

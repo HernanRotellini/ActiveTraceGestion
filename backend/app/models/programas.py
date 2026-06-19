@@ -40,6 +40,7 @@ class ProgramaMateria(TenantScopedMixin, Base):
 class FechaAcademica(TenantScopedMixin, Base):
     __tablename__ = "fecha_academica"
 
+    periodo_id: Mapped[UUID | None] = mapped_column(PostgresUUID(as_uuid=True), ForeignKey("periodos_academicos.id"), nullable=True, index=True)
     materia_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), ForeignKey("materias.id"), nullable=False, index=True)
     cohorte_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), ForeignKey("cohortes.id"), nullable=False, index=True)
     tipo: Mapped[TipoFechaAcademica] = mapped_column(
@@ -52,6 +53,7 @@ class FechaAcademica(TenantScopedMixin, Base):
     titulo: Mapped[str] = mapped_column(String(255), nullable=False)
 
     __table_args__ = (
+        Index("ix_fecha_tenant_periodo_id", "tenant_id", "periodo_id"),
         Index("ix_fecha_tenant_materia", "tenant_id", "materia_id"),
         Index("ix_fecha_tenant_cohorte", "tenant_id", "cohorte_id"),
         Index("ix_fecha_tenant_tipo", "tenant_id", "tipo"),

@@ -38,6 +38,20 @@ class AsignacionService:
     async def get_asignacion(self, asignacion_id: UUID):
         return await self._repo.get(asignacion_id)
 
+    async def get_mi_comision(self, asignacion_id: UUID, usuario_id: UUID):
+        record = await self._repo.get(asignacion_id)
+        if record is None or record.usuario_id != usuario_id:
+            return None
+        return record
+
+    async def get_usuario_id_by_email(self, email: str | None) -> UUID | None:
+        if not email:
+            return None
+        usuario = await self._usuario_repo.get_by_email(email)
+        if usuario is None:
+            return None
+        return usuario.id
+
     async def list_asignaciones(self, materia_id: UUID | None = None, usuario_id: UUID | None = None, rol: str | None = None):
         if materia_id is not None:
             return await self._repo.list_by_materia(materia_id)
@@ -46,6 +60,45 @@ class AsignacionService:
         if rol is not None:
             return await self._repo.list_by_rol(rol)
         return await self._repo.list()
+
+    async def list_mis_comisiones(
+        self,
+        usuario_id: UUID,
+        materia_id: UUID | None = None,
+        carrera_id: UUID | None = None,
+        cohorte_id: UUID | None = None,
+        rol: str | None = None,
+        estado: str | None = None,
+    ):
+        return await self._repo.list_by_filters(
+            usuario_id=usuario_id,
+            materia_id=materia_id,
+            carrera_id=carrera_id,
+            cohorte_id=cohorte_id,
+            rol=rol,
+            estado=estado,
+        )
+
+    async def list_mis_comisiones_enriched(
+        self,
+        usuario_id: UUID,
+        materia_id: UUID | None = None,
+        carrera_id: UUID | None = None,
+        cohorte_id: UUID | None = None,
+        rol: str | None = None,
+        estado: str | None = None,
+    ):
+        return await self._repo.list_mis_comisiones_enriched(
+            usuario_id=usuario_id,
+            materia_id=materia_id,
+            carrera_id=carrera_id,
+            cohorte_id=cohorte_id,
+            rol=rol,
+            estado=estado,
+        )
+
+    async def get_mi_comision_enriched(self, asignacion_id: UUID, usuario_id: UUID):
+        return await self._repo.get_mi_comision_enriched(asignacion_id, usuario_id)
 
     async def update_asignacion(self, asignacion_id: UUID, **kwargs):
         record = await self._repo.get(asignacion_id)

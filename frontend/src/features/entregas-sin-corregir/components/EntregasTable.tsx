@@ -21,6 +21,7 @@ export function EntregasTable({ data }: EntregasTableProps) {
             <th className="p-4 pb-2">Alumno</th>
             <th className="p-4 pb-2">Actividad</th>
             <th className="p-4 pb-2">Materia</th>
+            <th className="p-4 pb-2">Comisión</th>
             <th className="p-4 pb-2">Fecha de entrega</th>
             <th className="p-4 pb-2">Días pendiente</th>
           </tr>
@@ -31,6 +32,7 @@ export function EntregasTable({ data }: EntregasTableProps) {
               <td className="p-4 py-2">{e.alumno_nombre}</td>
               <td className="p-4 py-2">{e.actividad}</td>
               <td className="p-4 py-2">{e.materia}</td>
+              <td className="p-4 py-2">{e.comision}</td>
               <td className="p-4 py-2 text-gray-500">
                 {new Date(e.fecha_entrega).toLocaleDateString()}
               </td>

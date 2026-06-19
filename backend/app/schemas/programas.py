@@ -40,6 +40,7 @@ class ProgramaMateriaResponse(BaseModel):
 class FechaAcademicaCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    periodo_id: UUID
     materia_id: UUID
     cohorte_id: UUID
     tipo: TipoFechaAcademica
@@ -52,6 +53,7 @@ class FechaAcademicaCreate(BaseModel):
 class FechaAcademicaUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    periodo_id: UUID | None = None
     titulo: str | None = Field(default=None, max_length=255)
     fecha: date | None = None
     numero: int | None = Field(default=None, ge=1, le=10)
@@ -62,6 +64,7 @@ class FechaAcademicaResponse(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
     id: UUID
+    periodo_id: UUID | None = None
     materia_id: UUID
     cohorte_id: UUID
     tipo: TipoFechaAcademica
@@ -76,6 +79,7 @@ class FechaAcademicaCalendarResponse(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
     id: UUID
+    periodo_id: UUID | None = None
     materia_id: UUID
     cohorte_id: UUID
     tipo: TipoFechaAcademica

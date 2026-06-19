@@ -23,6 +23,10 @@ class InvalidPeriodoDatesError(ValueError):
     """Raised when fecha_fin is before fecha_inicio."""
 
 
+class DeleteBlockedError(ValueError):
+    """Raised when a periodo has dependent setup data."""
+
+
 class PeriodoAcademicoService:
     def __init__(self, session: AsyncSession, tenant_id: UUID) -> None:
         self.session = session
@@ -62,6 +66,8 @@ class PeriodoAcademicoService:
         return record
 
     async def delete(self, periodo_id: UUID) -> bool:
+        if await self._repo.has_dependencias(periodo_id):
+            raise DeleteBlockedError("Cannot delete periodo with associated fechas or programas")
         return await self._repo.soft_delete(periodo_id)
 
     async def activar(self, periodo_id: UUID):

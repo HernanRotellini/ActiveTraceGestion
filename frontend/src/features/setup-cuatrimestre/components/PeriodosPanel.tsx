@@ -31,6 +31,13 @@ function getPeriodoErrorMessage(error: unknown) {
     if (error.message.includes('fecha_fin')) {
       return 'La fecha de fin debe ser posterior o igual a la fecha de inicio.'
     }
+    if (
+      error.status === 409 ||
+      error.message.includes('associated fechas') ||
+      error.message.includes('associated programas')
+    ) {
+      return 'No se puede eliminar el periodo porque tiene fechas academicas o programas asociados. Desactivalo para conservar el historial.'
+    }
     if (error.status === 404) {
       return 'El periodo seleccionado ya no esta disponible.'
     }

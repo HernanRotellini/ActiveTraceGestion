@@ -1,52 +1,111 @@
 export interface Calificacion {
   id: string
-  alumno_id: string
-  alumno_nombre: string
-  materia: string
-  nota: number | null
-  estado: 'aprobado' | 'desaprobado' | 'sin_nota'
-  fecha_importacion: string
+  tenant_id: string
+  entrada_padron_id: string
+  materia_id: string
+  actividad: string
+  nota_numerica: number | null
+  nota_textual: string | null
+  aprobado: boolean
+  origen: string
+  importado_at: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface CalificacionesResponse {
+  items: Calificacion[]
+  total: number
 }
 
 export interface ActividadDetectada {
-  actividad_id: string
   nombre: string
   tipo: string
-  fecha: string
-  calificaciones_count: number
-  seleccionada: boolean
+}
+
+export interface ImportPreviewResponse {
+  preview_token: string
+  materia_id: string
+  cohorte_id: string
+  actividades: ActividadDetectada[]
+  total_rows: number
+  alumnos_match: Array<{
+    entrada_padron_id: string
+    nombre: string
+    apellidos: string
+    email: string
+    datos: Record<string, string | number | null>
+  }>
+  alumnos_no_match: Array<{
+    fila: number
+    datos: Record<string, string>
+  }>
+}
+
+export interface ImportConfirmResponse {
+  materia_id: string
+  cohorte_id: string
+  registros_creados: number
+  actividades_importadas: string[]
 }
 
 export interface UmbralConfig {
   id: string
-  nota_maxima: number
-  nota_minima: number
-  umbral_atraso: number
-  umbral_promocion: number
+  tenant_id: string
+  asignacion_id: string
+  materia_id: string
+  umbral_pct: number
+  valores_aprobatorios: string[] | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
 }
 
-export interface AtrasadosResponse {
-  total: number
-  items: Array<{
-    alumno_id: string
-    alumno_nombre: string
-    materia: string
-    atraso_dias: number
-    ultima_actividad: string | null
+export interface AtrasadoItem {
+  entrada_padron_id: string
+  alumno_nombre: string
+  actividades_atrasadas: Array<{
+    actividad: string
+    motivo: string
   }>
 }
 
 export interface RankingItem {
-  alumno_id: string
+  ranking: number
+  entrada_padron_id: string
   alumno_nombre: string
-  promedio: number
-  puesto: number
-  total_actividades: number
+  actividades_aprobadas: number
 }
 
-export interface NotasFinalesItem {
-  alumno_id: string
+export interface RankingResponse {
+  items: RankingItem[]
+  total: number
+}
+
+export interface NotaFinalItem {
+  entrada_padron_id: string
   alumno_nombre: string
-  nota_final: number | null
-  condicion: 'promocionado' | 'regular' | 'libre'
+  promedio: number
+  aprobado: boolean
+}
+
+export interface NotasFinalesResponse {
+  items: NotaFinalItem[]
+  total: number
+}
+
+export interface ReportesRapidosResponse {
+  total_alumnos: number
+  total_calificaciones: number
+  promedio_general: number
+  total_aprobados: number
+  total_no_aprobados: number
+  desglose_por_actividad: Array<{
+    actividad: string
+    presentado: number
+    promedio: number | null
+    min: number | null
+    max: number | null
+  }>
 }

@@ -51,7 +51,7 @@ async def usuarios_schema(db_engine: None):
 async def seed_tenant_admin(
     db_session: AsyncSession,
 ) -> dict[str, Any]:
-    """Seeds tenant + admin user + usuarios:gestionar + equipos:asignar permissions."""
+    """Seeds tenant + admin user + permissions needed by equipos tests."""
     tenant = Tenant(name="Tenant test-tenant", code="test-tenant")
     db_session.add(tenant)
     await db_session.flush()
@@ -73,6 +73,7 @@ async def seed_tenant_admin(
     for codigo, nombre, modulo, accion in [
         ("usuarios:gestionar", "Gestionar usuarios", "usuarios", "gestionar"),
         ("equipos:asignar", "Asignar equipos", "equipos", "asignar"),
+        ("calificaciones:ver", "Ver calificaciones", "calificaciones", "ver"),
     ]:
         permiso = Permiso(
             tenant_id=tenant.id,
@@ -297,7 +298,7 @@ class TestMisEquipos:
         from app.models.rbac import Permiso, Rol, RolPermiso
         r2 = Rol(tenant_id=t2.id, codigo="ADMIN", nombre="Admin")
         db_session.add(r2)
-        for codigo in ("usuarios:gestionar", "equipos:asignar"):
+        for codigo in ("usuarios:gestionar", "equipos:asignar", "calificaciones:ver"):
             p = Permiso(tenant_id=t2.id, codigo=codigo, nombre=codigo, modulo=codigo.split(":")[0], accion=codigo.split(":")[1])
             db_session.add(p)
             await db_session.flush()
@@ -308,6 +309,37 @@ class TestMisEquipos:
         resp = await async_client.get("/api/equipos/mis-equipos", headers=h2)
         assert resp.status_code == 200
         assert len(resp.json()) == 0
+
+
+class TestMisComisiones:
+    """GET /api/asignaciones/mis-comisiones para la pantalla docente."""
+
+    async def test_docente_ve_solo_sus_comisiones(
+        self, usuarios_schema, async_client: AsyncClient, seed_asignaciones: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        resp = await async_client.get("/api/asignaciones/mis-comisiones", headers=headers)
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 3
+        assert all(a["usuario_id"] == seed_asignaciones["usuario1_id"] for a in data)
+
+    async def test_filtra_mis_comisiones_por_estado(
+        self, usuarios_schema, async_client: AsyncClient, seed_asignaciones: dict[str, Any],
+    ) -> None:
+        headers = await admin_headers(async_client)
+
+        resp = await async_client.get(
+            "/api/asignaciones/mis-comisiones?estado=vigente",
+            headers=headers,
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2
+        assert all(a["estado_vigencia"] == "vigente" for a in data)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -331,6 +363,7 @@ class TestAsignacionMasiva:
             "carrera_id": ctx["carrera_id"],
             "cohorte_id": ctx["cohorte_id"],
             "rol": "PROFESOR",
+            "comisiones": ["A", "B"],
             "desde": "2026-03-01",
             "hasta": "2026-12-31",
         }
@@ -345,6 +378,7 @@ class TestAsignacionMasiva:
         for a in data:
             assert a["rol"] == "PROFESOR"
             assert a["materia_id"] == ctx["materia_id"]
+            assert a["comisiones"] == ["A", "B"]
 
     async def test_usuario_inexistente_retorna_404(
         self, usuarios_schema, db_session: AsyncSession, async_client: AsyncClient,

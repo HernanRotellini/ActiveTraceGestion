@@ -1,68 +1,127 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/shared/components/Card'
 import { Spinner } from '@/shared/components/Spinner'
-import { useEquiposList } from '@/features/equipos-docentes/hooks/useEquipos'
-import { ExportCsvButton } from '@/features/equipos-docentes/components/ExportCsvButton'
-import type { EquiposFilters } from '@/features/equipos-docentes/types'
+import { Combobox } from '@/shared/components/Combobox'
+import { Toast } from '@/shared/components/Toast'
+import { useAsignacionesList } from '@/features/equipos-docentes/hooks/useEquipos'
+import { useCarreras, useCohortesList, useMaterias, useUsuarios } from '@/features/admin/hooks/useAdmin'
+import type { AsignacionListFilters } from '@/features/equipos-docentes/types'
+
+const ROLE_LABELS: Record<string, string> = {
+  PROFESOR: 'Profesor',
+  TUTOR: 'Tutor',
+  COORDINADOR: 'Coordinador',
+  NEXO: 'Nexo',
+  ADMIN: 'Admin',
+  FINANZAS: 'Finanzas',
+}
+
+function formatDate(value: string | null) {
+  if (!value) return '-'
+  return new Date(value).toLocaleDateString()
+}
+
+function shortId(value: string | null) {
+  return value ? `${value.slice(0, 8)}...` : '-'
+}
 
 export default function EquiposListPage() {
-  const [filters, setFilters] = useState<EquiposFilters>({ page: 1, limit: 20 })
-  const { data, isLoading } = useEquiposList(filters)
+  const [filters, setFilters] = useState<AsignacionListFilters>({})
+  const [toastClosed, setToastClosed] = useState(false)
+  const { data: asignaciones, isLoading, error } = useAsignacionesList(filters)
+  const { data: carrerasResp, isLoading: loadingCarreras } = useCarreras()
+  const { data: cohortesResp, isLoading: loadingCohortes } = useCohortesList()
+  const { data: materiasResp, isLoading: loadingMaterias } = useMaterias()
+  const { data: usuariosResp, isLoading: loadingUsuarios } = useUsuarios()
+
+  const carrerasById = useMemo(
+    () => new Map((carrerasResp?.items ?? []).map((item) => [item.id, item.nombre])),
+    [carrerasResp?.items],
+  )
+  const cohortesById = useMemo(
+    () => new Map((cohortesResp?.items ?? []).map((item) => [item.id, item.nombre])),
+    [cohortesResp?.items],
+  )
+  const materiasById = useMemo(
+    () => new Map((materiasResp?.items ?? []).map((item) => [item.id, item.nombre])),
+    [materiasResp?.items],
+  )
+  const usuariosById = useMemo(
+    () => new Map((usuariosResp?.items ?? []).map((item) => [item.id, `${item.nombre} ${item.apellidos}`])),
+    [usuariosResp?.items],
+  )
+
+  const materiaItems = (materiasResp?.items ?? []).map((item) => ({
+    value: item.id,
+    label: `${item.nombre} (${item.codigo})`,
+  }))
+  const usuarioItems = (usuariosResp?.items ?? []).map((item) => ({
+    value: item.id,
+    label: `${item.nombre} ${item.apellidos} (${item.email})`,
+  }))
+
+  const updateFilter = <K extends keyof AsignacionListFilters>(key: K, value: AsignacionListFilters[K] | '') => {
+    setFilters((current) => ({ ...current, [key]: value || undefined }))
+  }
+
+  const loadingCatalogs = loadingCarreras || loadingCohortes || loadingMaterias || loadingUsuarios
+  const errorMessage = error instanceof Error ? error.message : 'No se pudieron cargar las asignaciones.'
 
   return (
     <div className="space-y-6">
+      {error && !toastClosed && (
+        <Toast message={errorMessage} variant="error" onClose={() => setToastClosed(true)} />
+      )}
+
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Equipos Docentes</h1>
-        <div className="flex items-center gap-3">
-          <ExportCsvButton filters={filters} />
-          <Link
-            to="/coordinacion/equipos-docentes/nuevo"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
-          >
-            Nuevo Equipo
-          </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Equipos Docentes</h1>
+          <p className="mt-1 text-sm text-gray-500">Asignaciones de docentes a materias, cohortes y comisiones.</p>
         </div>
+        <Link
+          to="/coordinacion/equipos-docentes/nuevo"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+        >
+          Nueva asignación
+        </Link>
       </div>
 
       <Card className="p-4">
-        <div className="flex flex-wrap gap-4">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Combobox
+            label="Materia"
+            items={materiaItems}
+            value={filters.materia_id ?? ''}
+            onChange={(value) => updateFilter('materia_id', value)}
+            placeholder="Todas"
+            isLoading={loadingMaterias}
+          />
+          <Combobox
+            label="Docente"
+            items={usuarioItems}
+            value={filters.usuario_id ?? ''}
+            onChange={(value) => updateFilter('usuario_id', value)}
+            placeholder="Todos"
+            isLoading={loadingUsuarios}
+          />
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Materia</label>
-            <input
-              type="text"
-              value={filters.materia ?? ''}
-              onChange={(e) => setFilters({ ...filters, materia: e.target.value || undefined, page: 1 })}
-              placeholder="Buscar materia..."
-              className="block w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Carrera</label>
-            <input
-              type="text"
-              value={filters.carrera ?? ''}
-              onChange={(e) => setFilters({ ...filters, carrera: e.target.value || undefined, page: 1 })}
-              placeholder="Buscar carrera..."
-              className="block w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Estado</label>
+            <label className="block text-sm font-medium text-gray-700">Rol</label>
             <select
-              value={filters.estado ?? ''}
-              onChange={(e) => setFilters({ ...filters, estado: e.target.value || undefined, page: 1 })}
-              className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              value={filters.rol ?? ''}
+              onChange={(event) => updateFilter('rol', event.target.value)}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Todos</option>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
+              {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           </div>
         </div>
       </Card>
 
-      {isLoading ? (
+      {isLoading || loadingCatalogs ? (
         <div className="flex justify-center py-12">
           <Spinner />
         </div>
@@ -72,69 +131,49 @@ export default function EquiposListPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b bg-gray-50 text-xs uppercase text-gray-600">
                 <tr>
+                  <th className="px-4 py-3">Docente</th>
+                  <th className="px-4 py-3">Rol</th>
                   <th className="px-4 py-3">Materia</th>
                   <th className="px-4 py-3">Carrera</th>
+                  <th className="px-4 py-3">Cohorte</th>
+                  <th className="px-4 py-3">Comisiones</th>
+                  <th className="px-4 py-3">Vigencia</th>
                   <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3">Asignaciones</th>
-                  <th className="px-4 py-3">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {data?.items?.map((eq) => (
-                  <tr key={eq.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{eq.materia_nombre}</td>
-                    <td className="px-4 py-3 text-gray-600">{eq.carrera}</td>
+                {asignaciones?.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {usuariosById.get(item.usuario_id) ?? shortId(item.usuario_id)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{ROLE_LABELS[item.rol] ?? item.rol}</td>
+                    <td className="px-4 py-3 text-gray-600">{materiasById.get(item.materia_id ?? '') ?? shortId(item.materia_id)}</td>
+                    <td className="px-4 py-3 text-gray-600">{carrerasById.get(item.carrera_id ?? '') ?? shortId(item.carrera_id)}</td>
+                    <td className="px-4 py-3 text-gray-600">{cohortesById.get(item.cohorte_id ?? '') ?? shortId(item.cohorte_id)}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {item.comisiones?.length ? item.comisiones.join(', ') : 'Sin comisiones cargadas'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{formatDate(item.desde)} - {formatDate(item.hasta)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        eq.estado === 'activo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        item.estado_vigencia === 'vigente' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {eq.estado}
+                        {item.estado_vigencia === 'vigente' ? 'Vigente' : 'Vencida'}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{eq.asignaciones?.length ?? 0}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        to={`/coordinacion/equipos-docentes/${eq.id}`}
-                        className="text-primary-600 hover:text-primary-800 font-medium"
-                      >
-                        Ver
-                      </Link>
                     </td>
                   </tr>
                 ))}
-                {(!data?.items || data.items.length === 0) && (
+                {(!asignaciones || asignaciones.length === 0) && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      No hay equipos docentes registrados.
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                      No hay asignaciones registradas.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-          {data && data.total > (filters.limit ?? 20) && (
-            <div className="flex items-center justify-between border-t px-4 py-3">
-              <span className="text-sm text-gray-600">
-                {((filters.page ?? 1) - 1) * (filters.limit ?? 20) + 1}-{Math.min((filters.page ?? 1) * (filters.limit ?? 20), data.total)} de {data.total}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}
-                  disabled={(filters.page ?? 1) <= 1}
-                  className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}
-                  disabled={(filters.page ?? 1) * (filters.limit ?? 20) >= data.total}
-                  className="rounded-lg border px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50"
-                >
-                  Siguiente
-                </button>
-              </div>
-            </div>
-          )}
         </Card>
       )}
     </div>

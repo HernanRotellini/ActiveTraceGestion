@@ -198,3 +198,76 @@ class TestSetupCuatrimestreApi:
         assert activate_entry.detalle["periodo_id"] == periodo_id
         assert activate_entry.detalle["estado_nuevo"] is True
         assert activate_entry.filas_afectadas == 1
+
+    async def test_delete_periodo_with_fechas_is_blocked(
+        self,
+        db_engine: None,
+        db_session: AsyncSession,
+        async_client: AsyncClient,
+    ) -> None:
+        from app.models.permisos import PERIODO_ELIMINAR
+        from app.services.auth import login_rate_limiter
+
+        login_rate_limiter.reset_all()
+
+        sessionmaker = get_sessionmaker()
+        async with sessionmaker() as session:
+            connection = await session.connection()
+            await connection.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
+            await connection.execute(text("CREATE SCHEMA public"))
+            await connection.run_sync(Base.metadata.create_all)
+            await session.commit()
+
+        tenant = Tenant(name="Tenant delete", code="delete-setup")
+        db_session.add(tenant)
+        await db_session.flush()
+        await create_user_with_permissions(
+            db_session,
+            tenant=tenant,
+            email="admin-delete@test.com",
+            role_code="ADMIN",
+            permissions=["estructura:gestionar"],
+        )
+        await db_session.commit()
+
+        headers = await auth_headers(
+            async_client, tenant_code="delete-setup", email="admin-delete@test.com"
+        )
+
+        create_response = await async_client.post(
+            "/api/periodos-academicos",
+            json={
+                "nombre": "2C 2026",
+                "fecha_inicio": "2026-08-01",
+                "fecha_fin": "2026-12-15",
+            },
+            headers=headers,
+        )
+        assert create_response.status_code == 201
+        periodo_id = create_response.json()["id"]
+
+        fecha_response = await async_client.post(
+            f"/api/periodos-academicos/{periodo_id}/fechas",
+            json={"key": "parcial_1", "label": "Primer parcial", "fecha": "2026-09-10"},
+            headers=headers,
+        )
+        assert fecha_response.status_code == 201
+
+        delete_response = await async_client.delete(
+            f"/api/periodos-academicos/{periodo_id}",
+            headers=headers,
+        )
+
+        assert delete_response.status_code == 409
+        assert "associated fechas" in delete_response.json()["detail"]
+
+        get_response = await async_client.get(
+            f"/api/periodos-academicos/{periodo_id}",
+            headers=headers,
+        )
+        assert get_response.status_code == 200
+
+        delete_audit = await db_session.execute(
+            select(AuditLog).where(AuditLog.accion == PERIODO_ELIMINAR)
+        )
+        assert delete_audit.scalars().all() == []

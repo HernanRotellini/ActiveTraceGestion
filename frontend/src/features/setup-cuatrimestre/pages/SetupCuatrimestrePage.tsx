@@ -135,7 +135,7 @@ export default function SetupCuatrimestrePage() {
 
       <PeriodosPanel periodos={periodos} isLoading={periodosQuery.isLoading} />
       <ProgramasPanel programas={programas} carreras={carreras} cohortes={cohortes} materias={materias} isLoading={programasQuery.isLoading || carrerasQuery.isLoading || cohortesQuery.isLoading || materiasQuery.isLoading} />
-      <FechasPanel fechas={fechas} carreras={carreras} cohortes={cohortes} materias={materias} isLoading={fechasQuery.isLoading || carrerasQuery.isLoading || cohortesQuery.isLoading || materiasQuery.isLoading} />
+      <FechasPanel fechas={fechas} periodos={periodos} carreras={carreras} cohortes={cohortes} materias={materias} isLoading={fechasQuery.isLoading || periodosQuery.isLoading || carrerasQuery.isLoading || cohortesQuery.isLoading || materiasQuery.isLoading} />
     </div>
   )
 }

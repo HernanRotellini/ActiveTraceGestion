@@ -57,3 +57,9 @@ class AsignacionResponse(BaseModel):
         if self.hasta is not None and self.hasta < today:
             return "vencida"
         return "vigente"
+
+
+class MisComisionResponse(AsignacionResponse):
+    materia_nombre: str | None = None
+    carrera_nombre: str | None = None
+    cohorte_nombre: str | None = None

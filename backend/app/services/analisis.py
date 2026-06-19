@@ -14,6 +14,7 @@ from app.repositories.asignaciones import AsignacionRepository
 logger = logging.getLogger(__name__)
 
 ROLES_GLOBALES: frozenset[str] = frozenset({"COORDINADOR", "ADMIN", "NEXO"})
+ROLES_ENTREGAS_GLOBALES: frozenset[str] = frozenset({"TUTOR", "COORDINADOR", "ADMIN"})
 
 
 class AnalisisService:
@@ -89,26 +90,52 @@ class AnalisisService:
             ])
         return output.getvalue()
 
-    async def get_entregas_pendientes(self, comision: str | None = None) -> list[dict]:
+    async def get_entregas_pendientes(
+        self,
+        comision: str | None = None,
+        materia_ids: list[UUID] | None = None,
+    ) -> list[dict]:
         """Obtiene entregas pendientes de corrección."""
-        self._registrar_auditoria(ANALISIS_CONSULTAR, None, {"tipo": "entregas_pendientes", "comision": comision})
-        return await self._repo.entregas_pendientes(comision)
+        self._registrar_auditoria(
+            ANALISIS_CONSULTAR,
+            None,
+            {
+                "tipo": "entregas_pendientes",
+                "comision": comision,
+                "materia_ids": [str(materia_id) for materia_id in materia_ids] if materia_ids is not None else None,
+            },
+        )
+        return await self._repo.entregas_pendientes(comision, materia_ids)
 
-    async def exportar_entregas_csv(self, comision: str | None = None) -> str:
+    async def exportar_entregas_csv(
+        self,
+        comision: str | None = None,
+        materia_ids: list[UUID] | None = None,
+    ) -> str:
         """Exporta entregas pendientes como CSV."""
-        items = await self._repo.entregas_pendientes(comision)
-        self._registrar_auditoria(ANALISIS_EXPORTAR, None, {"tipo": "exportar_entregas_csv", "cantidad": len(items)})
+        items = await self._repo.entregas_pendientes(comision, materia_ids)
+        self._registrar_auditoria(
+            ANALISIS_EXPORTAR,
+            None,
+            {
+                "tipo": "exportar_entregas_csv",
+                "cantidad": len(items),
+                "comision": comision,
+                "materia_ids": [str(materia_id) for materia_id in materia_ids] if materia_ids is not None else None,
+            },
+        )
 
         output = io.StringIO()
         output.write("\ufeff")
         writer = csv.writer(output)
-        writer.writerow(["alumno_id", "alumno_nombre", "actividad", "materia", "fecha_entrega", "dias_pendiente"])
+        writer.writerow(["alumno_id", "alumno_nombre", "actividad", "materia", "comision", "fecha_entrega", "dias_pendiente"])
         for item in items:
             writer.writerow([
                 str(item.get("alumno_id", "")),
                 item.get("alumno_nombre", ""),
                 item.get("actividad", ""),
                 item.get("materia", ""),
+                item.get("comision", ""),
                 item.get("fecha_entrega", ""),
                 item.get("dias_pendiente", 0),
             ])

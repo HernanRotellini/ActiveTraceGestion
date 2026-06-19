@@ -14,6 +14,7 @@ class AsignacionMasivaRequest(BaseModel):
     carrera_id: UUID
     cohorte_id: UUID
     rol: str
+    comisiones: list[str] | None = None
     desde: date
     hasta: date | None = None
 

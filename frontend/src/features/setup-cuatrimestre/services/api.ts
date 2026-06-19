@@ -72,6 +72,7 @@ export interface ProgramasFilters {
 }
 
 export interface FechasFilters {
+  periodo_id?: string
   materia_id?: string
   cohorte_id?: string
   tipo?: TipoFechaAcademica

@@ -13,6 +13,7 @@ interface ComboboxProps {
   placeholder?: string
   error?: string
   isLoading?: boolean
+  disabled?: boolean
   searchPlaceholder?: string
   noResultsText?: string
 }
@@ -25,6 +26,7 @@ export function Combobox({
   placeholder = 'Seleccionar...',
   error,
   isLoading = false,
+  disabled = false,
   searchPlaceholder = 'Buscar...',
   noResultsText = 'Sin resultados',
 }: ComboboxProps) {
@@ -63,6 +65,7 @@ export function Combobox({
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    if (disabled) return
     if (e.key === 'Escape') {
       setOpen(false)
       setSearch('')
@@ -84,18 +87,22 @@ export function Combobox({
           type="text"
           value={open ? search : (selectedItem?.label ?? '')}
           onChange={(e) => {
+            if (disabled) return
             setSearch(e.target.value)
             if (!open) setOpen(true)
             if (!e.target.value) onChange('')
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            if (!disabled) setOpen(true)
+          }}
           onKeyDown={handleKeyDown}
           placeholder={open ? searchPlaceholder : placeholder}
+          disabled={disabled}
           className={`block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 ${
             error
               ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
               : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
-          }`}
+          } ${disabled ? 'cursor-not-allowed bg-gray-100 text-gray-500' : ''}`}
           autoComplete="off"
         />
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">

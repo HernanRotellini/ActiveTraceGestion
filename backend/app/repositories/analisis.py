@@ -411,7 +411,11 @@ class AnalisisRepository:
 
     # ── 2.9 — entregas_pendientes ────────────────────────────────
 
-    async def entregas_pendientes(self, comision: str | None = None) -> list[dict]:
+    async def entregas_pendientes(
+        self,
+        comision: str | None = None,
+        materia_ids: list[UUID] | None = None,
+    ) -> list[dict]:
         """Detecta textual TPs sin calificar para TODAS las materias.
 
         Reporta actividades textual-scale donde el alumno no tiene
@@ -423,6 +427,9 @@ class AnalisisRepository:
             actividad, materia, fecha_entrega, dias_pendiente.
         """
         from datetime import date, timedelta
+
+        if materia_ids is not None and not materia_ids:
+            return []
 
         # 1. Obtener versiones activas del padrón + materias
         version_result = await self.session.execute(
@@ -438,6 +445,11 @@ class AnalisisRepository:
                 VersionPadron.deleted_at.is_(None),
                 Materia.tenant_id == self.tenant_id,
                 Materia.deleted_at.is_(None),
+                *(
+                    [VersionPadron.materia_id.in_(materia_ids)]
+                    if materia_ids is not None
+                    else []
+                ),
             )
         )
         version_rows = version_result.all()
@@ -611,6 +623,7 @@ class AnalisisRepository:
                     "alumno_nombre": nombre,
                     "actividad": actividad,
                     "materia": materia_nombre,
+                    "comision": entrada.comision,
                     "fecha_entrega": fecha_entrega,
                     "dias_pendiente": dias_pendiente,
                 })

@@ -45,6 +45,14 @@ class EquipoService:
         )
         return [AsignacionResponse.model_validate(a) for a in asignaciones]
 
+    async def get_usuario_id_by_email(self, email: str | None) -> UUID | None:
+        if not email:
+            return None
+        usuario = await self._usuario_repo.get_by_email(email)
+        if usuario is None:
+            return None
+        return usuario.id
+
     async def asignacion_masiva(
         self,
         usuario_ids: list[UUID],
@@ -54,6 +62,7 @@ class EquipoService:
         rol: str,
         desde: date_type,
         hasta: date_type | None = None,
+        comisiones: list[str] | None = None,
     ) -> list[AsignacionResponse]:
         usuarios = {}
         for uid in usuario_ids:
@@ -80,6 +89,7 @@ class EquipoService:
                 carrera_id=carrera_id,
                 cohorte_id=cohorte_id,
                 rol=rol,
+                comisiones=comisiones,
                 desde=desde,
                 hasta=hasta,
             )
@@ -94,6 +104,7 @@ class EquipoService:
                 "carrera_id": str(carrera_id),
                 "cohorte_id": str(cohorte_id),
                 "rol": rol,
+                "comisiones": comisiones or [],
             },
         )
         return [AsignacionResponse.model_validate(a) for a in created]
