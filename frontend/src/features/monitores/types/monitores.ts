@@ -7,7 +7,6 @@ export interface MonitorFilters {
   min_actividad_cumplida?: number
   page?: number
   per_page?: number
-  periodo?: string
 }
 
 export interface MonitorItem {

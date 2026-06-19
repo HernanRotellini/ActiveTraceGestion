@@ -1,142 +1,70 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Card } from '@/shared/components/Card'
-import { Button } from '@/shared/components/Button'
-import { Combobox } from '@/shared/components/Combobox'
-import { useMaterias } from '@/features/admin/hooks/useAdmin'
-import type { MonitorFilters } from '@/features/monitores/types/monitores'
-
-interface MetricResumen {
-  total_alumnos: number
-  total_comisiones: number
-  promedio_atraso: number
-  entregas_pendientes: number
-}
-
-interface AtrasoPorMateria {
-  materia_id: string
-  materia_nombre: string
-  total_alumnos: number
-  atrasados: number
-  entregados: number
-  porcentaje_atraso: number
-}
+import { Spinner } from '@/shared/components/Spinner'
+import { Toast } from '@/shared/components/Toast'
+import { useMonitor } from '@/features/monitores/hooks/useMonitor'
+import { MonitorFilters } from '@/features/monitores/components/MonitorFilters'
+import { MonitorTable } from '@/features/monitores/components/MonitorTable'
+import type { MonitorFilters as MonitorFiltersType } from '@/features/monitores/types/monitores'
 
 export default function MonitorGeneralPage() {
-  const [filters, setFilters] = useState<MonitorFilters>({})
+  const [filters, setFilters] = useState<MonitorFiltersType>({ per_page: 200 })
+  const { data, isLoading, error } = useMonitor(filters)
 
-  const { data: materiasResp, isLoading: loadingMaterias } = useMaterias()
-  const materiaItems = (materiasResp?.items ?? []).map((m) => ({
-    value: m.id,
-    label: `${m.nombre} (${m.codigo})${m.carrera_nombre ? ` - ${m.carrera_nombre}` : ''}`,
-  }))
+  const errorMessage = error instanceof Error ? error.message : 'No se pudo cargar el monitor.'
 
-  const metricas: MetricResumen = {
-    total_alumnos: 0,
-    total_comisiones: 0,
-    promedio_atraso: 0,
-    entregas_pendientes: 0,
-  }
-
-  const materiasAtraso: AtrasoPorMateria[] = []
-
-  const handleExport = () => {
-    // Export CSV
-  }
+  const stats = useMemo(() => {
+    const items = data?.items ?? []
+    const atrasados = items.filter((i) => i.atrasado).length
+    return {
+      total: data?.total ?? 0,
+      atrasados,
+      al_dia: (data?.total ?? 0) - atrasados,
+      pct_atraso: data?.total ? Math.round((atrasados / data.total) * 100) : 0,
+    }
+  }, [data])
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Monitor General</h1>
-        <Button variant="secondary" onClick={handleExport}>Exportar CSV</Button>
+      {error && <Toast message={errorMessage} variant="error" onClose={() => {}} />}
+
+      <h1 className="text-2xl font-bold text-gray-900">Monitor General</h1>
+
+      <div className="grid grid-cols-4 gap-4">
+        <Card className="p-4">
+          <p className="text-sm text-gray-500">Total Alumnos</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{stats.total}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-sm text-gray-500">Al día</p>
+          <p className="mt-1 text-2xl font-bold text-green-600">{stats.al_dia}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-sm text-gray-500">Atrasados</p>
+          <p className="mt-1 text-2xl font-bold text-red-600">{stats.atrasados}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-sm text-gray-500">% Atraso</p>
+          <p className="mt-1 text-2xl font-bold text-orange-600">{stats.pct_atraso}%</p>
+        </Card>
       </div>
 
       <Card className="p-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="w-56">
-            <Combobox
-              label="Materia"
-              items={materiaItems}
-              value={filters.materia_id ?? ''}
-              onChange={(val) => setFilters({ ...filters, materia_id: val || undefined })}
-              placeholder="Buscar materia..."
-              isLoading={loadingMaterias}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Período</label>
-            <input
-              type="text"
-              value={filters.periodo ?? ''}
-              onChange={(e) => setFilters({ ...filters, periodo: e.target.value || undefined })}
-              placeholder="Ej: 2026-1"
-              className="block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-        </div>
+        <MonitorFilters filters={filters} onChange={setFilters} />
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4">
-          <p className="text-sm text-gray-500">Total Alumnos</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{metricas.total_alumnos}</p>
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Spinner /></div>
+      ) : (
+        <Card>
+          {data && data.total > 0 && (
+            <div className="border-b px-4 py-2 text-sm text-gray-500">
+              {data.total} {data.total === 1 ? 'alumno' : 'alumnos'} encontrados
+            </div>
+          )}
+          <MonitorTable items={data?.items} />
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-gray-500">Comisiones</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{metricas.total_comisiones}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-gray-500">Promedio Atraso</p>
-          <p className="mt-1 text-2xl font-bold text-orange-600">{metricas.promedio_atraso}%</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-gray-500">Entregas Pendientes</p>
-          <p className="mt-1 text-2xl font-bold text-red-600">{metricas.entregas_pendientes}</p>
-        </Card>
-      </div>
-
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-gray-50 text-xs uppercase text-gray-600">
-              <tr>
-                <th className="px-4 py-3">Materia</th>
-                <th className="px-4 py-3">Total Alumnos</th>
-                <th className="px-4 py-3">Atrasados</th>
-                <th className="px-4 py-3">Entregados</th>
-                <th className="px-4 py-3">% Atraso</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {materiasAtraso.map((m) => (
-                <tr key={m.materia_id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{m.materia_nombre}</td>
-                  <td className="px-4 py-3 text-gray-600">{m.total_alumnos}</td>
-                  <td className="px-4 py-3 text-red-600">{m.atrasados}</td>
-                  <td className="px-4 py-3 text-green-600">{m.entregados}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-20 overflow-hidden rounded-full bg-gray-200">
-                        <div
-                          className={`h-full rounded-full ${m.porcentaje_atraso > 50 ? 'bg-red-500' : m.porcentaje_atraso > 20 ? 'bg-orange-500' : 'bg-green-500'}`}
-                          style={{ width: `${m.porcentaje_atraso}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-600">{m.porcentaje_atraso}%</span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {materiasAtraso.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                    No hay datos disponibles para los filtros seleccionados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      )}
     </div>
   )
 }
