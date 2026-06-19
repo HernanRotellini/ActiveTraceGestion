@@ -11,7 +11,7 @@ import type {
   ColoquiosFilters,
 } from '@/features/coloquios/types'
 
-const BASE = '/api/coloquios'
+const BASE = '/coloquios'
 
 export async function panelMetricas() {
   const { data } = await api.get<MetricasColoquiosResponse>(`${BASE}/metricas`)

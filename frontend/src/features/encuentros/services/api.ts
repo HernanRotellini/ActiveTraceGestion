@@ -9,7 +9,7 @@ import type {
   AdminInstanciasFilters,
 } from '@/features/encuentros/types'
 
-const BASE = '/api/v1/encuentros'
+const BASE = '/v1/encuentros'
 
 export async function listarSlots(filters?: EncuentrosFilters) {
   const { data } = await api.get<SlotEncuentroResponse[]>(`${BASE}/slots`, { params: filters })
