@@ -13,7 +13,10 @@ import type {
   UsuarioAdmin,
   UsuarioAdminPayload,
   UsuarioAdminFilters,
-  MetricasDashboard,
+  AccionesPorDia,
+  ComunicacionPorDocente,
+  Interaccion,
+  UltimaAccion,
   AuditoriaEntry,
   AuditoriaFilters,
 } from '@/features/admin/types'
@@ -99,12 +102,27 @@ export async function actualizarUsuario(id: string, payload: Partial<UsuarioAdmi
   return data
 }
 
-export async function obtenerMetricas(filters?: { fecha_desde?: string; fecha_hasta?: string; materia?: string }) {
-  const { data } = await api.get<MetricasDashboard>('/panel-auditoria/metricas', { params: filters })
+export async function listarAccionesPorDia(filters?: { fecha_desde?: string; fecha_hasta?: string; materia_id?: string }) {
+  const { data } = await api.get<{ items: AccionesPorDia[] }>('/api/v1/auditoria/panel/acciones-por-dia', { params: filters })
+  return data
+}
+
+export async function listarComunicacionesPorDocente(filters?: { fecha_desde?: string; fecha_hasta?: string; materia_id?: string }) {
+  const { data } = await api.get<{ items: ComunicacionPorDocente[] }>('/api/v1/auditoria/panel/comunicaciones-por-docente', { params: filters })
+  return data
+}
+
+export async function listarInteracciones(filters?: { fecha_desde?: string; fecha_hasta?: string; actor_id?: string }) {
+  const { data } = await api.get<{ items: Interaccion[] }>('/api/v1/auditoria/panel/interacciones-por-docente-materia', { params: filters })
+  return data
+}
+
+export async function listarUltimasAcciones(params?: { max_results?: number; offset?: number }) {
+  const { data } = await api.get<{ items: UltimaAccion[] }>('/api/v1/auditoria/panel/ultimas-acciones', { params })
   return data
 }
 
 export async function listarLogAuditoria(filters?: AuditoriaFilters) {
-  const { data } = await api.get<{ items: AuditoriaEntry[]; total: number }>('/audit-trail', { params: filters })
+  const { data } = await api.get<{ items: AuditoriaEntry[]; total: number }>('/api/v1/audit/logs', { params: filters })
   return data
 }

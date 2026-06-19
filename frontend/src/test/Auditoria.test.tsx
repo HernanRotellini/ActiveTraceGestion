@@ -9,8 +9,7 @@ describe('AuditoriaDashboardPage', () => {
   it('renders title and filters', () => {
     render(<AuditoriaDashboardPage />)
     expect(screen.getByText('Panel de Auditoría')).toBeInTheDocument()
-    expect(screen.getByText('Usuario')).toBeInTheDocument()
-    expect(screen.getByText('Materia')).toBeInTheDocument()
+    expect(screen.getByText('Acción')).toBeInTheDocument()
   })
 })
 
@@ -23,18 +22,14 @@ describe('AuditoriaLogPage', () => {
 })
 
 describe('AuditoriaFiltros', () => {
-  it('renders all filter inputs', () => {
+  it('renders filter inputs', () => {
     render(
       <AuditoriaFiltros
-        onUsuarioChange={() => {}}
-        onMateriaChange={() => {}}
         onAccionChange={() => {}}
         onFechaDesdeChange={() => {}}
         onFechaHastaChange={() => {}}
       />,
     )
-    expect(screen.getByText('Usuario')).toBeInTheDocument()
-    expect(screen.getByText('Materia')).toBeInTheDocument()
     expect(screen.getByText('Acción')).toBeInTheDocument()
     expect(screen.getByText('Desde')).toBeInTheDocument()
     expect(screen.getByText('Hasta')).toBeInTheDocument()

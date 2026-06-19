@@ -149,10 +149,34 @@ export function useActualizarUsuario() {
   })
 }
 
-export function useMetricas(filters?: { fecha_desde?: string; fecha_hasta?: string; materia?: string }) {
+export function useAccionesPorDia(filters?: { fecha_desde?: string; fecha_hasta?: string; materia_id?: string }) {
   return useQuery({
-    queryKey: ['metricas-auditoria', filters],
-    queryFn: () => api.obtenerMetricas(filters),
+    queryKey: ['auditoria-acciones-dia', filters],
+    queryFn: () => api.listarAccionesPorDia(filters),
+    staleTime: 30_000,
+  })
+}
+
+export function useComunicacionesPorDocente(filters?: { fecha_desde?: string; fecha_hasta?: string; materia_id?: string }) {
+  return useQuery({
+    queryKey: ['auditoria-comunicaciones', filters],
+    queryFn: () => api.listarComunicacionesPorDocente(filters),
+    staleTime: 30_000,
+  })
+}
+
+export function useInteracciones(filters?: { fecha_desde?: string; fecha_hasta?: string; actor_id?: string }) {
+  return useQuery({
+    queryKey: ['auditoria-interacciones', filters],
+    queryFn: () => api.listarInteracciones(filters),
+    staleTime: 30_000,
+  })
+}
+
+export function useUltimasAcciones(params?: { max_results?: number; offset?: number }) {
+  return useQuery({
+    queryKey: ['auditoria-ultimas-acciones', params],
+    queryFn: () => api.listarUltimasAcciones(params),
     staleTime: 30_000,
   })
 }

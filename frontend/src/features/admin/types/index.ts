@@ -113,52 +113,58 @@ export interface UsuarioAdminFilters {
   email?: string
 }
 
-export interface ActionByDay {
+export interface AccionesPorDia {
   fecha: string
   total: number
 }
 
-export interface ComunicacionEstado {
+export interface ComunicacionPorDocente {
   docente_id: string
-  docente_nombre: string
-  enviadas: number
-  pendientes: number
-  fallidas: number
+  accion: string
+  total: number
 }
 
 export interface Interaccion {
   docente_id: string
-  docente_nombre: string
-  materia: string
+  materia_id: string | null
+  accion: string
   total: number
 }
 
-export interface MetricasDashboard {
-  acciones_por_dia: ActionByDay[]
-  comunicaciones: ComunicacionEstado[]
-  interacciones: Interaccion[]
-  total_acciones: number
-  total_comunicaciones: number
+export interface UltimaAccion {
+  id: string
+  tenant_id: string
+  fecha_hora: string
+  actor_id: string
+  impersonado_id: string | null
+  materia_id: string | null
+  accion: string
+  detalle: Record<string, unknown> | null
+  filas_afectadas: number | null
+  ip: string | null
+  user_agent: string | null
 }
 
 export interface AuditoriaEntry {
   id: string
+  tenant_id: string
   fecha_hora: string
-  usuario: string
-  materia?: string
+  actor_id: string
+  impersonado_id: string | null
+  materia_id: string | null
   accion: string
-  registros_afectados: number
-  ip_origen?: string
-  user_agent?: string
-  detalle?: string
+  detalle: Record<string, unknown> | null
+  filas_afectadas: number | null
+  ip: string | null
+  user_agent: string | null
 }
 
 export interface AuditoriaFilters {
-  usuario?: string
-  materia?: string
-  accion?: string
   fecha_desde?: string
   fecha_hasta?: string
-  page?: number
+  actor_id?: string
+  accion?: string
+  materia_id?: string
   limit?: number
+  offset?: number
 }
