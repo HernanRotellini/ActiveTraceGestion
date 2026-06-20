@@ -379,6 +379,24 @@ class LiquidacionContextRepository:
         )
         return {usuario.id: usuario for usuario in result.scalars().all()}
 
+    async def list_roles_by_usuario_ids(self, usuario_ids: set[UUID]) -> dict[UUID, list[str]]:
+        if not usuario_ids:
+            return {}
+        result = await self.session.execute(
+            select(Asignacion.usuario_id, Asignacion.rol).where(
+                Asignacion.tenant_id == self.tenant_id,
+                Asignacion.deleted_at.is_(None),
+                Asignacion.usuario_id.in_(usuario_ids),
+            )
+        )
+        roles_by_usuario: dict[UUID, set[str]] = {}
+        for usuario_id, rol in result.all():
+            roles_by_usuario.setdefault(usuario_id, set()).add(rol)
+        return {
+            usuario_id: sorted(roles)
+            for usuario_id, roles in roles_by_usuario.items()
+        }
+
     async def list_asignaciones_vigentes(self, *, cohorte_id: UUID, periodo: date) -> list[Asignacion]:
         result = await self.session.execute(
             select(Asignacion).where(

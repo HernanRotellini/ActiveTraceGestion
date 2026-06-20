@@ -24,7 +24,7 @@ describe('LiquidacionTable', () => {
 
   it('renders liquidaciones table', () => {
     render(<LiquidacionTable items={items} />)
-    expect(screen.getByText('2026-06')).toBeInTheDocument()
+    expect(screen.getAllByText('2026-06')).toHaveLength(2)
   })
 
   it('renders empty state', () => {
@@ -76,11 +76,17 @@ describe('FacturaTable', () => {
   const facturas: FacturaResponse[] = [
     {
       id: 'f-1', usuario_id: 'd-1', periodo: '2026-06',
+      usuario_nombre: 'Ana',
+      usuario_apellidos: 'Perez',
+      usuario_roles: ['PROFESOR'],
       detalle: 'Honorarios junio', referencia_archivo: 'factura-001.pdf', archivo_size_bytes: 102400,
       estado: 'Pendiente', abonada_at: null, created_at: '2026-06-01T00:00:00Z',
     },
     {
       id: 'f-2', usuario_id: 'd-2', periodo: '2026-06',
+      usuario_nombre: 'Mario',
+      usuario_apellidos: 'Lopez',
+      usuario_roles: ['TUTOR', 'NEXO'],
       detalle: 'Honorarios junio', referencia_archivo: 'factura-002.pdf', archivo_size_bytes: 204800,
       estado: 'Abonada', abonada_at: '2026-06-05T00:00:00Z', created_at: '2026-06-01T00:00:00Z',
     },
@@ -88,12 +94,36 @@ describe('FacturaTable', () => {
 
   it('renders all facturas', () => {
     render(<FacturaTable facturas={facturas} onMarcarAbonada={() => {}} onEliminar={() => {}} />)
-    expect(screen.getByText('Honorarios junio')).toBeInTheDocument()
+    expect(screen.getAllByText('Honorarios junio')).toHaveLength(2)
+    expect(screen.getByText('Ana Perez')).toBeInTheDocument()
+    expect(screen.getByText('PROFESOR')).toBeInTheDocument()
+    expect(screen.getByText('TUTOR, NEXO')).toBeInTheDocument()
   })
 
   it('shows boton abonar for pending', () => {
     render(<FacturaTable facturas={facturas} onMarcarAbonada={() => {}} onEliminar={() => {}} />)
     expect(screen.getByText('Abonar')).toBeInTheDocument()
+  })
+
+  it('falls back when legacy factura payload omits enriched docente fields', () => {
+    const legacyFacturas = [
+      {
+        id: 'f-legacy',
+        usuario_id: 'd-legacy',
+        periodo: '2026-06',
+        detalle: 'Factura legacy',
+        referencia_archivo: 'factura-legacy.pdf',
+        archivo_size_bytes: 1024,
+        estado: 'Pendiente',
+        abonada_at: null,
+        created_at: '2026-06-01T00:00:00Z',
+      } as FacturaResponse,
+    ]
+
+    render(<FacturaTable facturas={legacyFacturas} onMarcarAbonada={() => {}} onEliminar={() => {}} />)
+
+    expect(screen.getByText('d-legacy')).toBeInTheDocument()
+    expect(screen.getByText('Sin rol')).toBeInTheDocument()
   })
 
   it('renders empty state', () => {

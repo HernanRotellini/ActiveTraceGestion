@@ -167,6 +167,9 @@ class FacturaResponse(BaseModel):
 
     id: UUID
     usuario_id: UUID
+    usuario_nombre: str
+    usuario_apellidos: str
+    usuario_roles: list[str]
     periodo: str
     detalle: str
     referencia_archivo: str

@@ -33,35 +33,48 @@ export function FacturaTable({ facturas, onMarcarAbonada, onEliminar, loading }:
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {facturas.map((f) => (
-            <tr key={f.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 font-mono text-xs text-gray-600">{f.usuario_id}</td>
-              <td className="px-4 py-3 text-gray-900">{f.periodo}</td>
-              <td className="px-4 py-3 text-gray-600">{f.detalle}</td>
-              <td className="px-4 py-3 text-right text-gray-500">{(f.archivo_size_bytes / 1024).toFixed(1)} KB</td>
-              <td className="px-4 py-3 text-center">
-                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                  f.estado === 'Abonada' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                }`}>
-                  {f.estado}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-gray-500">{new Date(f.created_at).toLocaleDateString()}</td>
-              <td className="px-4 py-3 text-gray-500">{f.abonada_at ? new Date(f.abonada_at).toLocaleDateString() : '-'}</td>
-              <td className="px-4 py-3 text-right">
-                <div className="flex justify-end gap-2">
-                  {f.estado === 'Pendiente' && (
-                    <Button variant="ghost" onClick={() => onMarcarAbonada(f.id)} loading={loading}>
-                      Abonar
+          {facturas.map((f) => {
+            const usuarioNombre = [f.usuario_nombre, f.usuario_apellidos]
+              .filter((value): value is string => Boolean(value))
+              .join(' ')
+              .trim() || f.usuario_id
+            const usuarioRoles = Array.isArray(f.usuario_roles) ? f.usuario_roles : []
+
+            return (
+              <tr key={f.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-gray-900">{usuarioNombre}</p>
+                  <p className="text-xs text-gray-500">
+                    {usuarioRoles.length > 0 ? usuarioRoles.join(', ') : 'Sin rol'}
+                  </p>
+                </td>
+                <td className="px-4 py-3 text-gray-900">{f.periodo}</td>
+                <td className="px-4 py-3 text-gray-600">{f.detalle}</td>
+                <td className="px-4 py-3 text-right text-gray-500">{(f.archivo_size_bytes / 1024).toFixed(1)} KB</td>
+                <td className="px-4 py-3 text-center">
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                    f.estado === 'Abonada' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {f.estado}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-gray-500">{new Date(f.created_at).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-gray-500">{f.abonada_at ? new Date(f.abonada_at).toLocaleDateString() : '-'}</td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-2">
+                    {f.estado === 'Pendiente' && (
+                      <Button variant="ghost" onClick={() => onMarcarAbonada(f.id)} loading={loading}>
+                        Abonar
+                      </Button>
+                    )}
+                    <Button variant="danger" onClick={() => onEliminar(f.id)}>
+                      Eliminar
                     </Button>
-                  )}
-                  <Button variant="danger" onClick={() => onEliminar(f.id)}>
-                    Eliminar
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
+                  </div>
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>

@@ -4,11 +4,13 @@ import { useSession } from '@/shared/hooks/useSession'
 import { useLogout } from '@/features/auth/hooks/useLogout'
 import { Button } from '@/shared/components/Button'
 
+type SidebarGroup = 'educativo' | 'facturacion' | 'auditoria'
+
 interface MenuItem {
   label: string
   route: string
   requiredPermission?: string
-  group?: 'educativo' | 'facturacion' | 'auditoria'
+  group?: SidebarGroup
 }
 
 const menuItems: MenuItem[] = [
@@ -31,48 +33,67 @@ const menuItems: MenuItem[] = [
   { label: 'Liquidaciones', route: '/liquidaciones', requiredPermission: 'liquidaciones:ver', group: 'facturacion' },
   { label: 'Grilla salarial', route: '/liquidaciones/grilla-salarial', requiredPermission: 'liquidaciones:gestionar', group: 'facturacion' },
   { label: 'Facturas', route: '/liquidaciones/facturas', requiredPermission: 'liquidaciones:ver', group: 'facturacion' },
-  { label: 'Auditoría', route: '/admin/auditoria', requiredPermission: 'auditoria:ver', group: 'auditoria' },
-  { label: 'Log auditoría', route: '/admin/auditoria/log', requiredPermission: 'auditoria:ver', group: 'auditoria' },
+  { label: 'Auditoria', route: '/admin/auditoria', requiredPermission: 'auditoria:ver', group: 'auditoria' },
+  { label: 'Log auditoria', route: '/admin/auditoria/log', requiredPermission: 'auditoria:ver', group: 'auditoria' },
 ]
 
-const sectionHeaders: { label: string; group: 'educativo' | 'facturacion' | 'auditoria' }[] = [
-  { label: 'EDUCATIVO', group: 'educativo' },
-  { label: 'FACTURACIÓN Y SALARIOS', group: 'facturacion' },
-  { label: 'AUDITORÍA', group: 'auditoria' },
+const sectionHeaders: Array<{ label: string; group: SidebarGroup }> = [
+  { label: 'Educativo', group: 'educativo' },
+  { label: 'Facturacion y salarios', group: 'facturacion' },
+  { label: 'Auditoria', group: 'auditoria' },
 ]
 
-interface SidebarHeader {
-  kind: 'header'
-  label: string
-  group: string
+const initialCollapsedSections: Record<SidebarGroup, boolean> = {
+  educativo: false,
+  facturacion: false,
+  auditoria: false,
 }
 
-function buildSidebarSections(items: MenuItem[]): (MenuItem | SidebarHeader)[] {
-  const result: (MenuItem | SidebarHeader)[] = []
-
-  const standalone = items.filter(item => !item.group)
-  result.push(...standalone)
-
-  const groupsWithItems = new Set(items.filter(item => item.group).map(item => item.group!))
-
-  for (const section of sectionHeaders) {
-    if (!groupsWithItems.has(section.group)) continue
-    result.push({ kind: 'header', label: section.label, group: section.group })
-    const groupItems = items.filter(item => item.group === section.group)
-    result.push(...groupItems)
-  }
-
-  return result
+function renderMenuLink(item: MenuItem, onNavigate: () => void) {
+  return (
+    <li key={item.route}>
+      <NavLink
+        to={item.route}
+        end={item.route === '/'}
+        className={({ isActive }) =>
+          `block rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            isActive
+              ? 'bg-primary-50 text-primary-700'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          }`
+        }
+        onClick={onNavigate}
+      >
+        {item.label}
+      </NavLink>
+    </li>
+  )
 }
 
 export default function MainLayout() {
   const { session, hasPermission } = useSession()
   const { logout, isLoading: isLoggingOut } = useLogout()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsedSections, setCollapsedSections] = useState(initialCollapsedSections)
 
   const visibleItems = menuItems.filter(
     (item) => !item.requiredPermission || hasPermission(item.requiredPermission),
   )
+  const standaloneItems = visibleItems.filter((item) => !item.group)
+  const groupedSections = sectionHeaders
+    .map((section) => ({
+      ...section,
+      items: visibleItems.filter((item) => item.group === section.group),
+    }))
+    .filter((section) => section.items.length > 0)
+
+  const closeSidebar = () => setSidebarOpen(false)
+  const toggleSection = (group: SidebarGroup) => {
+    setCollapsedSections((current) => ({
+      ...current,
+      [group]: !current[group],
+    }))
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -80,7 +101,7 @@ export default function MainLayout() {
         className={`fixed inset-0 z-20 bg-black/50 transition-opacity lg:hidden ${
           sidebarOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={closeSidebar}
       />
 
       <aside
@@ -91,8 +112,9 @@ export default function MainLayout() {
         <div className="flex h-16 items-center justify-between border-b px-6">
           <span className="text-lg font-bold text-primary-600">Trace</span>
           <button
+            type="button"
             className="text-gray-500 hover:text-gray-700 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
+            onClick={closeSidebar}
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -102,38 +124,37 @@ export default function MainLayout() {
 
         <nav className="flex-1 overflow-y-auto p-4">
           <ul className="space-y-1">
-            {buildSidebarSections(visibleItems).map((item) => {
-              if ('kind' in item && item.kind === 'header') {
-                return (
-                  <li key={`header-${item.group}`}>
-                    <div
-                      className="border-t border-gray-100 px-4 py-1.5 pt-3 mt-4"
-                      aria-hidden="true"
-                    >
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                        {item.label}
-                      </span>
-                    </div>
-                  </li>
-                )
-              }
-              const menuItem = item as MenuItem
+            {standaloneItems.map((item) => renderMenuLink(item, closeSidebar))}
+
+            {groupedSections.map((section) => {
+              const isCollapsed = collapsedSections[section.group]
               return (
-                <li key={menuItem.route}>
-                  <NavLink
-                    to={menuItem.route}
-                    end={menuItem.route === '/'}
-                    className={({ isActive }) =>
-                      `block rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                      }`
-                    }
-                    onClick={() => setSidebarOpen(false)}
+                <li key={section.group} className="mt-4">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between border-t border-gray-100 px-4 py-2 pt-3 text-left"
+                    onClick={() => toggleSection(section.group)}
+                    aria-expanded={!isCollapsed}
+                    aria-controls={`sidebar-section-${section.group}`}
                   >
-                    {menuItem.label}
-                  </NavLink>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      {section.label}
+                    </span>
+                    <svg
+                      className={`h-4 w-4 text-gray-400 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  {!isCollapsed && (
+                    <ul id={`sidebar-section-${section.group}`} className="mt-1 space-y-1">
+                      {section.items.map((item) => renderMenuLink(item, closeSidebar))}
+                    </ul>
+                  )}
                 </li>
               )
             })}
@@ -142,12 +163,12 @@ export default function MainLayout() {
 
         {session?.user && (
           <div className="border-t p-4">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="truncate text-sm font-medium text-gray-900">
               {session.user.nombre && session.user.apellidos
                 ? `${session.user.nombre} ${session.user.apellidos}`
                 : (session.user.email ?? session.user.user_id)}
             </p>
-            <p className="text-xs text-gray-500 truncate">
+            <p className="truncate text-xs text-gray-500">
               {session.user.roles?.join(', ')}
             </p>
           </div>
@@ -157,6 +178,7 @@ export default function MainLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-16 items-center justify-between border-b bg-white px-6">
           <button
+            type="button"
             className="text-gray-500 hover:text-gray-700 lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
@@ -169,7 +191,7 @@ export default function MainLayout() {
 
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={logout} loading={isLoggingOut}>
-              Cerrar sesión
+              Cerrar sesion
             </Button>
           </div>
         </header>
