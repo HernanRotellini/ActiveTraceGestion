@@ -637,7 +637,7 @@ class AnalisisRepository:
     ) -> dict:
         """Monitor general con filtros dinámicos.
 
-        Requiere al menos materia_id o busqueda para evitar queries sin filtro.
+        Sin filtros, lista todos los alumnos del tenant (siempre paginado).
 
         Args:
             filtros: Dict con materia_id, regional, comision, busqueda,
@@ -650,9 +650,6 @@ class AnalisisRepository:
         """
         materia_id = filtros.get("materia_id")
         busqueda = filtros.get("busqueda")
-
-        if not materia_id and not busqueda:
-            raise ValueError("Se requiere al menos materia_id o busqueda")
 
         # Build base query
         # We need: student data + count of activities + count of approved + atrasado status
