@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select, update
+from sqlalchemy import case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.comunicacion import Comunicacion, EstadoComunicacion
@@ -30,16 +30,16 @@ class ComunicacionRepository(TenantScopedRepository[Comunicacion]):
                 Comunicacion.materia_id,
                 func.count().label("total"),
                 func.sum(
-                    func.cast(Comunicacion.estado == EstadoComunicacion.PENDIENTE.value, func.Integer)
+                    case((Comunicacion.estado == EstadoComunicacion.PENDIENTE.value, 1), else_=0)
                 ).label("pendientes"),
                 func.sum(
-                    func.cast(Comunicacion.estado == EstadoComunicacion.ENVIADO.value, func.Integer)
+                    case((Comunicacion.estado == EstadoComunicacion.ENVIADO.value, 1), else_=0)
                 ).label("enviados"),
                 func.sum(
-                    func.cast(Comunicacion.estado == EstadoComunicacion.ERROR.value, func.Integer)
+                    case((Comunicacion.estado == EstadoComunicacion.ERROR.value, 1), else_=0)
                 ).label("errores"),
                 func.sum(
-                    func.cast(Comunicacion.estado == EstadoComunicacion.CANCELADO.value, func.Integer)
+                    case((Comunicacion.estado == EstadoComunicacion.CANCELADO.value, 1), else_=0)
                 ).label("cancelados"),
                 func.min(Comunicacion.created_at).label("created_at"),
             )
