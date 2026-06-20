@@ -255,6 +255,7 @@ class EncuentroService:
                 "video_url": i.video_url,
                 "comentario": i.comentario,
                 "created_at": i.created_at,
+                "updated_at": i.updated_at,
             }
             for i in instancias
         ]
