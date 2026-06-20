@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Card } from '@/shared/components/Card'
-import { Button } from '@/shared/components/Button'
-import { Spinner } from '@/shared/components/Spinner'
-import { Alert } from '@/shared/components/Alert'
-import { useSession } from '@/shared/hooks/useSession'
-import { usePreviewLiquidacion, useCerrarLiquidacion } from '@/features/liquidaciones/hooks/useLiquidaciones'
+import { useCohortesList } from '@/features/admin/hooks/useAdmin'
 import { LiquidacionKPIs } from '@/features/liquidaciones/components/LiquidacionKPIs'
+import { useCerrarLiquidacion, usePreviewLiquidacion } from '@/features/liquidaciones/hooks/useLiquidaciones'
 import type { LiquidacionPreviewResponse } from '@/features/liquidaciones/types'
+import { Alert } from '@/shared/components/Alert'
+import { Button } from '@/shared/components/Button'
+import { Card } from '@/shared/components/Card'
+import { Combobox } from '@/shared/components/Combobox'
+import { Spinner } from '@/shared/components/Spinner'
+import { useSession } from '@/shared/hooks/useSession'
 
 export default function LiquidacionPeriodoPage() {
   const { hasPermission } = useSession()
@@ -16,59 +18,68 @@ export default function LiquidacionPeriodoPage() {
   const [confirmCierre, setConfirmCierre] = useState(false)
   const [error, setError] = useState('')
 
+  const { data: cohortesResp, isLoading: loadingCohortes } = useCohortesList()
   const previewMutation = usePreviewLiquidacion()
   const cerrar = useCerrarLiquidacion()
 
   const puedeGestionar = hasPermission('liquidaciones:gestionar')
+  const cohorteItems = (cohortesResp?.items ?? [])
+    .map((cohorte) => ({
+      value: cohorte.id,
+      label: `${cohorte.nombre} (${cohorte.anio})`,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label))
 
   const handlePreview = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!cohorteId.trim() || !periodo.trim()) {
-      setError('Cohorte y período son obligatorios.')
+    if (!cohorteId || !periodo.trim()) {
+      setError('Cohorte y periodo son obligatorios.')
       return
     }
     try {
-      const result = await previewMutation.mutateAsync({ cohorte_id: cohorteId.trim(), periodo: periodo.trim() })
+      const result = await previewMutation.mutateAsync({
+        cohorte_id: cohorteId,
+        periodo: periodo.trim(),
+      })
       setPreview(result)
       setConfirmCierre(false)
     } catch {
-      setError('Error al generar el preview de liquidación.')
+      setError('Error al generar el preview de liquidacion.')
     }
   }
 
   const handleCerrar = async () => {
-    if (!cohorteId.trim() || !periodo.trim()) return
+    if (!cohorteId || !periodo.trim()) return
     try {
-      await cerrar.mutateAsync({ cohorte_id: cohorteId.trim(), periodo: periodo.trim() })
+      await cerrar.mutateAsync({ cohorte_id: cohorteId, periodo: periodo.trim() })
       setConfirmCierre(false)
       setPreview(null)
     } catch {
-      setError('Error al cerrar la liquidación.')
+      setError('Error al cerrar la liquidacion.')
     }
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Liquidación del Período</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Liquidacion del Periodo</h1>
 
       <Card className="p-6">
         <form onSubmit={handlePreview} className="space-y-4">
           {error && <Alert variant="error">{error}</Alert>}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Combobox
+              label="Cohorte *"
+              items={cohorteItems}
+              value={cohorteId}
+              onChange={setCohorteId}
+              placeholder="Seleccionar cohorte"
+              searchPlaceholder="Buscar cohorte..."
+              noResultsText="No hay cohortes disponibles."
+              isLoading={loadingCohortes}
+            />
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">ID de Cohorte *</label>
-              <input
-                type="text"
-                value={cohorteId}
-                onChange={(e) => setCohorteId(e.target.value)}
-                placeholder="UUID de la cohorte"
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Período * (YYYY-MM)</label>
+              <label className="block text-sm font-medium text-gray-700">Periodo * (YYYY-MM)</label>
               <input
                 type="text"
                 value={periodo}
@@ -118,13 +129,24 @@ export default function LiquidacionPeriodoPage() {
                     <td className="px-4 py-3 text-right">${Number(item.monto_plus).toLocaleString()}</td>
                     <td className="px-4 py-3 text-right font-medium">${Number(item.monto_total).toLocaleString()}</td>
                     <td className="px-4 py-3 text-center">
-                      {item.es_nexo && <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">NEXO</span>}
+                      {item.es_nexo && (
+                        <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                          NEXO
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       {item.procesable ? (
-                        <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Sí</span>
+                        <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                          Si
+                        </span>
                       ) : (
-                        <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700" title={item.motivo_no_procesable ?? ''}>No</span>
+                        <span
+                          className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+                          title={item.motivo_no_procesable ?? ''}
+                        >
+                          No
+                        </span>
                       )}
                     </td>
                   </tr>
@@ -137,12 +159,16 @@ export default function LiquidacionPeriodoPage() {
             <div className="flex justify-end">
               {confirmCierre ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">¿Confirmar cierre de liquidación?</span>
-                  <Button variant="danger" onClick={handleCerrar} loading={cerrar.isPending}>Confirmar cierre</Button>
-                  <Button variant="secondary" onClick={() => setConfirmCierre(false)}>Cancelar</Button>
+                  <span className="text-sm text-gray-600">Confirmar cierre de liquidacion?</span>
+                  <Button variant="danger" onClick={handleCerrar} loading={cerrar.isPending}>
+                    Confirmar cierre
+                  </Button>
+                  <Button variant="secondary" onClick={() => setConfirmCierre(false)}>
+                    Cancelar
+                  </Button>
                 </div>
               ) : (
-                <Button onClick={() => setConfirmCierre(true)}>Cerrar liquidación</Button>
+                <Button onClick={() => setConfirmCierre(true)}>Cerrar liquidacion</Button>
               )}
             </div>
           )}
@@ -151,12 +177,14 @@ export default function LiquidacionPeriodoPage() {
 
       {!preview && !previewMutation.isPending && (
         <Card className="p-12 text-center">
-          <p className="text-gray-500">Ingresá el ID de cohorte y el período para generar un preview.</p>
+          <p className="text-gray-500">Selecciona la cohorte y el periodo para generar un preview.</p>
         </Card>
       )}
 
       {previewMutation.isPending && (
-        <div className="flex justify-center py-12"><Spinner /></div>
+        <div className="flex justify-center py-12">
+          <Spinner />
+        </div>
       )}
     </div>
   )

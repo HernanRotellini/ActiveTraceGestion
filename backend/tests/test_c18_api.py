@@ -391,8 +391,23 @@ class TestLiquidacionesAPI:
 
 
 class TestFacturasAPI:
-    async def test_factura_crud_and_mark_abonada(self, async_client: AsyncClient, c18_api_context: dict[str, Any]) -> None:
+    async def test_factura_crud_and_mark_abonada(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        c18_api_context: dict[str, Any],
+    ) -> None:
         headers = admin_headers(c18_api_context)
+        await _crear_asignacion(
+            db_session,
+            c18_api_context["tenant_id"],
+            usuario_id=c18_api_context["facturante_id"],
+            cohorte_id=c18_api_context["cohorte_id"],
+            materia_id=c18_api_context["materia_id"],
+            rol="PROFESOR",
+        )
+        await db_session.commit()
+
         created = await async_client.post(
             "/api/facturas",
             json={
@@ -407,14 +422,19 @@ class TestFacturasAPI:
         assert created.status_code == 201
         factura_id = created.json()["id"]
         assert created.json()["estado"] == "Pendiente"
+        assert created.json()["usuario_nombre"] == "Docente"
+        assert created.json()["usuario_apellidos"] == "API"
+        assert created.json()["usuario_roles"] == ["PROFESOR"]
 
         listed = await async_client.get("/api/facturas", params={"periodo": "2026-06"}, headers=headers)
         assert listed.status_code == 200
         assert [item["id"] for item in listed.json()] == [factura_id]
+        assert listed.json()[0]["usuario_roles"] == ["PROFESOR"]
 
         detail = await async_client.get(f"/api/facturas/{factura_id}", headers=headers)
         assert detail.status_code == 200
         assert detail.json()["detalle"] == "Factura junio"
+        assert detail.json()["usuario_nombre"] == "Docente"
 
         updated = await async_client.put(
             f"/api/facturas/{factura_id}",

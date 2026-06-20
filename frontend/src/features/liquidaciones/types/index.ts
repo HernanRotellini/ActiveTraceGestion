@@ -120,6 +120,9 @@ export interface LiquidacionFilters {
 export interface FacturaResponse {
   id: string
   usuario_id: string
+  usuario_nombre: string
+  usuario_apellidos: string
+  usuario_roles: string[]
   periodo: string
   detalle: string
   referencia_archivo: string
