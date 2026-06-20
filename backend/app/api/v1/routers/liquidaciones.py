@@ -9,7 +9,6 @@ from app.api.v1.routers.rbac import CurrentUserDep
 from app.core.dependencies import get_db, require_permission
 from app.models.permisos import (
     LIQUIDACIONES_CALCULAR_CERRAR,
-    LIQUIDACIONES_GESTIONAR,
     LIQUIDACIONES_OPERAR_GRILLA,
     LIQUIDACIONES_VER,
 )
@@ -46,7 +45,7 @@ from app.services.liquidacion_service import (
 router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 
 GrillaGuard = Depends(require_permission(LIQUIDACIONES_OPERAR_GRILLA))
-LiquidacionesGestionarGuard = Depends(require_permission(LIQUIDACIONES_GESTIONAR))
+LiquidacionesGestionarGuard = Depends(require_permission(LIQUIDACIONES_CALCULAR_CERRAR))
 LiquidacionesVerGuard = Depends(require_permission(LIQUIDACIONES_VER))
 
 

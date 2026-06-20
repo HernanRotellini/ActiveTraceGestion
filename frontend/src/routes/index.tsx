@@ -297,7 +297,7 @@ export const router = createBrowserRouter([
           {
             path: 'liquidaciones/grilla-salarial',
             element: (
-              <PermissionGuard requiredPermissions={['liquidaciones:gestionar']}>
+              <PermissionGuard requiredPermissions={['liquidaciones:operar_grilla']}>
                 <SuspenseWrapper Component={GrillaSalarialPage} />
               </PermissionGuard>
             ),

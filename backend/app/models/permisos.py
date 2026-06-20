@@ -41,7 +41,6 @@ TAREAS_VER = "tareas:ver"
 ENCUENTROS_VER = "encuentros:ver"
 COLOQUIOS_VER = "coloquios:ver"
 LIQUIDACIONES_VER = "liquidaciones:ver"
-LIQUIDACIONES_GESTIONAR = "liquidaciones:gestionar"
 
 # ── Audit action codes ──────────────────────────────────────────
 CALIFICACIONES_IMPORTAR_ACTION = "CALIFICACIONES_IMPORTAR"

@@ -9,6 +9,7 @@ import { Card } from '@/shared/components/Card'
 import { Combobox } from '@/shared/components/Combobox'
 import { Spinner } from '@/shared/components/Spinner'
 import { useSession } from '@/shared/hooks/useSession'
+import { ApiError } from '@/shared/types/api'
 
 export default function LiquidacionPeriodoPage() {
   const { hasPermission } = useSession()
@@ -22,7 +23,7 @@ export default function LiquidacionPeriodoPage() {
   const previewMutation = usePreviewLiquidacion()
   const cerrar = useCerrarLiquidacion()
 
-  const puedeGestionar = hasPermission('liquidaciones:gestionar')
+  const puedeGestionar = hasPermission('liquidaciones:calcular_cerrar')
   const cohorteItems = (cohortesResp?.items ?? [])
     .map((cohorte) => ({
       value: cohorte.id,
@@ -37,6 +38,10 @@ export default function LiquidacionPeriodoPage() {
       setError('Cohorte y periodo son obligatorios.')
       return
     }
+    if (!/^\d{4}-\d{2}$/.test(periodo.trim())) {
+      setError('El periodo debe tener formato YYYY-MM (ej: 2026-06).')
+      return
+    }
     try {
       const result = await previewMutation.mutateAsync({
         cohorte_id: cohorteId,
@@ -44,8 +49,8 @@ export default function LiquidacionPeriodoPage() {
       })
       setPreview(result)
       setConfirmCierre(false)
-    } catch {
-      setError('Error al generar el preview de liquidacion.')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Error al generar el preview de liquidacion.')
     }
   }
 
@@ -55,8 +60,8 @@ export default function LiquidacionPeriodoPage() {
       await cerrar.mutateAsync({ cohorte_id: cohorteId, periodo: periodo.trim() })
       setConfirmCierre(false)
       setPreview(null)
-    } catch {
-      setError('Error al cerrar la liquidacion.')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Error al cerrar la liquidacion.')
     }
   }
 
@@ -81,7 +86,7 @@ export default function LiquidacionPeriodoPage() {
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">Periodo * (YYYY-MM)</label>
               <input
-                type="text"
+                type="month"
                 value={periodo}
                 onChange={(e) => setPeriodo(e.target.value)}
                 placeholder="ej: 2026-06"

@@ -31,7 +31,7 @@ const menuItems: MenuItem[] = [
   { label: 'Monitor general', route: '/coordinacion/monitores', requiredPermission: 'atrasados:ver', group: 'educativo' },
   { label: 'Usuarios', route: '/admin/usuarios', requiredPermission: 'usuarios:gestionar', group: 'educativo' },
   { label: 'Liquidaciones', route: '/liquidaciones', requiredPermission: 'liquidaciones:ver', group: 'facturacion' },
-  { label: 'Grilla salarial', route: '/liquidaciones/grilla-salarial', requiredPermission: 'liquidaciones:gestionar', group: 'facturacion' },
+  { label: 'Grilla salarial', route: '/liquidaciones/grilla-salarial', requiredPermission: 'liquidaciones:operar_grilla', group: 'facturacion' },
   { label: 'Facturas', route: '/liquidaciones/facturas', requiredPermission: 'liquidaciones:ver', group: 'facturacion' },
   { label: 'Auditoria', route: '/admin/auditoria', requiredPermission: 'auditoria:ver', group: 'auditoria' },
   { label: 'Log auditoria', route: '/admin/auditoria/log', requiredPermission: 'auditoria:ver', group: 'auditoria' },
