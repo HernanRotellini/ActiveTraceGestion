@@ -4,8 +4,6 @@ Plataforma de gestión académica y trazabilidad multi-tenant que opera como cap
 
 ## 🎥 Video demostrativo
 
-[![Ver demo en YouTube](https://img.shields.io/badge/YouTube-Ver%20demo-red?logo=youtube&logoColor=white)](https://youtu.be/TU_VIDEO_ID)
+[![Ver demo en YouTube](https://img.shields.io/badge/YouTube-Ver%20demo-red?logo=youtube&logoColor=white)](https://youtu.be/agdaWSorjfM)
 
-▶️ **[Ver el video en YouTube](https://youtu.be/TU_VIDEO_ID)**
-
-> Reemplazá `TU_VIDEO_ID` por el ID real del video (la parte final de la URL, ej: `https://youtu.be/dQw4w9WgXcQ`).
+▶️ **[Ver el video en YouTube](https://youtu.be/agdaWSorjfM)**
